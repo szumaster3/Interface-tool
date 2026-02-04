@@ -1,269 +1,275 @@
-// Decompiled by Jad v1.5.8g. Copyright 2001 Pavel Kouznetsov.
-// Jad home page: http://www.kpdus.com/jad.html
-// Decompiler options: packimports(3) 
-// Source File Name:   MainFile.java
-
 package com.alex.store;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
-
-// Referenced classes of package com.alex.store:
-//            Archive
 
 public final class MainFile {
+   public static final int IDX_BLOCK_LEN = 6;
+   public static final int HEADER_LEN = 8;
+   public static final int EXPANDED_HEADER_LEN = 10;
+   public static final int BLOCK_LEN = 512;
+   public static final int EXPANDED_BLOCK_LEN = 510;
+   public static final int TOTAL_BLOCK_LEN = 520;
+   private static final ByteBuffer tempBuffer = ByteBuffer.allocateDirect(520);
+   private final int id;
+   private final FileChannel index;
+   private final FileChannel data;
+   private final boolean newProtocol;
 
-	private static final int IDX_BLOCK_LEN = 6;
-	private static final int HEADER_LEN = 8;
-	private static final int EXPANDED_HEADER_LEN = 10;
-	private static final int BLOCK_LEN = 512;
-	private static final int EXPANDED_BLOCK_LEN = 510;
-	private static final int TOTAL_BLOCK_LEN = HEADER_LEN + BLOCK_LEN;
-	private static final ByteBuffer tempBuffer = ByteBuffer.allocateDirect(TOTAL_BLOCK_LEN);
-	private byte cachedArchives[][];
+   MainFile(int id, RandomAccessFile data, RandomAccessFile index, boolean newProtocol) throws IOException {
+      this.id = id;
+      this.data = data.getChannel();
+      this.index = index.getChannel();
+      this.newProtocol = newProtocol;
+   }
 
-	private int id;
-	private FileChannel index;
-	private FileChannel data;
-	private boolean newProtocol;
+   public Archive getArchive(int id) {
+      return this.getArchive(id, null);
+   }
 
-	// int id, RandomAccessFile data, RandomAccessFile index, boolean
-	// newProtocol
-	protected MainFile(int id, RandomAccessFile data, RandomAccessFile index, boolean newProtocol) throws IOException {
-		this.id = id;
-		this.data = data.getChannel();
-		this.index = index.getChannel();
-		this.newProtocol = newProtocol;
-		resetCachedArchives();
-	}
+   public Archive getArchive(int id, int[] keys) {
+      byte[] data = this.getArchiveData(id);
+      return data == null?null:new Archive(id, data, keys);
+   }
 
-	public Archive getArchive(int id) {
-		return getArchive(id, null);
-	}
+   public byte[] getArchiveData(int archiveId) {
+      FileChannel var2 = this.data;
+      FileChannel var3 = this.data;
+      synchronized(this.data) {
+         try {
+            tempBuffer.position(0).limit(6);
+            this.index.read(tempBuffer, archiveId * 6L);
+            tempBuffer.flip();
+            int var16 = getMediumInt(tempBuffer);
+            int block = getMediumInt(tempBuffer);
+            Object var10000;
+            byte[] var100001;
+            if(var16 < 0) {
+               var10000 = null;
+               var100001 = (byte[])var10000;
+               return var100001;
+            } else if(block <= 0 || (long)block > this.data.size() / 520L) {
+               var10000 = null;
+               var100001 = (byte[])var10000;
+               return var100001;
+            } else {
+               ByteBuffer fileBuffer = ByteBuffer.allocate(var16);
+               int remaining = var16;
+               int chunk = 0;
+               int blockLen = this.newProtocol && archiveId > '\uffff'?510:512;
+               int headerLen = this.newProtocol && archiveId > '\uffff'?10:8;
 
-	public Archive getArchive(int id, int[] keys) {
-		byte[] data = getCachedArchiveData(id);
-		if (data == null)
-			return null;
-		return new Archive(id, data, keys);
-	}
+               while(remaining > 0) {
+                  if(block == 0) {
+                     System.out.println(archiveId + ", " + this.newProtocol);
+                     var10000 = null;
+                     var100001 = (byte[])var10000;
+                     return var100001;
+                  }
 
-	public byte[] getCachedArchiveData(int id) {
-		byte data[];
-		if (cachedArchives[id] == null)
-			data = cachedArchives[id] = getArchiveData(id);
-		else
-			data = cachedArchives[id];
-		return data;
-	}
+                  int blockSize = remaining > blockLen?blockLen:remaining;
+                  tempBuffer.position(0).limit(blockSize + headerLen);
+                  this.data.read(tempBuffer, block * 520L);
+                  tempBuffer.flip();
+                  int currentFile;
+                  int currentChunk;
+                  int nextBlock;
+                  int currentIndex;
+                  if(this.newProtocol && archiveId > '\uffff') {
+                     currentFile = tempBuffer.getInt();
+                     currentChunk = tempBuffer.getShort() & '\uffff';
+                     nextBlock = getMediumInt(tempBuffer);
+                     currentIndex = tempBuffer.get() & 255;
+                  } else {
+                     currentFile = tempBuffer.getShort() & '\uffff';
+                     currentChunk = tempBuffer.getShort() & '\uffff';
+                     nextBlock = getMediumInt(tempBuffer);
+                     currentIndex = tempBuffer.get() & 255;
+                  }
 
-	public void resetCachedArchives() throws IOException {
-		cachedArchives = new byte[getArchivesCount()][];
-	}
+                  if((archiveId == currentFile || archiveId > '\uffff') && chunk == currentChunk && this.id == currentIndex) {
+                     if(nextBlock >= 0 && (long)nextBlock <= this.data.size() / 520L) {
+                        fileBuffer.put(tempBuffer);
+                        remaining -= blockSize;
+                        block = nextBlock;
+                        ++chunk;
+                        continue;
+                     }
 
-	public byte[] getArchiveData(int archiveId) {
-		synchronized (data) {
-			try {
-				tempBuffer.position(0).limit(IDX_BLOCK_LEN);
-				index.read(tempBuffer, ((long) archiveId * (long) IDX_BLOCK_LEN));
-				tempBuffer.flip();
-				int size = getMediumInt(tempBuffer);
-				int block = getMediumInt(tempBuffer);
-				if (size < 0)
-					return null;
-				if (block <= 0 || block > data.size() / TOTAL_BLOCK_LEN) {
-					return null;
-				}
-				ByteBuffer fileBuffer = ByteBuffer.allocate(size);
-				int remaining = size;
-				int chunk = 0;
-				int blockLen = !newProtocol || archiveId <= 0xffff ? BLOCK_LEN : EXPANDED_BLOCK_LEN;
-				int headerLen = !newProtocol || archiveId <= 0xffff ? HEADER_LEN : EXPANDED_HEADER_LEN;
-				while (remaining > 0) {
-					if (block == 0) {
-						System.out.println(archiveId + ", " + newProtocol);
-						return null;
-					}
-					int blockSize = remaining > blockLen ? blockLen : remaining;
-					tempBuffer.position(0).limit(blockSize + headerLen);
-					data.read(tempBuffer, ((long) block * (long) TOTAL_BLOCK_LEN));
-					tempBuffer.flip();
+                     var10000 = null;
+                     var100001 = (byte[])var10000;
+                     return var100001;
+                  }
 
-					int currentFile, currentChunk, nextBlock, currentIndex;
+                  var10000 = null;
+                  var100001 = (byte[])var10000;
+                  return var100001;
+               }
 
-					if (!newProtocol || archiveId <= 65535) {
-						currentFile = tempBuffer.getShort() & 0xffff;
-						currentChunk = tempBuffer.getShort() & 0xffff;
-						nextBlock = getMediumInt(tempBuffer);
-						currentIndex = tempBuffer.get() & 0xff;
-					} else {
-						currentFile = tempBuffer.getInt();
-						currentChunk = tempBuffer.getShort() & 0xffff;
-						nextBlock = getMediumInt(tempBuffer);
-						currentIndex = tempBuffer.get() & 0xff;
-					}
+               byte[] var18 = (byte[])fileBuffer.flip().array();
+               return var18;
+            }
+         } catch (Exception var181) {
+            return null;
+         }
+      }
+   }
 
-					if ((archiveId != currentFile && archiveId <= 65535) || chunk != currentChunk || id != currentIndex) {
-						return null;
-					}
-					if (nextBlock < 0 || nextBlock > data.size() / TOTAL_BLOCK_LEN) {
-						return null;
-					}
+   private static int getMediumInt(ByteBuffer buffer) {
+      return (buffer.get() & 255) << 16 | (buffer.get() & 255) << 8 | buffer.get() & 255;
+   }
 
-					fileBuffer.put(tempBuffer);
-					remaining -= blockSize;
-					block = nextBlock;
-					chunk++;
-				}
-				return (byte[]) fileBuffer.flip().array();
-			} catch (Exception ex) {
-				return null;
-			}
-		}
-	}
+   private static void putMediumInt(ByteBuffer buffer, int val) {
+      buffer.put((byte)(val >> 16));
+      buffer.put((byte)(val >> 8));
+      buffer.put((byte)val);
+   }
 
-	private static int getMediumInt(ByteBuffer buffer) {
-		return ((buffer.get() & 0xff) << 16) | ((buffer.get() & 0xff) << 8) | (buffer.get() & 0xff);
-	}
+   public boolean putArchive(Archive archive) {
+      return this.putArchiveData(archive.getId(), archive.getData());
+   }
 
-	private static void putMediumInt(ByteBuffer buffer, int val) {
-		buffer.put((byte) (val >> 16));
-		buffer.put((byte) (val >> 8));
-		buffer.put((byte) val);
-	}
+   public boolean putArchiveData(int id, byte[] archive) {
+      ByteBuffer buffer = ByteBuffer.wrap(archive);
+      boolean done = this.putArchiveData(id, buffer, archive.length, true);
+      if(!done) {
+         done = this.putArchiveData(id, buffer, archive.length, false);
+      }
 
-	public boolean putArchive(Archive archive) {
-		return putArchiveData(archive.getId(), archive.getData());
-	}
+      return done;
+   }
 
-	public boolean putArchiveData(int id, byte[] archive) {
-		ByteBuffer buffer = ByteBuffer.wrap(archive);
-		boolean done = putArchiveData(id, buffer, archive.length, true);
-		if (!done)
-			done = putArchiveData(id, buffer, archive.length, false);
-		if (id >= cachedArchives.length)
-			cachedArchives = Arrays.copyOf(cachedArchives, id + 1);
-		cachedArchives[id] = archive;
-		return done;
-	}
+   public boolean putArchiveData(int archiveId, ByteBuffer archive, int size, boolean exists) {
+      FileChannel var5 = this.data;
+      FileChannel var6 = this.data;
+      synchronized(this.data) {
+         try {
+            boolean var10000;
+            int var16;
+            boolean var100001;
+            if(exists) {
+               if((long)(archiveId * 6L + 6) > this.index.size()) {
+                  var10000 = false;
+                  var100001 = var10000;
+                  return var100001;
+               }
 
-	public boolean putArchiveData(int archiveId, ByteBuffer archive, int size, boolean exists) {
-		synchronized (data) {
-			try {
-				int block;
-				if (exists) {
-					if (archiveId * IDX_BLOCK_LEN + IDX_BLOCK_LEN > index.size()) {
-						return false;
-					}
+               tempBuffer.position(0).limit(6);
+               this.index.read(tempBuffer, archiveId * 6L);
+               tempBuffer.flip().position(3);
+               var16 = getMediumInt(tempBuffer);
+               if(var16 <= 0 || (long)var16 > this.data.size() / 520L) {
+                  var10000 = false;
+                  var100001 = var10000;
+                  return var100001;
+               }
+            } else {
+               var16 = (int)(this.data.size() + 520L - 1L) / 520;
+               if(var16 == 0) {
+                  var16 = 1;
+               }
+            }
 
-					tempBuffer.position(0).limit(IDX_BLOCK_LEN);
-					index.read(tempBuffer, archiveId * IDX_BLOCK_LEN);
-					tempBuffer.flip().position(3);
-					block = getMediumInt(tempBuffer);
+            tempBuffer.position(0);
+            putMediumInt(tempBuffer, size);
+            putMediumInt(tempBuffer, var16);
+            tempBuffer.flip();
+            this.index.write(tempBuffer, archiveId * 6L);
+            int remaining = size;
+            int chunk = 0;
+            int blockLen = this.newProtocol && archiveId > '\uffff'?510:512;
 
-					if (block <= 0 || block > data.size() / TOTAL_BLOCK_LEN) {
-						return false;
-					}
-				} else {
-					block = (int) (data.size() + TOTAL_BLOCK_LEN - 1) / TOTAL_BLOCK_LEN;
-					if (block == 0) {
-						block = 1;
-					}
-				}
+            for(int headerLen = this.newProtocol && archiveId > '\uffff'?10:8; remaining > 0; ++chunk) {
+               int nextBlock = 0;
+               int blockSize;
+               if(exists) {
+                  tempBuffer.position(0).limit(headerLen);
+                  this.data.read(tempBuffer, var16 * 520L);
+                  tempBuffer.flip();
+                  int currentChunk;
+                  int currentIndex;
+                  if(this.newProtocol && archiveId > '\uffff') {
+                     blockSize = tempBuffer.getInt();
+                     currentChunk = tempBuffer.getShort() & '\uffff';
+                     nextBlock = getMediumInt(tempBuffer);
+                     currentIndex = tempBuffer.get() & 255;
+                  } else {
+                     blockSize = tempBuffer.getShort() & '\uffff';
+                     currentChunk = tempBuffer.getShort() & '\uffff';
+                     nextBlock = getMediumInt(tempBuffer);
+                     currentIndex = tempBuffer.get() & 255;
+                  }
 
-				tempBuffer.position(0);
-				putMediumInt(tempBuffer, size);
-				putMediumInt(tempBuffer, block);
-				tempBuffer.flip();
-				index.write(tempBuffer, archiveId * IDX_BLOCK_LEN);
+                  if(archiveId != blockSize && archiveId <= '\uffff' || chunk != currentChunk || this.id != currentIndex) {
+                     var10000 = false;
+                     var100001 = var10000;
+                     return var100001;
+                  }
 
-				int remaining = size;
-				int chunk = 0;
-				int blockLen = !newProtocol || archiveId <= 0xffff ? BLOCK_LEN : EXPANDED_BLOCK_LEN;
-				int headerLen = !newProtocol || archiveId <= 0xffff ? HEADER_LEN : EXPANDED_HEADER_LEN;
-				while (remaining > 0) {
-					int nextBlock = 0;
-					if (exists) {
-						tempBuffer.position(0).limit(headerLen);
-						data.read(tempBuffer, block * TOTAL_BLOCK_LEN);
-						tempBuffer.flip();
+                  if(nextBlock < 0 || (long)nextBlock > this.data.size() / 520L) {
+                     var10000 = false;
+                     var100001 = var10000;
+                     return var100001;
+                  }
+               }
 
-						int currentFile, currentChunk, currentIndex;
-						if (!newProtocol || archiveId <= 0xffff) {
-							currentFile = tempBuffer.getShort() & 0xffff;
-							currentChunk = tempBuffer.getShort() & 0xffff;
-							nextBlock = getMediumInt(tempBuffer);
-							currentIndex = tempBuffer.get() & 0xff;
-						} else {
-							currentFile = tempBuffer.getInt();
-							currentChunk = tempBuffer.getShort() & 0xffff;
-							nextBlock = getMediumInt(tempBuffer);
-							currentIndex = tempBuffer.get() & 0xff;
-						}
+               if(nextBlock == 0) {
+                  exists = false;
+                  nextBlock = (int)((this.data.size() + 520L - 1L) / 520L);
+                  if(nextBlock == 0) {
+                     nextBlock = 1;
+                  }
 
-						if ((archiveId != currentFile && archiveId <= 65535) || chunk != currentChunk || id != currentIndex) {
-							return false;
-						}
-						if (nextBlock < 0 || nextBlock > data.size() / TOTAL_BLOCK_LEN) {
-							return false;
-						}
-					}
+                  if(nextBlock == var16) {
+                     ++nextBlock;
+                  }
+               }
 
-					if (nextBlock == 0) {
-						exists = false;
-						nextBlock = (int) ((data.size() + TOTAL_BLOCK_LEN - 1) / TOTAL_BLOCK_LEN);
-						if (nextBlock == 0) {
-							nextBlock = 1;
-						}
-						if (nextBlock == block) {
-							nextBlock++;
-						}
-					}
+               if(remaining <= blockLen) {
+                  nextBlock = 0;
+               }
 
-					if (remaining <= blockLen) {
-						nextBlock = 0;
-					}
-					tempBuffer.position(0).limit(TOTAL_BLOCK_LEN);
-					if (!newProtocol || archiveId <= 0xffff) {
-						tempBuffer.putShort((short) archiveId);
-						tempBuffer.putShort((short) chunk);
-						putMediumInt(tempBuffer, nextBlock);
-						tempBuffer.put((byte) id);
-					} else {
-						tempBuffer.putInt(archiveId);
-						tempBuffer.putShort((short) chunk);
-						putMediumInt(tempBuffer, nextBlock);
-						tempBuffer.put((byte) id);
-					}
+               tempBuffer.position(0).limit(520);
+               if(this.newProtocol && archiveId > '\uffff') {
+                  tempBuffer.putInt(archiveId);
+                  tempBuffer.putShort((short)chunk);
+                  putMediumInt(tempBuffer, nextBlock);
+                  tempBuffer.put((byte)this.id);
+               } else {
+                  tempBuffer.putShort((short)archiveId);
+                  tempBuffer.putShort((short)chunk);
+                  putMediumInt(tempBuffer, nextBlock);
+                  tempBuffer.put((byte)this.id);
+               }
 
-					int blockSize = remaining > blockLen ? blockLen : remaining;
-					archive.limit(archive.position() + blockSize);
-					tempBuffer.put(archive);
-					tempBuffer.flip();
+               blockSize = remaining > blockLen?blockLen:remaining;
+               archive.limit(archive.position() + blockSize);
+               tempBuffer.put(archive);
+               tempBuffer.flip();
+               this.data.write(tempBuffer, var16 * 520L);
+               remaining -= blockSize;
+               var16 = nextBlock;
+            }
 
-					data.write(tempBuffer, block * TOTAL_BLOCK_LEN);
-					remaining -= blockSize;
-					block = nextBlock;
-					chunk++;
-				}
+            var10000 = true;
+            return var10000;
+         } catch (Exception var17) {
+            return false;
+         }
+      }
+   }
 
-				return true;
-			} catch (Exception ex) {
-				return false;
-			}
-		}
-	}
+   public int getId() {
+      return this.id;
+   }
 
-	public int getId() {
-		return id;
-	}
-
-	public int getArchivesCount() throws IOException {
-		synchronized (index) {
-			return (int) (index.size() / 6);
-		}
-	}
+   public int getArchivesCount() throws IOException {
+      FileChannel var1 = this.index;
+      FileChannel var2 = this.index;
+      synchronized(this.index) {
+         return (int)(this.index.size() / 6L);
+      }
+   }
 }

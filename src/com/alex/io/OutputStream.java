@@ -1,325 +1,329 @@
-// Decompiled by Jad v1.5.8g. Copyright 2001 Pavel Kouznetsov.
-// Jad home page: http://www.kpdus.com/jad.html
-// Decompiler options: packimports(3) 
-// Source File Name:   OutputStream.java
-
 package com.alex.io;
 
 import java.math.BigInteger;
 
-// Referenced classes of package com.alex.io:
-//            Stream
-
 public final class OutputStream extends Stream {
+   private static final int[] BIT_MASK = new int[32];
+   private int opcodeStart = 0;
 
-	public OutputStream(int capacity) {
-		opcodeStart = 0;
-		setBuffer(new byte[capacity]);
-	}
+   static {
+      for(int i = 0; i < 32; ++i) {
+         BIT_MASK[i] = (1 << i) - 1;
+      }
 
-	public OutputStream() {
-		opcodeStart = 0;
-		setBuffer(new byte[16]);
-	}
+   }
 
-	public OutputStream(byte buffer[]) {
-		opcodeStart = 0;
-		setBuffer(buffer);
-		offset = buffer.length;
-		length = buffer.length;
-	}
+   public OutputStream(int capacity) {
+      this.setBuffer(new byte[capacity]);
+   }
 
-	public OutputStream(int buffer[]) {
-		opcodeStart = 0;
-		setBuffer(new byte[buffer.length]);
-		int ai[];
-		int j = (ai = buffer).length;
-		for (int i = 0; i < j; i++) {
-			int value = ai[i];
-			writeByte(value);
-		}
+   public OutputStream() {
+      this.setBuffer(new byte[16]);
+   }
 
-	}
+   public OutputStream(byte[] buffer) {
+      this.setBuffer(buffer);
+      this.offset = buffer.length;
+      this.length = buffer.length;
+   }
 
-	public void checkCapacityPosition(int position) {
-		if (position >= getBuffer().length) {
-			byte newBuffer[] = new byte[position + 16];
-			System.arraycopy(getBuffer(), 0, newBuffer, 0, getBuffer().length);
-			setBuffer(newBuffer);
-		}
-	}
+   public OutputStream(int[] buffer) {
+      this.setBuffer(new byte[buffer.length]);
+      int[] arr$ = buffer;
+      int len$ = buffer.length;
 
-	public void skip(int length) {
-		setOffset(getOffset() + length);
-	}
+      for(int i$ = 0; i$ < len$; ++i$) {
+         int value = arr$[i$];
+         this.writeByte(value);
+      }
 
-	public void setOffset(int offset) {
-		this.offset = offset;
-	}
+   }
 
-	public void writeBytes(byte b[], int offset, int length) {
-		checkCapacityPosition((getOffset() + length) - offset);
-		System.arraycopy(b, offset, getBuffer(), getOffset(), length);
-		setOffset(getOffset() + (length - offset));
-	}
+   public void checkCapacityPosition(int position) {
+      if(position >= this.getBuffer().length) {
+         byte[] newBuffer = new byte[position + 16];
+         System.arraycopy(this.getBuffer(), 0, newBuffer, 0, this.getBuffer().length);
+         this.setBuffer(newBuffer);
+      }
 
-	public void writeBytes(byte b[]) {
-		int offset = 0;
-		int length = b.length;
-		checkCapacityPosition((getOffset() + length) - offset);
-		System.arraycopy(b, offset, getBuffer(), getOffset(), length);
-		setOffset(getOffset() + (length - offset));
-	}
+   }
 
-	public void addBytes128(byte data[], int offset, int len) {
-		for (int k = offset; k < len; k++)
-			writeByte((byte) (data[k] + 128));
+   public void skip(int length) {
+      this.setOffset(this.getOffset() + length);
+   }
 
-	}
+   public void setOffset(int offset) {
+      this.offset = offset;
+   }
 
-	public void addBytesS(byte data[], int offset, int len) {
-		for (int k = offset; k < len; k++)
-			writeByte((byte) (-128 + data[k]));
+   public void writeBytes(byte[] b, int offset, int length) {
+      this.checkCapacityPosition(this.getOffset() + length - offset);
+      System.arraycopy(b, offset, this.getBuffer(), this.getOffset(), length);
+      this.setOffset(this.getOffset() + (length - offset));
+   }
 
-	}
+   public void writeBytes(byte[] b) {
+      byte offset = 0;
+      int length = b.length;
+      this.checkCapacityPosition(this.getOffset() + length - offset);
+      System.arraycopy(b, offset, this.getBuffer(), this.getOffset(), length);
+      this.setOffset(this.getOffset() + (length - offset));
+   }
 
-	public void addBytes_Reverse(byte data[], int offset, int len) {
-		for (int i = len - 1; i >= 0; i--)
-			writeByte(data[i]);
+   public void addBytes128(byte[] data, int offset, int len) {
+      for(int k = offset; k < len; ++k) {
+         this.writeByte((byte)(data[k] + 128));
+      }
 
-	}
+   }
 
-	public void addBytes_Reverse128(byte data[], int offset, int len) {
-		for (int i = len - 1; i >= 0; i--)
-			writeByte((byte) (data[i] + 128));
+   public void addBytesS(byte[] data, int offset, int len) {
+      for(int k = offset; k < len; ++k) {
+         this.writeByte((byte)(-128 + data[k]));
+      }
 
-	}
+   }
 
-	public void writeByte(int i) {
-		writeByte(i, offset++);
-	}
+   public void addBytes_Reverse(byte[] data, int offset, int len) {
+      for(int i = len - 1; i >= 0; --i) {
+         this.writeByte(data[i]);
+      }
 
-	public void writeNegativeByte(int i) {
-		writeByte(-i, offset++);
-	}
+   }
 
-	public void writeByte(int i, int position) {
-		checkCapacityPosition(position);
-		getBuffer()[position] = (byte) i;
-	}
+   public void addBytes_Reverse128(byte[] data, int offset, int len) {
+      for(int i = len - 1; i >= 0; --i) {
+         this.writeByte((byte)(data[i] + 128));
+      }
 
-	public void writeByte128(int i) {
-		writeByte(i + 128);
-	}
+   }
 
-	public void writeByteC(int i) {
-		writeByte(-i);
-	}
+   public void writeByte(int i) {
+      this.writeByte(i, this.offset++);
+   }
 
-	public void write3Byte(int i) {
-		writeByte(i >> 16);
-		writeByte(i >> 8);
-		writeByte(i);
-	}
+   public void writeNegativeByte(int i) {
+      this.writeByte(-i, this.offset++);
+   }
 
-	public void write128Byte(int i) {
-		writeByte(128 - i);
-	}
+   public void writeByte(int i, int position) {
+      this.checkCapacityPosition(position);
+      this.getBuffer()[position] = (byte)i;
+   }
 
-	public void writeShortLE128(int i) {
-		writeByte(i + 128);
-		writeByte(i >> 8);
-	}
+   public void writeByte128(int i) {
+      this.writeByte(i + 128);
+   }
 
-	public void writeShort128(int i) {
-		writeByte(i >> 8);
-		writeByte(i + 128);
-	}
+   public void writeByteC(int i) {
+      this.writeByte(-i);
+   }
 
-	public void writeBigSmart(int i) {
-		if (i >= 32767 && i >= 0)
-			writeInt(i - 0x7fffffff - 1);
-		else
-			writeShort(i < 0 ? 32767 : i);
-	}
+   public void write3Byte(int i) {
+      this.writeByte(i >> 16);
+      this.writeByte(i >> 8);
+      this.writeByte(i);
+   }
 
-	public void writeSmart(int i) {
-		if (i >= 128)
-			writeShort(i + 32768);
-		else
-			writeByte(i);
-	}
+   public void write128Byte(int i) {
+      this.writeByte(128 - i);
+   }
 
-	public void writeShort(int i) {
-		writeByte(i >> 8);
-		writeByte(i);
-	}
+   public void writeShortLE128(int i) {
+      this.writeByte(i + 128);
+      this.writeByte(i >> 8);
+   }
 
-	public void writeShortLE(int i) {
-		writeByte(i);
-		writeByte(i >> 8);
-	}
+   public void writeShort128(int i) {
+      this.writeByte(i >> 8);
+      this.writeByte(i + 128);
+   }
 
-	public void write24BitInt(int i) {
-		writeByte(i >> 16);
-		writeByte(i >> 8);
-		writeByte(i);
-	}
+   public void writeBigSmart(int i) {
+      //if(i >= 32767 && i >= 0) {
+      if(i >= 52767 && i >= 0) {
+         this.writeInt(i - Integer.MAX_VALUE - 1);
+      } else {
+         this.writeShort(i >= 0?i:52767);
+         //this.writeShort(i >= 0?i:32767);
+      }
 
-	@Override
-	public void writeInt(int i) {
-		writeByte(i >> 24);
-		writeByte(i >> 16);
-		writeByte(i >> 8);
-		writeByte(i);
-	}
+   }
 
-	public void writeIntV1(int i) {
-		writeByte(i >> 8);
-		writeByte(i);
-		writeByte(i >> 24);
-		writeByte(i >> 16);
-	}
+   public void writeSmart(int i) {
+      if(i >= 128) {
+         this.writeShort(i);
+      } else {
+         this.writeByte(i);
+      }
 
-	public void writeIntV2(int i) {
-		writeByte(i >> 16);
-		writeByte(i >> 24);
-		writeByte(i);
-		writeByte(i >> 8);
-	}
+   }
 
-	public void writeIntLE(int i) {
-		writeByte(i);
-		writeByte(i >> 8);
-		writeByte(i >> 16);
-		writeByte(i >> 24);
-	}
+   public void writeShort(int i) {
+      this.writeByte(i >> 8);
+      this.writeByte(i);
+   }
 
-	public void writeLong(long l) {
-		writeByte((int) (l >> 56));
-		writeByte((int) (l >> 48));
-		writeByte((int) (l >> 40));
-		writeByte((int) (l >> 32));
-		writeByte((int) (l >> 24));
-		writeByte((int) (l >> 16));
-		writeByte((int) (l >> 8));
-		writeByte((int) l);
-	}
+   public void writeShortLE(int i) {
+      this.writeByte(i);
+      this.writeByte(i >> 8);
+   }
 
-	public void writePSmarts(int i) {
-		if (i < 128) {
-			writeByte(i);
-			return;
-		}
-		if (i < 32768) {
-			writeShort(32768 + i);
-			return;
-		} else {
-			System.out.println("Error psmarts out of range:");
-			return;
-		}
-	}
+   public void write24BitInt(int i) {
+      this.writeByte(i >> 16);
+      this.writeByte(i >> 8);
+      this.writeByte(i);
+   }
 
-	public void writeString(String s) {
-		checkCapacityPosition(getOffset() + s.length() + 1);
-		System.arraycopy(s.getBytes(), 0, getBuffer(), getOffset(), s.length());
-		setOffset(getOffset() + s.length());
-		writeByte(0);
-	}
+   public void writeInt(int i) {
+      this.writeByte(i >> 24);
+      this.writeByte(i >> 16);
+      this.writeByte(i >> 8);
+      this.writeByte(i);
+   }
 
-	public void writeGJString(String s) {
-		writeByte(0);
-		writeString(s);
-	}
+   public void writeIntV1(int i) {
+      this.writeByte(i >> 8);
+      this.writeByte(i);
+      this.writeByte(i >> 24);
+      this.writeByte(i >> 16);
+   }
 
-	public void putGJString3(String s) {
-		writeByte(0);
-		writeString(s);
-		writeByte(0);
-	}
+   public void writeIntV2(int i) {
+      this.writeByte(i >> 16);
+      this.writeByte(i >> 24);
+      this.writeByte(i);
+      this.writeByte(i >> 8);
+   }
 
-	public void writePacket(int id) {
-		writeByte(id);
-	}
+   public void writeIntLE(int i) {
+      this.writeByte(i);
+      this.writeByte(i >> 8);
+      this.writeByte(i >> 16);
+      this.writeByte(i >> 24);
+   }
 
-	public void writePacketVarByte(int id) {
-		writePacket(id);
-		writeByte(0);
-		opcodeStart = getOffset() - 1;
-	}
+   public void writeLong(long l) {
+      this.writeByte((int)(l >> 56));
+      this.writeByte((int)(l >> 48));
+      this.writeByte((int)(l >> 40));
+      this.writeByte((int)(l >> 32));
+      this.writeByte((int)(l >> 24));
+      this.writeByte((int)(l >> 16));
+      this.writeByte((int)(l >> 8));
+      this.writeByte((int)l);
+   }
 
-	public void writePacketVarShort(int id) {
-		writePacket(id);
-		writeShort(0);
-		opcodeStart = getOffset() - 2;
-	}
+   public void writePSmarts(int i) {
+      if(i < 128) {
+         this.writeByte(i);
+      } else if (i < 32768) {
+             this.writeShort(32768 + i);
+        }else {
+         System.out.println("Error psmarts out of range:");
+      }
 
-	public void endPacketVarByte() {
-		writeByte((getOffset() - (opcodeStart + 2)) + 1, opcodeStart);
-	}
+   }
 
-	public void endPacketVarShort() {
-		int size = getOffset() - (opcodeStart + 2);
-		writeByte(size >> 8, opcodeStart++);
-		writeByte(size, opcodeStart);
-	}
+   public void writeString(String s) {
+      this.checkCapacityPosition(this.getOffset() + s.length() + 1);
+      System.arraycopy(s.getBytes(), 0, this.getBuffer(), this.getOffset(), s.length());
+      this.setOffset(this.getOffset() + s.length());
+      this.writeByte(0);
+   }
 
-	public void initBitAccess() {
-		bitPosition = getOffset() * 8;
-	}
+   public void writeGJString(String s) {
+      this.writeByte(0);
+      this.writeString(s);
+   }
 
-	public void finishBitAccess() {
-		setOffset((bitPosition + 7) / 8);
-	}
+   public void putGJString3(String s) {
+      this.writeByte(0);
+      this.writeString(s);
+      this.writeByte(0);
+   }
 
-	public int getBitPos(int i) {
-		return 8 * i - bitPosition;
-	}
+   public void writePacket(int id) {
+      this.writeByte(id);
+   }
 
-	public void writeBits(int numBits, int value) {
-		int bytePos = bitPosition >> 3;
-		int bitOffset = 8 - (bitPosition & 7);
-		bitPosition += numBits;
-		for (; numBits > bitOffset; bitOffset = 8) {
-			checkCapacityPosition(bytePos);
-			getBuffer()[bytePos] &= ~BIT_MASK[bitOffset];
-			getBuffer()[bytePos++] |= value >> numBits - bitOffset & BIT_MASK[bitOffset];
-			numBits -= bitOffset;
-		}
+   public void writePacketVarByte(int id) {
+      this.writePacket(id);
+      this.writeByte(0);
+      this.opcodeStart = this.getOffset() - 1;
+   }
 
-		checkCapacityPosition(bytePos);
-		if (numBits == bitOffset) {
-			getBuffer()[bytePos] &= ~BIT_MASK[bitOffset];
-			getBuffer()[bytePos] |= value & BIT_MASK[bitOffset];
-		} else {
-			getBuffer()[bytePos] &= ~(BIT_MASK[numBits] << bitOffset - numBits);
-			getBuffer()[bytePos] |= (value & BIT_MASK[numBits]) << bitOffset - numBits;
-		}
-	}
+   public void writePacketVarShort(int id) {
+      this.writePacket(id);
+      this.writeShort(0);
+      this.opcodeStart = this.getOffset() - 2;
+   }
 
-	public void setBuffer(byte buffer[]) {
-		this.buffer = buffer;
-	}
+   public void endPacketVarByte() {
+      this.writeByte(this.getOffset() - (this.opcodeStart + 2) + 1, this.opcodeStart);
+   }
 
-	public final void rsaEncode(BigInteger key, BigInteger modulus) {
-		int length = offset;
-		offset = 0;
-		byte data[] = new byte[length];
-		getBytes(data, 0, length);
-		BigInteger biginteger2 = new BigInteger(data);
-		BigInteger biginteger3 = biginteger2.modPow(key, modulus);
-		byte out[] = biginteger3.toByteArray();
-		offset = 0;
-		writeBytes(out, 0, out.length);
-	}
+   public void endPacketVarShort() {
+      int size = this.getOffset() - (this.opcodeStart + 2);
+      this.writeByte(size >> 8, this.opcodeStart++);
+      this.writeByte(size, this.opcodeStart);
+   }
 
-	private static final int BIT_MASK[];
-	private int opcodeStart;
+   public void initBitAccess() {
+      this.bitPosition = this.getOffset() * 8;
+   }
 
-	static {
-		BIT_MASK = new int[32];
-		for (int i = 0; i < 32; i++)
-			BIT_MASK[i] = (1 << i) - 1;
+   public void finishBitAccess() {
+      this.setOffset((this.bitPosition + 7) / 8);
+   }
 
-	}
+   public int getBitPos(int i) {
+      return 8 * i - this.bitPosition;
+   }
+
+   public void writeBits(int numBits, int value) {
+      int bytePos = this.bitPosition >> 3;
+      int bitOffset = 8 - (this.bitPosition & 7);
+
+      byte[] var10000;
+      for(this.bitPosition += numBits; numBits > bitOffset; bitOffset = 8) {
+         this.checkCapacityPosition(bytePos);
+         var10000 = this.getBuffer();
+         var10000[bytePos] = (byte)(var10000[bytePos] & ~BIT_MASK[bitOffset]);
+         var10000 = this.getBuffer();
+         int var10001 = bytePos++;
+         var10000[var10001] = (byte)(var10000[var10001] | value >> numBits - bitOffset & BIT_MASK[bitOffset]);
+         numBits -= bitOffset;
+      }
+
+      this.checkCapacityPosition(bytePos);
+      if(numBits == bitOffset) {
+         var10000 = this.getBuffer();
+         var10000[bytePos] = (byte)(var10000[bytePos] & ~BIT_MASK[bitOffset]);
+         var10000 = this.getBuffer();
+         var10000[bytePos] = (byte)(var10000[bytePos] | value & BIT_MASK[bitOffset]);
+      } else {
+         var10000 = this.getBuffer();
+         var10000[bytePos] = (byte)(var10000[bytePos] & ~(BIT_MASK[numBits] << bitOffset - numBits));
+         var10000 = this.getBuffer();
+         var10000[bytePos] = (byte)(var10000[bytePos] | (value & BIT_MASK[numBits]) << bitOffset - numBits);
+      }
+
+   }
+
+   public void setBuffer(byte[] buffer) {
+      this.buffer = buffer;
+   }
+
+   public void rsaEncode(BigInteger key, BigInteger modulus) {
+      int length = this.offset;
+      this.offset = 0;
+      byte[] data = new byte[length];
+      this.getBytes(data, 0, length);
+      BigInteger biginteger2 = new BigInteger(data);
+      BigInteger biginteger3 = biginteger2.modPow(key, modulus);
+      byte[] out = biginteger3.toByteArray();
+      this.offset = 0;
+      this.writeBytes(out, 0, out.length);
+   }
 }

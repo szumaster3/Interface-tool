@@ -1,254 +1,253 @@
 package com.alex.io;
 
-import com.alex.utils.Constants;
-
 public final class InputStream extends Stream {
+   private static final int[] BIT_MASK = new int[]{0, 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095, 8191, 16383, 32767, '\uffff', 131071, 262143, 524287, 1048575, 2097151, 4194303, 8388607, 16777215, 33554431, 67108863, 134217727, 268435455, 536870911, 1073741823, Integer.MAX_VALUE, -1};
 
-	public void initBitAccess() {
-		bitPosition = offset * 8;
-	}
+   public void initBitAccess() {
+      this.bitPosition = this.offset * 8;
+   }
 
-	private static final int[] BIT_MASK = new int[] { 0, 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095, 8191, 16383, 32767, 65535, 131071, 262143, 524287, 1048575, 2097151, 4194303, 8388607, 16777215, 33554431, 67108863, 134217727, 268435455, 536870911, 1073741823, 2147483647, -1 };
+   public void finishBitAccess() {
+      this.offset = (7 + this.bitPosition) / 8;
+   }
 
-	public void finishBitAccess() {
-		offset = (7 + bitPosition) / 8;
-	}
+   public int readBits(int bitOffset) {
+      int bytePos = this.bitPosition >> 1779819011;
+      int i_8_ = -(7 & this.bitPosition) + 8;
+      this.bitPosition += bitOffset;
 
-	public int readBits(int bitOffset) {
+      int value;
+      for(value = 0; ~bitOffset < ~i_8_; i_8_ = 8) {
+         value += (BIT_MASK[i_8_] & this.buffer[bytePos++]) << -i_8_ + bitOffset;
+         bitOffset -= i_8_;
+      }
 
-		int bytePos = bitPosition >> 1779819011;
-		int i_8_ = -(0x7 & bitPosition) + 8;
-		bitPosition += bitOffset;
-		int value = 0;
-		for (/**/; (bitOffset ^ 0xffffffff) < (i_8_ ^ 0xffffffff); i_8_ = 8) {
-			value += (BIT_MASK[i_8_] & buffer[bytePos++]) << -i_8_ + bitOffset;
-			bitOffset -= i_8_;
-		}
-		if ((i_8_ ^ 0xffffffff) == (bitOffset ^ 0xffffffff))
-			value += buffer[bytePos] & BIT_MASK[i_8_];
-		else
-			value += (buffer[bytePos] >> -bitOffset + i_8_ & BIT_MASK[bitOffset]);
-		return value;
-	}
+      if(~i_8_ == ~bitOffset) {
+         value += this.buffer[bytePos] & BIT_MASK[i_8_];
+      } else {
+         value += this.buffer[bytePos] >> -bitOffset + i_8_ & BIT_MASK[bitOffset];
+      }
 
-	public InputStream(int capacity) {
-		buffer = new byte[capacity];
-	}
+      return value;
+   }
 
-	public InputStream(byte[] buffer) {
-		this.buffer = buffer;
-		this.length = buffer.length;
-	}
+   public InputStream(int capacity) {
+      this.buffer = new byte[capacity];
+   }
 
-	public void checkCapacity(int length) {
-		if (offset + length >= buffer.length) {
-			byte[] newBuffer = new byte[(offset + length) * 2];
-			System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
-			buffer = newBuffer;
-		}
-	}
+   public InputStream(byte[] buffer) {
+      this.buffer = buffer;
+      this.length = buffer.length;
+   }
 
-	public void skip(int length) {
-		offset += length;
-	}
+   public void checkCapacity(int length) {
+      if(this.offset + length >= this.buffer.length) {
+         byte[] newBuffer = new byte[(this.offset + length) * 2];
+         System.arraycopy(this.buffer, 0, newBuffer, 0, this.buffer.length);
+         this.buffer = newBuffer;
+      }
 
-	public void setLength(int length) {
-		this.length = length;
-	}
+   }
 
-	public void setOffset(int offset) {
-		this.offset = offset;
-	}
+   public void skip(int length) {
+      this.offset += length;
+   }
 
-	public int getRemaining() {
-		return offset < length ? length - offset : 0;
-	}
+   public void setLength(int length) {
+      this.length = length;
+   }
 
-	public void addBytes(byte[] b, int offset, int length) {
-		checkCapacity(length - offset);
-		System.arraycopy(b, offset, buffer, this.offset, length);
-		this.length += length - offset;
-	}
+   public void setOffset(int offset) {
+      this.offset = offset;
+   }
 
-	public int readPacket() {
-		return readUnsignedByte();
-	}
+   public int getRemaining() {
+      return this.offset < this.length?this.length - this.offset:0;
+   }
 
-	public int readByte() {
-		return getRemaining() > 0 ? buffer[offset++] : 0;
-	}
+   public void addBytes(byte[] b, int offset, int length) {
+      this.checkCapacity(length - offset);
+      System.arraycopy(b, offset, this.buffer, this.offset, length);
+      this.length += length - offset;
+   }
 
-	public void readBytes(byte buffer[], int off, int len) {
-		for (int k = off; k < len + off; k++) {
-			buffer[k] = (byte) readByte();
-		}
-	}
+   public int readPacket() {
+      return this.readUnsignedByte();
+   }
 
-	public void readBytes(byte buffer[]) {
-		readBytes(buffer, 0, buffer.length);
-	}
+   public int readByte() {
+      return this.getRemaining() > 0?this.buffer[this.offset++]:0;
+   }
 
-	public int readSmart2() {
-		int i = 0;
-		int i_33_ = readUnsignedSmart();
-		while ((i_33_ ^ 0xffffffff) == -32768) {
-			i_33_ = readUnsignedSmart();
-			i += 32767;
-		}
-		i += i_33_;
-		return i;
-	}
+   public void readBytes(byte[] buffer, int off, int len) {
+      for(int k = off; k < len + off; ++k) {
+         buffer[k] = (byte)this.readByte();
+      }
 
-	public int readUnsignedByte() {
-		return readByte() & 0xff;
-	}
+   }
 
-	public int readByte128() {
-		return (byte) (readByte() - 128);
-	}
+   public void readBytes(byte[] buffer) {
+      this.readBytes(buffer, 0, buffer.length);
+   }
 
-	public int readByteC() {
-		return (byte) -readByte();
-	}
+   public int readSmart2() {
+      int i = 0;
 
-	public int read128Byte() {
-		return (byte) (128 - readByte());
-	}
+      int i_33_;
+      for(i_33_ = this.readUnsignedSmart(); ~i_33_ == -32768; i += 32767) {
+         i_33_ = this.readUnsignedSmart();
+      }
 
-	public int readUnsignedByte128() {
-		return readUnsignedByte() - 128 & 0xff;
-	}
+      i += i_33_;
+      return i;
+   }
 
-	public int readUnsignedByteC() {
-		return -readUnsignedByte() & 0xff;
-	}
+   public int readUnsignedByte() {
+      return this.readByte() & 255;
+   }
 
-	public int readUnsigned128Byte() {
-		return 128 - readUnsignedByte() & 0xff;
-	}
+   public int readByte128() {
+      return (byte)(this.readByte() - 128);
+   }
 
-	public int readShortLE() {
-		int i = readUnsignedByte() + (readUnsignedByte() << 8);
-		if (i > 32767) {
-			i -= 0x10000;
-		}
-		return i;
-	}
+   public int readByteC() {
+      return (byte)(-this.readByte());
+   }
 
-	public int readShort128() {
-		int i = (readUnsignedByte() << 8) + (readByte() - 128 & 0xff);
-		if (i > 32767) {
-			i -= 0x10000;
-		}
-		return i;
-	}
+   public int read128Byte() {
+      return (byte)(128 - this.readByte());
+   }
 
-	public int readShortLE128() {
-		int i = (readByte() - 128 & 0xff) + (readUnsignedByte() << 8);
-		if (i > 32767) {
-			i -= 0x10000;
-		}
-		return i;
-	}
+   public int readUnsignedByte128() {
+      return this.readUnsignedByte() - 128 & 255;
+   }
 
-	public int read128ShortLE() {
-		int i = (128 - readByte() & 0xff) + (readUnsignedByte() << 8);
-		if (i > 32767) {
-			i -= 0x10000;
-		}
-		return i;
-	}
+   public int readUnsignedByteC() {
+      return -this.readUnsignedByte() & 255;
+   }
 
-	public int readShort() {
-		int value = 0;
-		value |= (readUnsignedByte() << 8);
-		value |= readUnsignedByte();
-		if (value > 32767) {
-			value -= 0x10000;
-		}
-		return value;
-	}
+   public int readUnsigned128Byte() {
+      return 128 - this.readUnsignedByte() & 255;
+   }
 
-	public int readUnsignedShortLE() {
-		return readUnsignedByte() + (readUnsignedByte() << 8);
-	}
+   public int readShortLE() {
+      int i = this.readUnsignedByte() + (this.readUnsignedByte() << 8);
+      if(i > 32767) {
+         i -= 65536;
+      }
 
-	public int readUnsignedShort() {
-		return (readUnsignedByte() << 8) + readUnsignedByte();
-	}
+      return i;
+   }
 
-	public int readUnsignedShort128() {
-		return (readUnsignedByte() << 8) + (readByte() - 128 & 0xff);
-	}
+   public int readShort128() {
+      int i = (this.readUnsignedByte() << 8) + (this.readByte() - 128 & 255);
+      if(i > 32767) {
+         i -= 65536;
+      }
 
-	public int readUnsignedShortLE128() {
-		return (readByte() - 128 & 0xff) + (readUnsignedByte() << 8);
-	}
+      return i;
+   }
 
-	public int readInt() {
-		return (readUnsignedByte() << 24) + (readUnsignedByte() << 16) + (readUnsignedByte() << 8) + readUnsignedByte();
-	}
+   public int readShortLE128() {
+      int i = (this.readByte() - 128 & 255) + (this.readUnsignedByte() << 8);
+      if(i > 32767) {
+         i -= 65536;
+      }
 
-	public int read24BitInt() {
-		return (readUnsignedByte() << 16) + (readUnsignedByte() << 8) + (readUnsignedByte());
-	}
+      return i;
+   }
 
-	public int readIntV1() {
-		return (readUnsignedByte() << 8) + readUnsignedByte() + (readUnsignedByte() << 24) + (readUnsignedByte() << 16);
-	}
+   public int read128ShortLE() {
+      int i = (128 - this.readByte() & 255) + (this.readUnsignedByte() << 8);
+      if(i > 32767) {
+         i -= 65536;
+      }
 
-	public int readIntV2() {
-		return (readUnsignedByte() << 16) + (readUnsignedByte() << 24) + readUnsignedByte() + (readUnsignedByte() << 8);
-	}
+      return i;
+   }
 
-	public int readIntLE() {
-		return readUnsignedByte() + (readUnsignedByte() << 8) + (readUnsignedByte() << 16) + (readUnsignedByte() << 24);
-	}
+   public int readShort() {
+      int i = (this.readUnsignedByte() << 8) + this.readUnsignedByte();
+      if(i > 32767) {
+         i -= 65536;
+      }
 
-	public long readLong() {
-		long l = readInt() & 0xffffffffL;
-		long l1 = readInt() & 0xffffffffL;
-		return (l << 32) + l1;
-	}
+      return i;
+   }
 
-	public String readString() {
-		String s = "";
-		int b;
-		while ((b = readByte()) != 0) {
-			s += (char) b;
-		}
-		return s;
-	}
+   public int readUnsignedShortLE() {
+      return this.readUnsignedByte() + (this.readUnsignedByte() << 8);
+   }
 
-	public String readJagString() {
-		readByte();
-		String s = "";
-		int b;
-		while ((b = readByte()) != 0) {
-			s += (char) b;
-		}
-		return s;
-	}
+   public int readUnsignedShort() {
+      return (this.readUnsignedByte() << 8) + this.readUnsignedByte();
+   }
 
-	@SuppressWarnings("unused")
-	public int readBigSmart() {
-		if (Constants.CLIENT_BUILD < 670)
-			return readUnsignedShort();
-		if ((buffer[offset] ^ 0xffffffff) <= -1) {
-			int value = readUnsignedShort();
-			if (value == 32767) {
-				return -1;
-			}
-			return value;
-		}
-		return readInt() & 0x7fffffff;
-	}
+   public int readUnsignedShort128() {
+      return (this.readUnsignedByte() << 8) + (this.readByte() - 128 & 255);
+   }
 
-	public int readUnsignedSmart() {
-		int i = 0xff & buffer[offset];
-		if (i >= 128)
-			return -32768 + readUnsignedShort();
-		return readUnsignedByte();
-	}
+   public int readUnsignedShortLE128() {
+      return (this.readByte() - 128 & 255) + (this.readUnsignedByte() << 8);
+   }
 
+   public int readInt() {
+      return (this.readUnsignedByte() << 24) + (this.readUnsignedByte() << 16) + (this.readUnsignedByte() << 8) + this.readUnsignedByte();
+   }
+
+   public int read24BitInt() {
+      return (this.readUnsignedByte() << 16) + (this.readUnsignedByte() << 8) + this.readUnsignedByte();
+   }
+
+   public int readIntV1() {
+      return (this.readUnsignedByte() << 8) + this.readUnsignedByte() + (this.readUnsignedByte() << 24) + (this.readUnsignedByte() << 16);
+   }
+
+   public int readIntV2() {
+      return (this.readUnsignedByte() << 16) + (this.readUnsignedByte() << 24) + this.readUnsignedByte() + (this.readUnsignedByte() << 8);
+   }
+
+   public int readIntLE() {
+      return this.readUnsignedByte() + (this.readUnsignedByte() << 8) + (this.readUnsignedByte() << 16) + (this.readUnsignedByte() << 24);
+   }
+
+   public long readLong() {
+      long l = (long)this.readInt() & 4294967295L;
+      long l1 = (long)this.readInt() & 4294967295L;
+      return (l << 32) + l1;
+   }
+
+   public String readString() {
+      String s;
+      int b;
+      for(s = ""; (b = this.readByte()) != 0; s = s + (char)b) {
+      }
+
+      return s;
+   }
+
+   public String readJagString() {
+      this.readByte();
+
+      String s;
+      int b;
+      for(s = ""; (b = this.readByte()) != 0; s = s + (char)b) {
+      }
+
+      return s;
+   }
+   
+   public int readBigSmart() {
+      if(~this.buffer[this.offset] <= -1) {
+         int value = this.readUnsignedShort();
+         return value == 32767?-1:value;
+      } else {
+         return this.readInt() & Integer.MAX_VALUE;
+      }
+   }
+
+   public int readUnsignedSmart() {
+      int i = 255 & this.buffer[this.offset];
+      return i >= 128?-32768 + this.readUnsignedShort():this.readUnsignedByte();
+   }
 }

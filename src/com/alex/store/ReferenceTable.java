@@ -1,355 +1,313 @@
-// Decompiled by Jad v1.5.8g. Copyright 2001 Pavel Kouznetsov.
-// Jad home page: http://www.kpdus.com/jad.html
-// Decompiler options: packimports(3) 
-// Source File Name:   ReferenceTable.java
-
 package com.alex.store;
-
-import java.util.Arrays;
 
 import com.alex.io.InputStream;
 import com.alex.io.OutputStream;
 
-// Referenced classes of package com.alex.store:
-//            Archive, ArchiveReference, FileReference, MainFile
+import java.util.Arrays;
 
 public final class ReferenceTable {
+   private final Archive archive;
+   private int revision;
+   private boolean named;
+   private boolean usesWhirpool;
+   private ArchiveReference[] archives;
+   private int[] validArchiveIds;
+   private boolean updatedRevision;
+   private boolean needsArchivesSort;
 
-	protected ReferenceTable(Archive archive) {
-		this.archive = archive;
-		decodeHeader();
-	}
+   ReferenceTable(Archive archive) {
+      this.archive = archive;
+      this.decodeHeader();
+   }
 
-	public void setKeys(int keys[]) {
-		archive.setKeys(keys);
-	}
+   public void setKeys(int[] keys) {
+      this.archive.setKeys(keys);
+   }
 
-	public int[] getKeys() {
-		return archive.getKeys();
-	}
+   public int[] getKeys() {
+      return this.archive.getKeys();
+   }
 
-	public void sortArchives() {
-		Arrays.sort(validArchiveIds);
-		needsArchivesSort = false;
-	}
+   public void sortArchives() {
+      Arrays.sort(this.validArchiveIds);
+      this.needsArchivesSort = false;
+   }
 
-	public void addEmptyArchiveReference(int archiveId) {
-		needsArchivesSort = true;
-		int newValidArchiveIds[] = Arrays.copyOf(validArchiveIds, validArchiveIds.length + 1);
-		newValidArchiveIds[newValidArchiveIds.length - 1] = archiveId;
-		validArchiveIds = newValidArchiveIds;
-		ArchiveReference reference;
-		if (archives.length <= archiveId) {
-			ArchiveReference newArchives[] = Arrays.copyOf(archives, archiveId + 1);
-			reference = newArchives[archiveId] = new ArchiveReference();
-			archives = newArchives;
-		} else {
-			reference = archives[archiveId] = new ArchiveReference();
-		}
-		reference.reset();
-	}
+   public void addEmptyArchiveReference(int archiveId) {
+      this.needsArchivesSort = true;
+      int[] newValidArchiveIds = Arrays.copyOf(this.validArchiveIds, this.validArchiveIds.length + 1);
+      newValidArchiveIds[newValidArchiveIds.length - 1] = archiveId;
+      this.validArchiveIds = newValidArchiveIds;
+      ArchiveReference reference;
+      if(this.archives.length <= archiveId) {
+         ArchiveReference[] newArchives = Arrays.copyOf(this.archives, archiveId + 1);
+         reference = newArchives[archiveId] = new ArchiveReference();
+         this.archives = newArchives;
+      } else {
+         reference = this.archives[archiveId] = new ArchiveReference();
+      }
 
-	public void sortTable() {
-		if (needsArchivesSort)
-			sortArchives();
-		for (int index = 0; index < validArchiveIds.length; index++) {
-			ArchiveReference archive = archives[validArchiveIds[index]];
-			if (archive.isNeedsFilesSort())
-				archive.sortFiles();
-		}
+      reference.reset();
+   }
 
-	}
+   public void sortTable() {
+      if(this.needsArchivesSort) {
+         this.sortArchives();
+      }
 
-	public Object[] encodeHeader(MainFile mainFile) {
+      for(int index = 0; index < this.validArchiveIds.length; ++index) {
+         ArchiveReference archive = this.archives[this.validArchiveIds[index]];
+         if(archive.isNeedsFilesSort()) {
+            archive.sortFiles();
+         }
+      }
 
-		OutputStream stream = new OutputStream();
-		try {
-			int protocol = getProtocol();
-			stream.writeByte(protocol);
-			if (protocol >= 6)
-				stream.writeInt(revision);
-			stream.writeByte((named ? 1 : 0) | (usesWhirpool ? 2 : 0));
+   }
 
-			if (protocol >= 7)
-				stream.writeBigSmart(validArchiveIds.length);
-			else
-				stream.writeShort(validArchiveIds.length);
+   public Object[] encodeHeader(MainFile mainFile) {
+      OutputStream stream = new OutputStream();
+      int protocol = this.getProtocol();
+      stream.writeByte(protocol);
+      if(protocol >= 6) {
+         stream.writeInt(this.revision);
+      }
 
-			for (int index = 0; index < validArchiveIds.length; index++) {
-				int offset = validArchiveIds[index];
-				if (index != 0)
-					offset -= validArchiveIds[index - 1];
+      stream.writeByte((this.named?1:0) | (this.usesWhirpool?2:0));
+      if(protocol >= 7) {
+         stream.writeBigSmart(this.validArchiveIds.length);
+      } else {
+         stream.writeShort(this.validArchiveIds.length);
+      }
 
-				if (protocol >= 7)
-					stream.writeBigSmart(offset);
-				else
-					stream.writeShort(offset);
-			}
+      int data;
+      int archive;
+      for(data = 0; data < this.validArchiveIds.length; ++data) {
+         archive = this.validArchiveIds[data];
+         if(data != 0) {
+            archive -= this.validArchiveIds[data - 1];
+         }
 
-			int pHash = this.archive.getHash();
-			boolean flag4 = (pHash & 0x04) != 0;
-			boolean flag8 = (pHash & 0x08) != 0;
+         if(protocol >= 7) {
+            stream.writeBigSmart(archive);
+         } else {
+            stream.writeShort(archive);
+         }
+      }
 
-			if (named) {
-				for (int index = 0; index < validArchiveIds.length; index++)
-					stream.writeInt(archives[validArchiveIds[index]].getNameHash());
+      if(this.named) {
+         for(data = 0; data < this.validArchiveIds.length; ++data) {
+            stream.writeInt(this.archives[this.validArchiveIds[data]].getNameHash());
+         }
+      }
 
-			}
+      if(this.usesWhirpool) {
+         for(data = 0; data < this.validArchiveIds.length; ++data) {
+            stream.writeBytes(this.archives[this.validArchiveIds[data]].getWhirpool());
+         }
+      }
 
-			for (int index = 0; index < validArchiveIds.length; index++)
-				stream.writeInt(archives[validArchiveIds[index]].getCRC());
+      for(data = 0; data < this.validArchiveIds.length; ++data) {
+         stream.writeInt(this.archives[this.validArchiveIds[data]].getCRC());
+      }
 
-			/*
-			 * Write the freaking hash? WTF IS THE HASH?
-			 */
-			if (flag8) {
-				for (int index = 0; index < validArchiveIds.length; index++)
-					stream.writeInt(archives[validArchiveIds[index]].getHash()); // HSAS
-			}
+      for(data = 0; data < this.validArchiveIds.length; ++data) {
+         stream.writeInt(this.archives[this.validArchiveIds[data]].getRevision());
+      }
 
-			if (usesWhirpool) {
-				for (int index = 0; index < validArchiveIds.length; index++)
-					stream.writeBytes(archives[validArchiveIds[index]].getWhirpool());
+      for(data = 0; data < this.validArchiveIds.length; ++data) {
+         archive = this.archives[this.validArchiveIds[data]].getValidFileIds().length;
+         if(protocol >= 7) {
+            stream.writeBigSmart(archive);
+         } else {
+            stream.writeShort(archive);
+         }
+      }
 
-			}
+      int index2;
+      ArchiveReference var8;
+      for(data = 0; data < this.validArchiveIds.length; ++data) {
+         var8 = this.archives[this.validArchiveIds[data]];
 
-			if (flag4) {
-				for (int index = 0; index < validArchiveIds.length; index++) {
-					stream.writeInt(archives[validArchiveIds[index]].getCompressed());
-					stream.writeInt(archives[validArchiveIds[index]].getUncompressed());
-				}
-			}
+         for(index2 = 0; index2 < var8.getValidFileIds().length; ++index2) {
+            int var9 = var8.getValidFileIds()[index2];
+            if(index2 != 0) {
+               var9 -= var8.getValidFileIds()[index2 - 1];
+            }
 
-			for (int index = 0; index < validArchiveIds.length; index++)
-				stream.writeInt(archives[validArchiveIds[index]].getRevision());
+            if(protocol >= 7) {
+               stream.writeBigSmart(var9);
+            } else {
+               stream.writeShort(var9);
+            }
+         }
+      }
 
-			for (int index = 0; index < validArchiveIds.length; index++) {
-				int value = archives[validArchiveIds[index]].getValidFileIds().length;
-				if (protocol >= 7)
-					stream.writeBigSmart(value);
-				else
-					stream.writeShort(value);
-			}
+      if(this.named) {
+         for(data = 0; data < this.validArchiveIds.length; ++data) {
+            var8 = this.archives[this.validArchiveIds[data]];
 
-			for (int index = 0; index < validArchiveIds.length; index++) {
-				ArchiveReference archive = archives[validArchiveIds[index]];
-				for (int index2 = 0; index2 < archive.getValidFileIds().length; index2++) {
-					int offset = archive.getValidFileIds()[index2];
-					if (index2 != 0)
-						offset -= archive.getValidFileIds()[index2 - 1];
-					if (protocol >= 7)
-						stream.writeBigSmart(offset);
-					else
-						stream.writeShort(offset);
-				}
+            for(index2 = 0; index2 < var8.getValidFileIds().length; ++index2) {
+               stream.writeInt(var8.getFiles()[var8.getValidFileIds()[index2]].getNameHash());
+            }
+         }
+      }
 
-			}
+      byte[] var91 = new byte[stream.getOffset()];
+      stream.setOffset(0);
+      stream.getBytes(var91, 0, var91.length);
+      return this.archive.editNoRevision(var91, mainFile);
+   }
 
-			if (named) {
-				for (int index = 0; index < validArchiveIds.length; index++) {
-					ArchiveReference archive = archives[validArchiveIds[index]];
-					for (int index2 = 0; index2 < archive.getValidFileIds().length; index2++)
-						stream.writeInt(archive.getFiles()[archive.getValidFileIds()[index2]].getNameHash());
+   public int getProtocol() {
+      if(this.archives.length > '\uffff') {
+         return 7;
+      } else {
+         for(int index = 0; index < this.validArchiveIds.length; ++index) {
+            if(index > 0 && this.validArchiveIds[index] - this.validArchiveIds[index - 1] > '\uffff') {
+               return 7;
+            }
 
-				}
+            if(this.archives[this.validArchiveIds[index]].getValidFileIds().length > '\uffff') {
+               return 7;
+            }
+         }
 
-			}
-			byte data[] = new byte[stream.getOffset()];
-			stream.setOffset(0);
-			stream.getBytes(data, 0, data.length);
-			return this.archive.editNoRevision(data, mainFile);
-		} catch (Exception e) {
-			// System.out.println("Unhandled exception: " + e);
-		}
-		return archives;
-	}
+         return this.revision == 0?5:6;
+      }
+   }
 
-	public int getProtocol() {
-		if (archives.length > 65535)
-			return 7;
-		for (int index = 0; index < validArchiveIds.length; index++) {
-			if (index > 0 && validArchiveIds[index] - validArchiveIds[index - 1] > 65535)
-				return 7;
-			if (archives[validArchiveIds[index]].getValidFileIds().length > 65535)
-				return 7;
-		}
+   public void setRevision(int revision) {
+      this.updatedRevision = true;
+      this.revision = revision;
+   }
 
-		return revision != 0 ? 6 : 5;
-	}
+   public void updateRevision() {
+      if(!this.updatedRevision) {
+         ++this.revision;
+         this.updatedRevision = true;
+      }
 
-	public void setRevision(int revision) {
-		updatedRevision = true;
-		this.revision = revision;
-	}
+   }
 
-	public void updateRevision() {
-		if (updatedRevision) {
-			return;
-		} else {
-			revision++;
-			updatedRevision = true;
-			return;
-		}
-	}
+   private void decodeHeader() {
+      InputStream stream = new InputStream(this.archive.getData());
+      int protocol = stream.readUnsignedByte();
+      if(protocol >= 5 && protocol <= 7) {
+         if(protocol >= 6) {
+            this.revision = stream.readInt();
+         }
 
-	public void removeArchiveReference(int archiveId) {
-		int newValidFileIds[] = new int[validArchiveIds.length - 1];
-		int count = 0;
-		int ai[];
-		int j = (ai = validArchiveIds).length;
-		for (int i = 0; i < j; i++) {
-			int id = ai[i];
-			if (id != archiveId)
-				newValidFileIds[count++] = id;
-		}
+         int hash = stream.readUnsignedByte();
+         this.named = (1 & hash) != 0;
+         this.usesWhirpool = (2 & hash) != 0;
+         int validArchivesCount = protocol >= 7?stream.readBigSmart():stream.readUnsignedShort();
+         this.validArchiveIds = new int[validArchivesCount];
+         int lastArchiveId = 0;
+         int biggestArchiveId = 0;
 
-		validArchiveIds = newValidFileIds;
-		archives[archiveId] = null;
-		needsArchivesSort = true;
-	}
+         int index;
+         int archive;
+         for(index = 0; index < validArchivesCount; ++index) {
+            archive = lastArchiveId += protocol >= 7?stream.readBigSmart():stream.readUnsignedShort();
+            if(archive > biggestArchiveId) {
+               biggestArchiveId = archive;
+            }
 
-	// public static final int flag4 = 0x04;
+            this.validArchiveIds[index] = archive;
+         }
 
-	private void decodeHeader() {
+         this.archives = new ArchiveReference[biggestArchiveId + 1];
 
-		// System.out.println("Archive Data: " + this.archive.getData());
-		InputStream stream = new InputStream(this.archive.getData());
+         for(index = 0; index < validArchivesCount; ++index) {
+            this.archives[this.validArchiveIds[index]] = new ArchiveReference();
+         }
 
-		int protocol = stream.readUnsignedByte();
+         if(this.named) {
+            for(index = 0; index < validArchivesCount; ++index) {
+               this.archives[this.validArchiveIds[index]].setNameHash(stream.readInt());
+            }
+         }
 
-		if (protocol < 5 || protocol > 7)
-			throw new RuntimeException("INVALID PROTOCOL");
-		if (protocol >= 6) {
-			revision = stream.readInt();
-		}
-		this.archive.setHash(stream.readUnsignedByte());
-		// int hash = stream.readUnsignedByte();
-		named = (1 & this.archive.getHash()) != 0;
-		usesWhirpool = (2 & this.archive.getHash()) != 0;
-		boolean flag4 = (this.archive.getHash() & 4) != 0;
-		boolean flag8 = (this.archive.getHash() & 8) != 0;
+         if(this.usesWhirpool) {
+            for(index = 0; index < validArchivesCount; ++index) {
+               byte[] index2 = new byte[64];
+               stream.getBytes(index2, 0, 64);
+               this.archives[this.validArchiveIds[index]].setWhirpool(index2);
+            }
+         }
 
-		int validArchivesCount = protocol >= 7 ? stream.readBigSmart() : stream.readUnsignedShort();
-		validArchiveIds = new int[validArchivesCount];
+         for(index = 0; index < validArchivesCount; ++index) {
+            this.archives[this.validArchiveIds[index]].setCrc(stream.readInt());
+         }
 
-		int lastArchiveId = 0;
-		int biggestArchiveId = 0;
+         for(index = 0; index < validArchivesCount; ++index) {
+            this.archives[this.validArchiveIds[index]].setRevision(stream.readInt());
+         }
 
-		for (int index = 0; index < validArchivesCount; index++) {
-			int archiveId = lastArchiveId += protocol >= 7 ? stream.readBigSmart() : stream.readUnsignedShort();
+         for(index = 0; index < validArchivesCount; ++index) {
+            this.archives[this.validArchiveIds[index]].setValidFileIds(new int[protocol >= 7?stream.readBigSmart():stream.readUnsignedShort()]);
+         }
 
-			if (archiveId > biggestArchiveId)
-				biggestArchiveId = archiveId;
-			validArchiveIds[index] = archiveId;
-		}
+         ArchiveReference var14;
+         int var13;
+         for(index = 0; index < validArchivesCount; ++index) {
+            archive = 0;
+            var13 = 0;
+            var14 = this.archives[this.validArchiveIds[index]];
 
-		archives = new ArchiveReference[biggestArchiveId + 1];
-		for (int index = 0; index < validArchivesCount; index++)
-			archives[validArchiveIds[index]] = new ArchiveReference();
+            int index21;
+            for(index21 = 0; index21 < var14.getValidFileIds().length; ++index21) {
+               int fileId = archive += protocol >= 7?stream.readBigSmart():stream.readUnsignedShort();
+               if(fileId > var13) {
+                  var13 = fileId;
+               }
 
-		if (named) {
-			for (int index = 0; index < validArchivesCount; index++)
-				archives[validArchiveIds[index]].setNameHash(stream.readInt()); // identifier
-		}
+               var14.getValidFileIds()[index21] = fileId;
+            }
 
-		if (NEW_PROTOCOL) {
-			for (int index = 0; index < validArchivesCount; index++)
-				archives[validArchiveIds[index]].setCrc(stream.readInt());
-		}
+            var14.setFiles(new FileReference[var13 + 1]);
 
-		// FLAG8
-		// BUFFER FLAG_UNKNOWN4
+            for(index21 = 0; index21 < var14.getValidFileIds().length; ++index21) {
+               var14.getFiles()[var14.getValidFileIds()[index21]] = new FileReference();
+            }
+         }
 
-		if (flag8) {
-			for (int i = 0; i < validArchivesCount; i++) {
-				archives[validArchiveIds[i]].setHash(stream.readInt());
-			}
-		}
+         if(this.named) {
+            for(index = 0; index < validArchivesCount; ++index) {
+               var14 = this.archives[this.validArchiveIds[index]];
 
-		// FLAG_WHIRLPOOL
-		if (usesWhirpool) {
-			for (int index = 0; index < validArchivesCount; index++) {
-				byte[] whirpool = new byte[64];
-				stream.getBytes(whirpool, 0, 64);
-				archives[validArchiveIds[index]].setWhirpool(whirpool);
-			}
-		}
-		if (flag4) {
-			for (int i = 0; i < validArchivesCount; i++) {
-				archives[validArchiveIds[i]].setCompressed(stream.readInt());
-				archives[validArchiveIds[i]].setUncompressed(stream.readInt());// stream.readInt();
-			}
-		}
+               for(var13 = 0; var13 < var14.getValidFileIds().length; ++var13) {
+                  var14.getFiles()[var14.getValidFileIds()[var13]].setNameHash(stream.readInt());
+               }
+            }
+         }
 
-		if (!NEW_PROTOCOL) {
-			for (int index = 0; index < validArchivesCount; index++)
-				archives[validArchiveIds[index]].setCrc(stream.readInt());
+      } else {
+         throw new RuntimeException("INVALID PROTOCOL");
+      }
+   }
 
-		}
+   public int getRevision() {
+      return this.revision;
+   }
 
-		for (int index = 0; index < validArchivesCount; index++)
-			archives[validArchiveIds[index]].setRevision(stream.readInt());
+   public ArchiveReference[] getArchives() {
+      return this.archives;
+   }
 
-		for (int index = 0; index < validArchivesCount; index++) {
-			int size = protocol >= 7 ? stream.readBigSmart() : stream.readUnsignedShort();
-			archives[validArchiveIds[index]].setValidFileIds(new int[size]);
-		}
+   public int[] getValidArchiveIds() {
+      return this.validArchiveIds;
+   }
 
-		for (int index = 0; index < validArchivesCount; index++) {
-			int lastFileId = 0;
-			int biggestFileId = 0;
-			ArchiveReference archive = archives[validArchiveIds[index]];
-			for (int index2 = 0; index2 < archive.getValidFileIds().length; index2++) {
-				int fileId = lastFileId += protocol >= 7 ? stream.readBigSmart() : stream.readUnsignedShort();
-				if (fileId > biggestFileId)
-					biggestFileId = fileId;
-				archive.getValidFileIds()[index2] = fileId;
-			}
-			archive.setFiles(new FileReference[biggestFileId + 1]);
-			for (int index2 = 0; index2 < archive.getValidFileIds().length; index2++)
-				archive.getFiles()[archive.getValidFileIds()[index2]] = new FileReference();
-		}
-		if (named) {
-			for (int index = 0; index < validArchivesCount; index++) {
-				ArchiveReference archive = archives[validArchiveIds[index]];
-				for (int index2 = 0; index2 < archive.getValidFileIds().length; index2++)
-					archive.getFiles()[archive.getValidFileIds()[index2]].setNameHash(stream.readInt());
-			}
-		}
-	}
+   public boolean isNamed() {
+      return this.named;
+   }
 
-	public int getRevision() {
-		return revision;
-	}
+   public boolean usesWhirpool() {
+      return this.usesWhirpool;
+   }
 
-	public ArchiveReference[] getArchives() {
-		return archives;
-	}
-
-	public int[] getValidArchiveIds() {
-		return validArchiveIds;
-	}
-
-	public boolean isNamed() {
-		return named;
-	}
-
-	public boolean usesWhirpool() {
-		return usesWhirpool;
-	}
-
-	public int getCompression() {
-		return archive.getCompression();
-	}
-
-	public static boolean NEW_PROTOCOL = false;
-	private Archive archive;
-	private int revision;
-	private boolean named;
-	private boolean usesWhirpool;
-	private ArchiveReference archives[];
-	private int validArchiveIds[];
-	private boolean updatedRevision;
-	private boolean needsArchivesSort;
-
+   public int getCompression() {
+      return this.archive.getCompression();
+   }
 }

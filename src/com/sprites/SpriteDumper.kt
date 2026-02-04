@@ -1,0 +1,60 @@
+/**
+ * Copyright (c) Kyle Fricilone
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+package com.sprites
+
+import com.logging.LogFactory
+import properties.PropertyValues
+import java.io.File
+import java.util.logging.Level
+import java.util.logging.Logger
+import javax.imageio.ImageIO
+
+object SpriteDumper {
+    private val logger: Logger = LogFactory.createLogger(SpriteDumper::class.java.name)
+
+    fun dump() {
+        val directory = File(PropertyValues.dump_path)
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+        val size = SpriteLoader.numSprites
+        for (i in 0 until size) {
+            val spra = SpriteLoader.getArchive(i) ?: continue
+
+            for (frame in 0 until spra.size()) {
+                val file = File(PropertyValues.dump_path, i.toString() + "_" + frame + ".png")
+                val image = spra.getSprite(frame)
+                try {
+                    ImageIO.write(image, "png", file)
+                } catch (e: Exception) {
+                    logger.log(Level.SEVERE, "Could not dump sprite " + i + " error ->" + e.message)
+                    continue
+                }
+            }
+
+            val progress = (i + 1).toDouble() / size * 100
+
+            //System.out.printf("%d out of %d %.2f%s\n", (i + 1),size, progress, "%");
+            logger.info((i + 1).toString() + " out of " + size + " " + Math.round(progress) + "%")
+        }
+    }
+}

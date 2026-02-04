@@ -1,154 +1,148 @@
-// Decompiled by Jad v1.5.8g. Copyright 2001 Pavel Kouznetsov.
-// Jad home page: http://www.kpdus.com/jad.html
-// Decompiler options: packimports(3) 
-// Source File Name:   Store.java
-
 package com.alex.store;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.math.BigInteger;
-import java.util.Arrays;
 
 import com.alex.io.OutputStream;
 import com.alex.util.whirlpool.Whirlpool;
 import com.alex.utils.Utils;
 
-// Referenced classes of package com.alex.store:
-//            MainFile, Index, ReferenceTable, Archive
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.math.BigInteger;
+import java.util.Arrays;
 
 public final class Store {
+   private Index[] indexes;
+   private final MainFile index255;
+   private final String path;
+   private final RandomAccessFile data;
+   private final boolean newProtocol;
 
-	public Store(String path) throws IOException {
-		this(path, true);
-	}
+   public Store(String path) throws IOException {
+      this(path, true);
+   }
 
-	public Store(String path, boolean newProtocol) throws IOException {
-		this(path, newProtocol, null);
-	}
+   public Store(String path, boolean newProtocol) throws IOException {
+      this(path, newProtocol, null);
+   }
 
-	public Store(String path, boolean newProtocol, int keys[][]) throws IOException {
+   public Store(String path, boolean newProtocol, int[][] keys) throws IOException {
+      this.path = path;
+      this.newProtocol = newProtocol;
+      this.data = new RandomAccessFile(path + "main_file_cache.dat2", "rw");
+      this.index255 = new MainFile(255, this.data, new RandomAccessFile(path + "main_file_cache.idx255", "rw"), newProtocol);
+      int idxsCount = this.index255.getArchivesCount();
+      this.indexes = new Index[idxsCount];
 
-		this.path = path;
-		this.newProtocol = newProtocol;
-		data = new RandomAccessFile((new StringBuilder(String.valueOf(path))).append("main_file_cache.dat2").toString(), "rw");
-		// musicData = new RandomAccessFile((new
-		// StringBuilder(String.valueOf(path))).append("main_file_cache.dat2m").toString(),
-		// "rw");
-		index255 = new MainFile(255, data, new RandomAccessFile((new StringBuilder(String.valueOf(path))).append("main_file_cache.idx255").toString(), "rw"), newProtocol);
-		int idxsCount = index255.getArchivesCount();
-		indexes = new Index[idxsCount];
-		for (int id = 0; id < idxsCount; id++) {
-			Index index = new Index(index255, new MainFile(id, data, new RandomAccessFile((new StringBuilder(String.valueOf(path))).append("main_file_cache.idx").append(id).toString(), "rw"), newProtocol), keys != null ? keys[id] : null);
-			if (index.getTable() != null)
-				indexes[id] = index;
-		}
+      for(int id = 0; id < idxsCount; ++id) {
+         Index index = new Index(this.index255, new MainFile(id, this.data, new RandomAccessFile(path + "main_file_cache.idx" + id, "rw"), newProtocol), keys == null?null:keys[id]);
+         if(index.getTable() != null) {
+            this.indexes[id] = index;
+         }
+      }
 
-	}
+   }
 
-	public final byte[] generateIndex255Archive255Current(BigInteger grab_server_private_exponent, BigInteger grab_server_modulus) {
-		OutputStream stream = new OutputStream();
-		stream.writeByte(getIndexes().length);
-		for (int index = 0; index < getIndexes().length; index++)
-			if (getIndexes()[index] == null) {
-				stream.writeInt(0);
-				stream.writeInt(0);
-				stream.writeBytes(new byte[64]);
-			} else {
-				stream.writeInt(getIndexes()[index].getCRC());
-				stream.writeInt(getIndexes()[index].getTable().getRevision());
-				stream.writeBytes(getIndexes()[index].getWhirlpool());
-				if (getIndexes()[index].getKeys() != null) {
-					int ai[];
-					int k = (ai = getIndexes()[index].getKeys()).length;
-					for (int j = 0; j < k; j++) {
-						int key = ai[j];
-						stream.writeInt(key);
-					}
+   public byte[] generateIndex255Archive255Current(BigInteger grab_server_private_exponent, BigInteger grab_server_modulus) {
+      OutputStream stream = new OutputStream();
+      stream.writeByte(this.getIndexes().length);
 
-				} else {
-					for (int i = 0; i < 4; i++)
-						stream.writeInt(0);
+      for(int var9 = 0; var9 < this.getIndexes().length; ++var9) {
+         if(this.getIndexes()[var9] == null) {
+            stream.writeInt(0);
+            stream.writeInt(0);
+            stream.writeBytes(new byte[64]);
+         } else {
+            stream.writeInt(this.getIndexes()[var9].getCRC());
+            stream.writeInt(this.getIndexes()[var9].getTable().getRevision());
+            stream.writeBytes(this.getIndexes()[var9].getWhirlpool());
+            if(this.getIndexes()[var9].getKeys() != null) {
+               int[] var10 = this.getIndexes()[var9].getKeys();
+               int var12 = var10.length;
 
-				}
-			}
+               for(int i$ = 0; i$ < var12; ++i$) {
+                  int key = var10[i$];
+                  stream.writeInt(key);
+               }
+            } else {
+               for(int var11 = 0; var11 < 4; ++var11) {
+                  stream.writeInt(0);
+               }
+            }
+         }
+      }
 
-		byte archive[] = new byte[stream.getOffset()];
-		stream.setOffset(0);
-		stream.getBytes(archive, 0, archive.length);
-		OutputStream hashStream = new OutputStream(65);
-		hashStream.writeByte(0);
-		hashStream.writeBytes(Whirlpool.getHash(archive, 0, archive.length));
-		byte hash[] = new byte[hashStream.getOffset()];
-		hashStream.setOffset(0);
-		hashStream.getBytes(hash, 0, hash.length);
-		if (grab_server_private_exponent != null && grab_server_modulus != null)
-			hash = Utils.cryptRSA(hash, grab_server_private_exponent, grab_server_modulus);
-		stream.writeBytes(hash);
-		archive = new byte[stream.getOffset()];
-		stream.setOffset(0);
-		stream.getBytes(archive, 0, archive.length);
-		return archive;
-	}
+      byte[] var91 = new byte[stream.getOffset()];
+      stream.setOffset(0);
+      stream.getBytes(var91, 0, var91.length);
+      OutputStream var111 = new OutputStream(65);
+      var111.writeByte(0);
+      var111.writeBytes(Whirlpool.getHash(var91, 0, var91.length));
+      byte[] var121 = new byte[var111.getOffset()];
+      var111.setOffset(0);
+      var111.getBytes(var121, 0, var121.length);
+      if(grab_server_private_exponent != null && grab_server_modulus != null) {
+         var121 = Utils.cryptRSA(var121, grab_server_private_exponent, grab_server_modulus);
+      }
 
-	public byte[] generateIndex255Archive255() {
-		return generateIndex255Archive255Current(null, null);
-	}
+      stream.writeBytes(var121);
+      var91 = new byte[stream.getOffset()];
+      stream.setOffset(0);
+      stream.getBytes(var91, 0, var91.length);
+      return var91;
+   }
 
-	public byte[] generateIndex255Archive255Outdated() {
-		OutputStream stream = new OutputStream(indexes.length * 8);
-		for (int index = 0; index < indexes.length; index++)
-			if (indexes[index] == null) {
-				stream.writeInt(0);
-				stream.writeInt(0);
-			} else {
-				stream.writeInt(indexes[index].getCRC());
-				stream.writeInt(indexes[index].getTable().getRevision());
-			}
+   public byte[] generateIndex255Archive255() {
+      return this.generateIndex255Archive255Current(null, null);
+   }
 
-		byte archive[] = new byte[stream.getOffset()];
-		stream.setOffset(0);
-		stream.getBytes(archive, 0, archive.length);
-		return archive;
-	}
+   public byte[] generateIndex255Archive255Outdated() {
+      OutputStream stream = new OutputStream(this.indexes.length * 8);
 
-	public Index[] getIndexes() {
-		return indexes;
-	}
+      for(int var3 = 0; var3 < this.indexes.length; ++var3) {
+         if(this.indexes[var3] == null) {
+            stream.writeInt(0);
+            stream.writeInt(0);
+         } else {
+            stream.writeInt(this.indexes[var3].getCRC());
+            stream.writeInt(this.indexes[var3].getTable().getRevision());
+         }
+      }
 
-	public MainFile getIndex255() {
-		return index255;
-	}
+      byte[] var31 = new byte[stream.getOffset()];
+      stream.setOffset(0);
+      stream.getBytes(var31, 0, var31.length);
+      return var31;
+   }
 
-	public int addIndex(boolean named, boolean usesWhirpool, int tableCompression) throws IOException {
-		int id = indexes.length;
-		Index newIndexes[] = Arrays.copyOf(indexes, indexes.length + 1);
-		resetIndex(id, newIndexes, named, usesWhirpool, tableCompression);
-		indexes = newIndexes;
-		return id;
-	}
+   public Index[] getIndexes() {
+      return this.indexes;
+   }
 
-	public void resetIndex(int id, boolean named, boolean usesWhirpool, int tableCompression) throws FileNotFoundException, IOException {
-		resetIndex(id, indexes, named, usesWhirpool, tableCompression);
-	}
+   public MainFile getIndex255() {
+      return this.index255;
+   }
 
-	public void resetIndex(int id, Index indexes[], boolean named, boolean usesWhirpool, int tableCompression) throws FileNotFoundException, IOException {
-		OutputStream stream = new OutputStream(4);
-		stream.writeByte(5);
-		stream.writeByte((named ? 1 : 0) | (usesWhirpool ? 2 : 0));
-		stream.writeShort(0);
-		byte archiveData[] = new byte[stream.getOffset()];
-		stream.setOffset(0);
-		stream.getBytes(archiveData, 0, archiveData.length);
-		Archive archive = new Archive(id, tableCompression, -1, archiveData);
-		index255.putArchiveData(id, archive.compress());
-		indexes[id] = new Index(index255, new MainFile(id, data, new RandomAccessFile((new StringBuilder(String.valueOf(path))).append("main_file_cache.idx").append(id).toString(), "rw"), newProtocol), null);
-	}
+   public int addIndex(boolean named, boolean usesWhirpool, int tableCompression) throws IOException {
+      int id = this.indexes.length;
+      Index[] newIndexes = Arrays.copyOf(this.indexes, this.indexes.length + 1);
+      this.resetIndex(id, newIndexes, named, usesWhirpool, tableCompression);
+      this.indexes = newIndexes;
+      return id;
+   }
 
-	private Index indexes[];
-	private MainFile index255;
-	private String path;
-	private RandomAccessFile data;
-	private boolean newProtocol;
+   public void resetIndex(int id, boolean named, boolean usesWhirpool, int tableCompression) throws IOException {
+      this.resetIndex(id, this.indexes, named, usesWhirpool, tableCompression);
+   }
+
+   public void resetIndex(int id, Index[] indexes, boolean named, boolean usesWhirpool, int tableCompression) throws IOException {
+      OutputStream stream = new OutputStream(4);
+      stream.writeByte(5);
+      stream.writeByte((named?1:0) | (usesWhirpool?2:0));
+      stream.writeShort(0);
+      byte[] archiveData = new byte[stream.getOffset()];
+      stream.setOffset(0);
+      stream.getBytes(archiveData, 0, archiveData.length);
+      Archive archive = new Archive(id, tableCompression, -1, archiveData);
+      this.index255.putArchiveData(id, archive.compress());
+      indexes[id] = new Index(this.index255, new MainFile(id, this.data, new RandomAccessFile(this.path + "main_file_cache.idx" + id, "rw"), this.newProtocol), null);
+   }
 }

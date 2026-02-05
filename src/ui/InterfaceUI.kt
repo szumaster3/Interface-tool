@@ -585,6 +585,21 @@ class InterfaceUI : JFrame() {
             drawTree(currentInterface)
         }
         buttonPanel.add(btnAddRectangle)
+
+        val openSpriteBrowserBtn = JButton("Browse Sprites")
+        openSpriteBrowserBtn.preferredSize = buttonSize
+        openSpriteBrowserBtn.addActionListener {
+            SpriteBrowser(this) { spriteId,w,h ->
+                if (currentInterface <= 0) return@SpriteBrowser
+                selectedComponent?.spriteId = spriteId
+                selectedComponent?.baseWidth = w
+                selectedComponent?.baseHeight =h
+                setValues(currentInterface, selectedComponent!!.componentId)
+                repaint()
+            }
+        }
+        buttonPanel.add(openSpriteBrowserBtn)
+
         panel.add(buttonPanel, BorderLayout.NORTH)
 
         viewportPanel = object : JPanel() {

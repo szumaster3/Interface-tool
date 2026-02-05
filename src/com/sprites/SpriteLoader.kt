@@ -13,7 +13,7 @@ object SpriteLoader {
     val numSprites: Int
         get() {
             val spriteIndex = spriteIndex
-            return spriteIndex.lastArchiveId
+            return spriteIndex.lastArchiveId + 1
         }
 
     fun getArchive(archive: Int): SpriteArchive? {

@@ -2,13 +2,12 @@ package com.interfaces
 
 /**
  * Interface tool
- * paolo 19/07/2019
- * #Shnek6969
+ * @author paolo
+ * @date 19/07/2019
+ * @discord #Shnek6969
  */
 object ComponentConstants {
-    /**
-     * Component types
-     */
+    /** Component types */
     const val CONTAINER: Int = 0
     const val MODEL_LIST: Int = 1
     const val INVENTORY: Int = 2
@@ -20,21 +19,15 @@ object ComponentConstants {
     const val TOOLTIP: Int = 8
     const val UNKNOWN: Int = 9
 
-    /**
-     * masks
-     */
+    /** masks */
     const val CLICK_MASK: Int = 30
 
-    /**
-     * onload scripts
-     */
+    /** onload scripts */
     const val SCROLL_BAR_SCRIPT: Int = 30
     const val SCROLL_BAR_SCRIPT_2: Int = 62
     const val BUTTON_SCRIPT: Int = 92
 
-    /**
-     * if1 buttons;
-     */
+    /** if1 buttons; */
     const val NO_BUTTON: Int = 0
     const val BUTTON: Int = 1
     const val TARGET_BUTTON: Int = 2

@@ -3,9 +3,9 @@ package tools.build
 import com.logging.LogFactory
 import com.rs.cache.Cache
 import com.rs.cache.loaders.ComponentDefinition
-import ui.InterfaceUI
 import java.util.function.Consumer
 import java.util.logging.Logger
+import ui.InterfaceUI
 
 class Copy private constructor(val targetInterface: Int) {
     private val tasks: MutableList<CopyTask> = ArrayList()
@@ -102,9 +102,7 @@ class Copy private constructor(val targetInterface: Int) {
 
             Cache.store!!.indexes[3].putFile(targetInterface, task.targetId, comp.encode(comp.hasScripts))
 
-            logger.info(
-                "Copied: " + src + ":" + task.sourceId + " -> " + targetInterface + ":" + task.targetId
-            )
+            logger.info("Copied: " + src + ":" + task.sourceId + " -> " + targetInterface + ":" + task.targetId)
         }
 
         ComponentDefinition.getInterface(targetInterface, true)

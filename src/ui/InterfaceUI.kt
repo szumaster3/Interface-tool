@@ -11,8 +11,10 @@ import com.rs.cache.loaders.ComponentDefinition
 import com.sprites.ImageUtils
 import com.sprites.SpriteDumper
 import com.sprites.SpriteLoader
+import com.sprites.utils.SpriteBrowser
 import properties.PropertyValues.loadValues
 import properties.PropertyValues.setCachePath
+import tools.note.ScriptTable
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ItemEvent
@@ -23,7 +25,6 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
-import java.util.*
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.imageio.ImageIO
@@ -34,8 +35,8 @@ import javax.swing.event.TreeSelectionEvent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
-class InterfaceUI : JFrame() {
 
+class InterfaceUI : JFrame() {
     var progressMonitor: ProgressMonitor? = null
     private var interface_list: JList<*>? = null
     private var viewportPanel: JPanel? = null
@@ -149,6 +150,8 @@ class InterfaceUI : JFrame() {
         )
         txt_interId.columns = 10
         searchPanel.add(txt_interId)
+        val menuBar = JMenuBar()
+        jMenuBar = menuBar
 
         val btnFind = JButton("Find")
         btnFind.setBounds(
@@ -184,25 +187,27 @@ class InterfaceUI : JFrame() {
         val popupMenu = JPopupMenu()
         val export = JMenuItem("Export")
         popupMenu.add(export)
-        interface_list!!.addMouseListener(object : MouseAdapter() {
-            override fun mouseClicked(me: MouseEvent) {
-                if (SwingUtilities.isRightMouseButton(me) // if right mouse button clicked
-                    && !interface_list!!.isSelectionEmpty // and list selection is not empty
-                    && (interface_list!!.locationToIndex(me.point) // and clicked point is
-                            == interface_list!!.selectedIndex)
-                ) {       //   inside selected item bounds
-                    popupMenu.show(interface_list, me.x, me.y)
+        interface_list!!.addMouseListener(
+            object : MouseAdapter() {
+                override fun mouseClicked(me: MouseEvent) {
+                    if (
+                        SwingUtilities.isRightMouseButton(me) // if right mouse button clicked
+                        &&
+                        !interface_list!!.isSelectionEmpty // and list selection is not empty
+                        &&
+                        (interface_list!!.locationToIndex(me.point) // and clicked point is
+                                == interface_list!!.selectedIndex)
+                    ) { //   inside selected item bounds
+                        popupMenu.show(interface_list, me.x, me.y)
+                    }
                 }
             }
-        })
+        )
         export.addActionListener {
             try {
                 exportInterface(currentInterface)
             } catch (e: IOException) {
-                JOptionPane.showMessageDialog(
-                    interfaceViewportScrollPane,
-                    "File could not be dumped, error: " + e.message
-                )
+                JOptionPane.showMessageDialog(interfaceViewportScrollPane, "File could not be dumped, error: " + e.message)
             }
         }
 
@@ -249,41 +254,41 @@ class InterfaceUI : JFrame() {
         addInterfaceButton.preferredSize = Dimension(Constants.LEFT_SCROLLPANE_WIDTH, Constants.BUTTON_HEIGHT)
         moreButtonsPanel.add(addInterfaceButton)
 
-        val deleteInterfaceButton = JButton("Delete Selected").apply {
-            preferredSize = Dimension(Constants.LEFT_SCROLLPANE_WIDTH, Constants.BUTTON_HEIGHT)
+        val deleteInterfaceButton =
+            JButton("Delete Selected").apply {
+                preferredSize = Dimension(Constants.LEFT_SCROLLPANE_WIDTH, Constants.BUTTON_HEIGHT)
 
-            addActionListener {
-                val option = JOptionPane.showConfirmDialog(
-                    null,
-                    "Are you sure that you want to remove interface $currentInterface?",
-                    "Warning",
-                    JOptionPane.YES_NO_OPTION
-                )
+                addActionListener {
+                    val option =
+                        JOptionPane.showConfirmDialog(
+                            null,
+                            "Are you sure that you want to remove interface $currentInterface?",
+                            "Warning",
+                            JOptionPane.YES_NO_OPTION
+                        )
 
+                    if (option == JOptionPane.YES_OPTION) {
+                        val componentsSize = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface)
 
-                if (option == JOptionPane.YES_OPTION) {
-                    val componentsSize = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface)
-
-                    for (i in 0 until componentsSize) {
-                        if (i == 0) {
-                            addBaseComponent(currentInterface, true)
-                        } else {
-                            Cache.store!!.indexes[3].removeFile(currentInterface, i)
+                        for (i in 0 until componentsSize) {
+                            if (i == 0) {
+                                addBaseComponent(currentInterface, true)
+                            } else {
+                                Cache.store!!.indexes[3].removeFile(currentInterface, i)
+                            }
                         }
-                    }
 
-                    try {
-                        Cache.init()
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
+                        try {
+                            Cache.init()
+                        } catch (e: IOException) {
+                            e.printStackTrace()
+                        }
 
-                    ComponentDefinition.componentDefinition =
-                        arrayOfNulls(ComponentDefinition.interfaceDefinitionsSize)
-                    drawTree(currentInterface)
+                        ComponentDefinition.componentDefinition = arrayOfNulls(ComponentDefinition.interfaceDefinitionsSize)
+                        drawTree(currentInterface)
+                    }
                 }
             }
-        }
 
         deleteInterfaceButton.preferredSize = Dimension(Constants.LEFT_SCROLLPANE_WIDTH, Constants.BUTTON_HEIGHT)
         moreButtonsPanel.add(deleteInterfaceButton)
@@ -294,21 +299,35 @@ class InterfaceUI : JFrame() {
         premadeComponentsPanel.preferredSize = Dimension(Constants.PREMADE_COMP_WIDTH, Constants.PREMADE_COMP_HEIGHT)
 
         val comboBox = JComboBox<String>()
-        comboBox.model = DefaultComboBoxModel(
+        val items =
             arrayOf(
+                "Select component...",
                 "Close button",
                 "Normal button",
                 "Start interface",
                 "Basic custom hover",
                 "Basic button with pop-up"
             )
-        )
+        comboBox.model = DefaultComboBoxModel(items)
+        comboBox.selectedIndex = 0
         comboBox.preferredSize = Dimension(Constants.PREMADE_COMP_WIDTH - 10, Constants.BUTTON_HEIGHT)
         premadeComponentsPanel.add(comboBox)
 
-
         val btnAddPremadeComponent = JButton("Add Component")
-        btnAddPremadeComponent.addActionListener { addDefaultComponent(currentInterface) }
+        btnAddPremadeComponent.addActionListener {
+            val selectedItem = comboBox.selectedItem?.toString() ?: return@addActionListener
+
+            if (selectedItem == "Select component...") {
+                JOptionPane.showMessageDialog(
+                    premadeComponentsPanel,
+                    "Please select a component from the list.",
+                    "No component selected",
+                    JOptionPane.WARNING_MESSAGE
+                )
+                return@addActionListener
+            }
+            addDefaultComponent(currentInterface, selectedItem)
+        }
         btnAddPremadeComponent.preferredSize = Dimension(Constants.PREMADE_COMP_WIDTH - 10, Constants.BUTTON_HEIGHT)
         premadeComponentsPanel.add(btnAddPremadeComponent)
         moreButtonsPanel.add(premadeComponentsPanel)
@@ -340,12 +359,13 @@ class InterfaceUI : JFrame() {
 
         componentScrollpane = JScrollPane()
         componentScrollpane!!.preferredSize = Dimension(Constants.RIGHT_SCROLLPANE_WIDTH, Constants.VIEWPORT_HEIGHT)
-        //jtree itself
         val componentTree = JTree(createInterfaceTree(1))
         componentScrollpane!!.setViewportView(componentTree)
         componentTree.addTreeSelectionListener { _: TreeSelectionEvent? ->
-            val selectedNode = componentTree.lastSelectedPathComponent as DefaultMutableTreeNode
-            val id = selectedNode.userObject.toString().replace("Component ".toRegex(), "").toInt()
+            val selectedNode =
+                componentTree.lastSelectedPathComponent as? DefaultMutableTreeNode ?: return@addTreeSelectionListener
+            val text = selectedNode.userObject.toString()
+            val id = text.substringBefore(":").toIntOrNull() ?: return@addTreeSelectionListener
             selectedComp = id
             setValues(currentInterface, id)
             repaint()
@@ -353,8 +373,7 @@ class InterfaceUI : JFrame() {
         panel.add(componentScrollpane, BorderLayout.CENTER)
 
         val moreButtonsPanel = JPanel(FlowLayout())
-        moreButtonsPanel.preferredSize =
-            Dimension(Constants.RIGHT_SCROLLPANE_WIDTH, Constants.DEFAULT_EDITOR_HEIGHT / 3)
+        moreButtonsPanel.preferredSize = Dimension(Constants.RIGHT_SCROLLPANE_WIDTH, Constants.DEFAULT_EDITOR_HEIGHT / 3)
 
         val componentButtons = JPanel(FlowLayout())
         componentButtons.preferredSize = Dimension(Constants.RIGHT_SCROLLPANE_WIDTH, Constants.BUTTON_HEIGHT)
@@ -393,14 +412,11 @@ class InterfaceUI : JFrame() {
                 var message: String? = null
                 if (c != null) {
                     message =
-                        (if (c.type == ComponentConstants.CONTAINER) "Are you sure that you want to remove component $selectedComp from interface $currentInterface ? NOTE: this component is a container, childs will be removed aswell." else "Are you sure that you want to remove  component $selectedComp from interface $currentInterface ?")
+                        (if (c.type == ComponentConstants.CONTAINER)
+                            "Are you sure that you want to remove component $selectedComp from interface $currentInterface ? NOTE: this component is a container, childs will be removed aswell."
+                        else "Are you sure that you want to remove  component $selectedComp from interface $currentInterface ?")
                 }
-                val option = JOptionPane.showConfirmDialog(
-                    this,
-                    message,
-                    "Inane warning",
-                    JOptionPane.YES_NO_OPTION
-                )
+                val option = JOptionPane.showConfirmDialog(this, message, "Inane warning", JOptionPane.YES_NO_OPTION)
                 if (option == 0) {
                     try {
                         Cache.store!!.indexes[3].removeFile(currentInterface, selectedComp)
@@ -459,19 +475,22 @@ class InterfaceUI : JFrame() {
         settingsPanel.add(chckbxShowHiddenComps)
 
         chckbxRealFontTesting = JCheckBox("Draw Real Font")
+        chckbxRealFontTesting.isEnabled = false
         chckbxRealFontTesting.preferredSize = checkBoxSize
-        chckbxRealFontTesting.addMouseListener(object : MouseAdapter() {
-            override fun mouseClicked(arg0: MouseEvent) {
-                drawTree(currentInterface)
-                drawInterfaceComponents(
-                    currentInterface,
-                    chckbxShowContainers.isSelected,
-                    chckbxShowHiddenComps.isSelected,
-                    chckbxShowRectangles.isSelected,
-                    chckbxRealFontTesting.isSelected
-                )
+        chckbxRealFontTesting.addMouseListener(
+            object : MouseAdapter() {
+                override fun mouseClicked(arg0: MouseEvent) {
+                    drawTree(currentInterface)
+                    drawInterfaceComponents(
+                        currentInterface,
+                        chckbxShowContainers.isSelected,
+                        chckbxShowHiddenComps.isSelected,
+                        chckbxShowRectangles.isSelected,
+                        chckbxRealFontTesting.isSelected
+                    )
+                }
             }
-        })
+        )
         chckbxRealFontTesting.setBounds(6, 107, 193, 25)
         settingsPanel.add(chckbxRealFontTesting)
         moreButtonsPanel.add(settingsPanel)
@@ -495,11 +514,13 @@ class InterfaceUI : JFrame() {
             comp?.parentId = -1
             comp?.componentHash =
                 ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface) + (currentInterface shl 16)
-            Cache.store!!.indexes[3].putFile(
-                currentInterface,
-                ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
-                comp!!.encode(true)
-            )
+            Cache.store!!
+                .indexes[3]
+                .putFile(
+                    currentInterface,
+                    ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
+                    comp!!.encode(true)
+                )
             ComponentDefinition.getInterface(currentInterface, true)
             drawTree(currentInterface)
         }
@@ -517,11 +538,13 @@ class InterfaceUI : JFrame() {
             comp?.parentId = -1
             comp?.componentHash =
                 ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface) + (currentInterface shl 16)
-            Cache.store!!.indexes[3].putFile(
-                currentInterface,
-                ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
-                comp!!.encode(true)
-            )
+            Cache.store!!
+                .indexes[3]
+                .putFile(
+                    currentInterface,
+                    ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
+                    comp!!.encode(true)
+                )
             ComponentDefinition.getInterface(currentInterface, true)
             drawTree(currentInterface)
         }
@@ -539,11 +562,13 @@ class InterfaceUI : JFrame() {
             comp?.parentId = -1
             comp?.componentHash =
                 ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface) + (currentInterface shl 16)
-            Cache.store!!.indexes[3].putFile(
-                currentInterface,
-                ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
-                comp!!.encode(true)
-            )
+            Cache.store!!
+                .indexes[3]
+                .putFile(
+                    currentInterface,
+                    ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
+                    comp!!.encode(true)
+                )
             ComponentDefinition.getInterface(currentInterface, true)
             drawTree(currentInterface)
         }
@@ -557,17 +582,19 @@ class InterfaceUI : JFrame() {
             comp?.parentId = -1
             comp?.componentHash =
                 ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface) + (currentInterface shl 16)
-            Cache.store!!.indexes[3].putFile(
-                currentInterface,
-                ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
-                comp!!.encode(true)
-            )
+            Cache.store!!
+                .indexes[3]
+                .putFile(
+                    currentInterface,
+                    ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
+                    comp!!.encode(true)
+                )
             ComponentDefinition.getInterface(currentInterface, true)
             drawTree(currentInterface)
         }
         buttonPanel.add(btnAddModel)
 
-        val btnAddRectangle = JButton("Add Rectangle")
+        val btnAddRectangle = JButton("Add Figure")
         btnAddRectangle.preferredSize = buttonSize
         btnAddRectangle.addActionListener { _: ActionEvent? ->
             if (currentInterface <= 0) return@addActionListener
@@ -576,11 +603,13 @@ class InterfaceUI : JFrame() {
             comp?.baseY = 0
             comp?.componentHash =
                 ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface) + (currentInterface shl 16)
-            Cache.store!!.indexes[3].putFile(
-                currentInterface,
-                ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
-                comp!!.encode(true)
-            )
+            Cache.store!!
+                .indexes[3]
+                .putFile(
+                    currentInterface,
+                    ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
+                    comp!!.encode(true)
+                )
             ComponentDefinition.getInterface(currentInterface, true)
             drawTree(currentInterface)
         }
@@ -589,42 +618,48 @@ class InterfaceUI : JFrame() {
         val openSpriteBrowserBtn = JButton("Browse Sprites")
         openSpriteBrowserBtn.preferredSize = buttonSize
         openSpriteBrowserBtn.addActionListener {
-            SpriteBrowser(this) { spriteId,w,h ->
+            SpriteBrowser(this) { spriteId, w, h ->
                 if (currentInterface <= 0) return@SpriteBrowser
                 selectedComponent?.spriteId = spriteId
-                selectedComponent?.baseWidth = w
-                selectedComponent?.baseHeight =h
+                selectedComponent?.baseWidth == w
+                selectedComponent?.baseHeight == h
                 setValues(currentInterface, selectedComponent!!.componentId)
                 repaint()
             }
         }
         buttonPanel.add(openSpriteBrowserBtn)
 
+        val scriptTableBtn = JButton("Script Table")
+        scriptTableBtn.preferredSize = buttonSize
+        scriptTableBtn.addActionListener { ScriptTable() }
+        buttonPanel.add(scriptTableBtn)
+
         panel.add(buttonPanel, BorderLayout.NORTH)
 
-        viewportPanel = object : JPanel() {
-            override fun paintComponent(g: Graphics) {
-                if (currentInterface == -1) return
-                drawInterfaceToGraphics(
-                    g,
-                    currentInterface,
-                    chckbxShowContainers.isSelected,
-                    chckbxShowHiddenComps.isSelected,
-                    chckbxShowRectangles.isSelected,
-                    chckbxRealFontTesting.isSelected
-                )
-                if (selectedComponent != null && (selectedComponent!!.componentHash shr 16) == currentInterface) {
-                    g.color = Color.WHITE
-                    ComponentPosition.setValues(selectedComponent)
-                    g.drawRect(
-                        ComponentDefinition.getX(selectedComponent!!, currentInterface),
-                        ComponentDefinition.getY(selectedComponent!!, currentInterface),
-                        selectedComponent!!.width,
-                        selectedComponent!!.height
+        viewportPanel =
+            object : JPanel() {
+                override fun paintComponent(g: Graphics) {
+                    if (currentInterface == -1) return
+                    drawInterfaceToGraphics(
+                        g,
+                        currentInterface,
+                        chckbxShowContainers.isSelected,
+                        chckbxShowHiddenComps.isSelected,
+                        chckbxShowRectangles.isSelected,
+                        chckbxRealFontTesting.isSelected
                     )
+                    if (selectedComponent != null && (selectedComponent!!.componentHash shr 16) == currentInterface) {
+                        g.color = Color.WHITE
+                        ComponentPosition.setValues(selectedComponent)
+                        g.drawRect(
+                            ComponentDefinition.getX(selectedComponent!!, currentInterface),
+                            ComponentDefinition.getY(selectedComponent!!, currentInterface),
+                            selectedComponent!!.width,
+                            selectedComponent!!.height
+                        )
+                    }
                 }
             }
-        }
         (viewportPanel as JPanel).preferredSize = Dimension(Constants.VIEWPORT_WIDTH, Constants.VIEWPORT_HEIGHT)
         (viewportPanel as JPanel).minimumSize = Dimension(Constants.VIEWPORT_WIDTH, Constants.VIEWPORT_HEIGHT)
         (viewportPanel as JPanel).maximumSize = Dimension(Constants.VIEWPORT_WIDTH, Constants.VIEWPORT_HEIGHT)
@@ -632,10 +667,11 @@ class InterfaceUI : JFrame() {
         panel.add(viewportPanel!!, BorderLayout.CENTER)
 
         tabbedPane = JTabbedPane(JTabbedPane.TOP)
-        tabbedPane!!.preferredSize = Dimension(
-            Constants.DEFAULT_EDITOR_WIDTH - Constants.LEFT_SCROLLPANE_WIDTH - Constants.RIGHT_SCROLLPANE_WIDTH,
-            Constants.DEFAULT_EDITOR_HEIGHT - Constants.VIEWPORT_HEIGHT - Constants.BUTTON_HEIGHT - 4
-        )
+        tabbedPane!!.preferredSize =
+            Dimension(
+                Constants.DEFAULT_EDITOR_WIDTH - Constants.LEFT_SCROLLPANE_WIDTH - Constants.RIGHT_SCROLLPANE_WIDTH,
+                Constants.DEFAULT_EDITOR_HEIGHT - Constants.VIEWPORT_HEIGHT - Constants.BUTTON_HEIGHT - 4
+            )
         tabbedPane!!.addTab("General", null, constructGeneralTab())
         tabbedPane!!.addTab("Text", null, constructTextTab())
         tabbedPane!!.addTab("Model", null, constructModelTab())
@@ -653,8 +689,7 @@ class InterfaceUI : JFrame() {
         fieldPanel.preferredSize = Dimension(Constants.INFO_FIELD_WIDTH, Constants.INFO_FIELD_HEIGHT)
 
         val labelField = JTextField()
-        labelField.preferredSize =
-            Dimension(Constants.INFO_FIELD_WIDTH / 3, Constants.INFO_FIELD_HEIGHT)
+        labelField.preferredSize = Dimension(Constants.INFO_FIELD_WIDTH / 3, Constants.INFO_FIELD_HEIGHT)
         labelField.text = label
         labelField.isEditable = false
         fieldPanel.add(labelField, BorderLayout.WEST)
@@ -671,8 +706,7 @@ class InterfaceUI : JFrame() {
         fieldPanel.preferredSize = Dimension(Constants.INFO_FIELD_WIDTH, Constants.INFO_FIELD_HEIGHT)
 
         val labelField = JTextField()
-        labelField.preferredSize =
-            Dimension(Constants.INFO_FIELD_WIDTH / 3, Constants.INFO_FIELD_HEIGHT)
+        labelField.preferredSize = Dimension(Constants.INFO_FIELD_WIDTH / 3, Constants.INFO_FIELD_HEIGHT)
         labelField.text = label
         labelField.isEditable = false
         fieldPanel.add(labelField, BorderLayout.WEST)
@@ -686,11 +720,12 @@ class InterfaceUI : JFrame() {
 
     private fun constructGeneralTab(): JPanel {
         val generalTab = JPanel(GridLayout(10, 2))
-        generalTab.preferredSize = Dimension(
-            Constants.DEFAULT_EDITOR_WIDTH - Constants.LEFT_SCROLLPANE_WIDTH - Constants.RIGHT_SCROLLPANE_WIDTH - 10,
-            Constants.DEFAULT_EDITOR_HEIGHT / 3 - 15
-        )
-        generalTab.add(createInfoFieldPanel("Overlayer", txt_overlayer))
+        generalTab.preferredSize =
+            Dimension(
+                Constants.DEFAULT_EDITOR_WIDTH - Constants.LEFT_SCROLLPANE_WIDTH - Constants.RIGHT_SCROLLPANE_WIDTH - 10,
+                Constants.DEFAULT_EDITOR_HEIGHT / 3 - 15
+            )
+        generalTab.add(createInfoFieldPanel("Parent ID", txt_overlayer))
         generalTab.add(createInfoFieldPanel("Hidden", chckbxHidden))
         generalTab.add(createInfoFieldPanel("Type", txt_type))
         generalTab.add(createInfoFieldPanel("Hash", txt_hash))
@@ -727,17 +762,17 @@ class InterfaceUI : JFrame() {
     private fun constructModelTab(): JPanel {
         val modelTab = JPanel(GridLayout(10, 2))
         modelTab.add(createInfoFieldPanel("Model ID", txt_model))
-        modelTab.add(createInfoFieldPanel("Animation", txt_animationId))
-        modelTab.add(createInfoFieldPanel("Zoom", txt_modelZoom))
-        modelTab.add(createInfoFieldPanel("Animated", chckbxAnimated))
-        modelTab.add(createInfoFieldPanel("Centre", chckbxCentre))
-        modelTab.add(createInfoFieldPanel("Ignore Z Buffer", chckbxIgnoreZ))
+        modelTab.add(createInfoFieldPanel("Animation ID", txt_animationId))
+        modelTab.add(createInfoFieldPanel("Model Zoom", txt_modelZoom))
         modelTab.add(createInfoFieldPanel("Viewport X", txt_viewportX))
         modelTab.add(createInfoFieldPanel("Viewport Y", txt_viewportY))
         modelTab.add(createInfoFieldPanel("Viewport Z", txt_viewportZ))
-        modelTab.add(createInfoFieldPanel("Pitch", txt_pitch))
-        modelTab.add(createInfoFieldPanel("Roll", txt_roll))
-        modelTab.add(createInfoFieldPanel("Yaw", txt_yaw))
+        modelTab.add(createInfoFieldPanel("Sprite Pitch", txt_pitch))
+        modelTab.add(createInfoFieldPanel("Centre", chckbxCentre))
+        modelTab.add(createInfoFieldPanel("Sprite Yaw", txt_yaw))
+        modelTab.add(createInfoFieldPanel("Animated", chckbxAnimated))
+        modelTab.add(createInfoFieldPanel("Sprite Roll", txt_roll))
+        modelTab.add(createInfoFieldPanel("Ignore Z Buffer", chckbxIgnoreZ))
         return modelTab
     }
 
@@ -753,9 +788,9 @@ class InterfaceUI : JFrame() {
         val spriteTab = JPanel(GridLayout(10, 2))
         spriteTab.add(createInfoFieldPanel("Sprite ID", txt_sprite))
         spriteTab.add(createInfoFieldPanel("Border Thickness", txt_border))
-        spriteTab.add(createInfoFieldPanel("Repeat", chckbxRepeat))
-        spriteTab.add(createInfoFieldPanel("H Flip", chckbxHorizontalFlip))
-        spriteTab.add(createInfoFieldPanel("V Flip", chckbxVerticalFlip))
+        spriteTab.add(createInfoFieldPanel("Tiling", chckbxRepeat))
+        spriteTab.add(createInfoFieldPanel("Horizontal Flip", chckbxHorizontalFlip))
+        spriteTab.add(createInfoFieldPanel("Vertical Flip", chckbxVerticalFlip))
         spriteTab.add(createInfoFieldPanel("Has alpha", chckbxHasAlpha))
         return spriteTab
     }
@@ -811,27 +846,63 @@ class InterfaceUI : JFrame() {
         val menuBar = JMenuBar()
         jMenuBar = menuBar
 
-        val mnNewMenu_1 = JMenu("Info")
-        mnNewMenu_1.addActionListener { _: ActionEvent? ->
-            JOptionPane.showMessageDialog(
-                interfaceViewportScrollPane,
-                "Interface editor made by Shnek, Discord : Cara Shnek#6969 "
-            )
-        }
-        menuBar.add(mnNewMenu_1)
+        val mnCredits = JMenu("Credits")
+        mnCredits.addMouseListener(object : MouseAdapter() {
+            override fun mouseClicked(e: MouseEvent) {
+                val dialog = JDialog(this@InterfaceUI, "Credits", true)
+                dialog.layout = BorderLayout()
+                val message = JLabel(
+                    "<html><center>"
+                            + "<h2>Interface Editor</h2>"
+                            + "<p>Made by: Shnek<br>Discord: Cara Shnek#6969</p>"
+                            + "<p>Major code refactoring & improvements by: Ceikry</p>"
+                            + "<p>Recent changes - szumaster 05.02.2026</p></center></html>"
+                )
+                message.border = BorderFactory.createEmptyBorder(10, 10, 10, 10)
+                dialog.add(message, BorderLayout.CENTER)
+
+                val okButton = JButton("OK")
+                okButton.addActionListener { dialog.dispose() }
+
+                val panel = JPanel()
+                panel.add(okButton)
+                dialog.add(panel, BorderLayout.SOUTH)
+
+                dialog.pack()
+                dialog.setLocationRelativeTo(this@InterfaceUI)
+                dialog.isVisible = true
+            }
+        })
+        menuBar.add(mnCredits)
 
         val mnAbout = JMenu("Extra")
         menuBar.add(mnAbout)
 
-        val mntmDumpSprites = JMenuItem("Dump sprites")
+        val mntmDumpSprites = JMenuItem("Export sprites")
         mntmDumpSprites.addActionListener { _: ActionEvent? ->
-            progressMonitor = ProgressMonitor(menuBar, "Dumping sprites", "", 0, Cache.store!!.indexes[8].lastArchiveId)
-            progressMonitor!!.setProgress(1)
-            SpriteDumper.dump()
+            val max = Cache.store!!.indexes[Constants.SPRITES_INDEX].lastArchiveId + 1
+            val progressMonitor = ProgressMonitor(menuBar, "Export sprites", "", 0, max)
+
+            Thread {
+                for (i in 0..max) {
+                    if (progressMonitor.isCanceled) {
+                        break
+                    }
+
+                    SpriteDumper.dump()
+                    SwingUtilities.invokeLater {
+                        progressMonitor.setProgress(i)
+                        progressMonitor.note = "Export sprite $i of $max"
+                    }
+                }
+                SwingUtilities.invokeLater { progressMonitor.close() }
+            }
+                .start()
         }
         mnAbout.add(mntmDumpSprites)
 
         val mntmPackInterface = JMenuItem("Pack interface")
+        mntmPackInterface.isEnabled = false
         mntmPackInterface.addActionListener { _: ActionEvent? -> }
         mnAbout.add(mntmPackInterface)
 
@@ -848,14 +919,15 @@ class InterfaceUI : JFrame() {
         selectedComponent = comp
 
         txt_hash.text = comp.componentHash.toString()
-        txt_type.text = when (comp.type) {
-            ComponentConstants.CONTAINER -> "Container"
-            ComponentConstants.TEXT -> "Text"
-            ComponentConstants.SPRITE -> "Sprite"
-            ComponentConstants.FIGURE -> "Figure"
-            ComponentConstants.MODEL -> "Model"
-            else -> comp.type.toString()
-        }
+        txt_type.text =
+            when (comp.type) {
+                ComponentConstants.CONTAINER -> "Container"
+                ComponentConstants.TEXT -> "Text"
+                ComponentConstants.SPRITE -> "Sprite"
+                ComponentConstants.FIGURE -> "Figure"
+                ComponentConstants.MODEL -> "Model"
+                else -> comp.type.toString()
+            }
 
         txt_x.text = comp.baseX.toString()
         txt_y.text = comp.baseY.toString()
@@ -987,8 +1059,9 @@ class InterfaceUI : JFrame() {
             c.type = ComponentConstants.SPRITE
             c.optionBase = ""
             c.contentType = 0
-            if (ComponentDefinition.componentDefinition!![inter] == null) ComponentDefinition.componentDefinition!![inter] =
-                arrayOfNulls(ComponentDefinition.getInterfaceDefinitionsComponentsSize(inter))
+            if (ComponentDefinition.componentDefinition!![inter] == null)
+                ComponentDefinition.componentDefinition!![inter] =
+                    arrayOfNulls(ComponentDefinition.getInterfaceDefinitionsComponentsSize(inter))
             ComponentDefinition.componentDefinition!![inter]!![comp] = c
         }
 
@@ -1009,7 +1082,6 @@ class InterfaceUI : JFrame() {
                 c.scrollMaxV = parseIntSafe(txt_scrollY.text, 0)
                 c.noClickThrough = chckbxHover.isSelected
             }
-
             ComponentConstants.SPRITE -> {
                 c.spriteId = parseIntSafe(txt_sprite.text, 0)
                 c.angle2d = 0
@@ -1026,7 +1098,6 @@ class InterfaceUI : JFrame() {
                 if (c.spriteTiling) c.flag = c.flag or 1
                 if (c.hasAlpha) c.flag = c.flag or 2
             }
-
             ComponentConstants.MODEL -> {
                 c.modelId = parseIntSafe(txt_model.text, -1)
                 c.modelAnimId = parseIntSafe(txt_animationId.text, -1)
@@ -1043,7 +1114,6 @@ class InterfaceUI : JFrame() {
                 c.spriteRoll = parseIntSafe(txt_roll.text, 0)
                 c.spriteYaw = parseIntSafe(txt_yaw.text, 0)
             }
-
             ComponentConstants.TEXT -> {
                 c.text = txt_text.text
                 c.textHorizontalAli = parseIntSafe(txt_xali.text, 0)
@@ -1055,7 +1125,6 @@ class InterfaceUI : JFrame() {
                 c.transparency = parseIntSafe(txt_trans.text, 255)
                 c.multiline = chckbxMultiline.isSelected
             }
-
             ComponentConstants.FIGURE -> {
                 c.color = parseIntSafe(txt_color.text, 0)
                 c.filled = chckbxFilled.isSelected
@@ -1103,7 +1172,6 @@ class InterfaceUI : JFrame() {
         logger.info("Saved IF3 [$inter:$comp]")
     }
 
-
     private fun parseIntSafe(value: String, defaultValue: Int): Int {
         return try {
             value.toInt()
@@ -1113,79 +1181,85 @@ class InterfaceUI : JFrame() {
     }
 
     private fun populateList(): DefaultListModel<String> {
-        logger.info("Populating interface list")
         val listModel = DefaultListModel<String>()
-
         for (i in 0 until ComponentDefinition.interfaceDefinitionsSize) {
             try {
                 if (ComponentDefinition.getInterface(i, false) != null) {
                     listModel.addElement("Interface: $i")
                 }
-            } catch (_: Exception) {
-
-            }
+            } catch (_: Exception) {}
         }
-
-        logger.info("Done Populating list")
         return listModel
     }
 
     private fun createInterfaceTree(interfaceId: Int): DefaultTreeModel {
         val inter = DefaultMutableTreeNode("Interface $interfaceId")
-        //new stuff
+
         for (i in 0 until ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId)) {
             val c = ComponentDefinition.getInterfaceComponent(interfaceId, i)
             if (c == null) {
-                println("is null$i")
+                println("Component=[$i] is null for interface [$interfaceId]")
                 continue
             }
-            //System.out.println("here");
-            //check for the base containers
+
             if (c.parentId == -1 && ComponentDefinition.hasChilds(interfaceId, c.componentHash)) {
-                val child = DefaultMutableTreeNode("Component " + c.componentId)
+                val child = DefaultMutableTreeNode("${c.componentId}: (${InterfaceUtils.getComponentType(c.type)})")
+
                 val childs = ComponentDefinition.getChildsByParent(interfaceId, c.componentHash)
-                //loop throu the childs
                 for (c2 in childs) {
-                    //check if the child is a container , if so loop throu his childs etc..
                     if (ComponentDefinition.hasChilds(interfaceId, c2.componentHash)) {
                         val childs2 = ComponentDefinition.getChildsByParent(interfaceId, c2.componentHash)
-                        val container2 = DefaultMutableTreeNode("Component " + c2.componentId)
+                        val container2 =
+                            DefaultMutableTreeNode("${c2.componentId}: (${InterfaceUtils.getComponentType(c2.type)})")
+
                         for (c3 in childs2) {
                             if (ComponentDefinition.hasChilds(interfaceId, c3.componentHash)) {
                                 val childs3 = ComponentDefinition.getChildsByParent(interfaceId, c3.componentHash)
-                                val container3 = DefaultMutableTreeNode("Component " + c3.componentId)
+                                val container3 =
+                                    DefaultMutableTreeNode("${c3.componentId}: (${InterfaceUtils.getComponentType(c3.type)})")
+
                                 for (c4 in childs3) {
                                     if (ComponentDefinition.hasChilds(interfaceId, c4.componentHash)) {
-                                        val child4 =
-                                            ComponentDefinition.getChildsByParent(interfaceId, c4.componentHash)
-                                        val container4 = DefaultMutableTreeNode("Component " + c4.componentId)
+                                        val child4 = ComponentDefinition.getChildsByParent(interfaceId, c4.componentHash)
+                                        val container4 =
+                                            DefaultMutableTreeNode(
+                                                "${c4.componentId}: (${InterfaceUtils.getComponentType(c4.type)})"
+                                            )
+
                                         for (c5 in child4) {
-                                            val childs4 = DefaultMutableTreeNode("Component " + c5.componentId)
+                                            val childs4 =
+                                                DefaultMutableTreeNode(
+                                                    "${c5.componentId}: (${InterfaceUtils.getComponentType(c5.type)})"
+                                                )
                                             container4.add(childs4)
                                         }
 
                                         container3.add(container4)
                                     } else {
-                                        val child2 = DefaultMutableTreeNode("Component " + c4.componentId)
+                                        val child2 =
+                                            DefaultMutableTreeNode(
+                                                "${c4.componentId}: (${InterfaceUtils.getComponentType(c4.type)})"
+                                            )
                                         container3.add(child2)
                                     }
                                 }
                                 container2.add(container3)
                             } else {
-                                val child2 = DefaultMutableTreeNode("Component " + c3.componentId)
+                                val child2 =
+                                    DefaultMutableTreeNode("${c3.componentId}: (${InterfaceUtils.getComponentType(c3.type)})")
                                 container2.add(child2)
                             }
                         }
                         child.add(container2)
                     } else {
-                        val child2 = DefaultMutableTreeNode("Component " + c2.componentId)
+                        val child2 = DefaultMutableTreeNode("${c2.componentId}: (${InterfaceUtils.getComponentType(c2.type)})")
                         child.add(child2)
                     }
                 }
 
                 inter.add(child)
             } else if (c.parentId == -1 && !ComponentDefinition.hasChilds(interfaceId, c.componentHash)) {
-                val child2 = DefaultMutableTreeNode("Component " + c.componentId)
+                val child2 = DefaultMutableTreeNode("${c.componentId}: (${InterfaceUtils.getComponentType(c.type)})")
                 inter.add(child2)
             }
         }
@@ -1212,21 +1286,18 @@ class InterfaceUI : JFrame() {
             val containerPlace = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface)
             copiedComp!!.parentId = -1
 
-            Cache.store!!.indexes[3].putFile(
-                currentInterface, containerPlace, copiedComp!!.encode(
-                    copiedComp!!.hasScripts
-                )
-            )
+            Cache.store!!.indexes[3].putFile(currentInterface, containerPlace, copiedComp!!.encode(copiedComp!!.hasScripts))
             val childs = ComponentDefinition.getChildsByParent(copiedComp!!.interfaceId, copiedComp!!.componentHash)
             for (c in childs) {
-                if (c.type == ComponentConstants.CONTAINER) { //TODO packing containers in containers
-                } else Cache.store!!.indexes[3].putFile(
-                    currentInterface,
-                    ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
-                    c.encode(
-                        copiedComp!!.hasScripts
-                    )
-                )
+                if (c.type == ComponentConstants.CONTAINER) { // TODO packing containers in containers
+                } else
+                    Cache.store!!
+                        .indexes[3]
+                        .putFile(
+                            currentInterface,
+                            ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
+                            c.encode(copiedComp!!.hasScripts)
+                        )
             }
             ComponentDefinition.getInterface(currentInterface, true)
             val size = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface)
@@ -1242,11 +1313,13 @@ class InterfaceUI : JFrame() {
             }
         } else {
             copiedComp!!.parentId = -1
-            Cache.store!!.indexes[3].putFile(
-                currentInterface,
-                ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
-                copiedComp!!.encode(copiedComp!!.hasScripts)
-            )
+            Cache.store!!
+                .indexes[3]
+                .putFile(
+                    currentInterface,
+                    ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
+                    copiedComp!!.encode(copiedComp!!.hasScripts)
+                )
         }
         ComponentDefinition.getInterface(currentInterface, true)
         drawTree(currentInterface)
@@ -1259,13 +1332,9 @@ class InterfaceUI : JFrame() {
         FileOutputStream(file).use { fos ->
             fos.write(data)
             fos.close()
-            JOptionPane.showMessageDialog(
-                interfaceViewportScrollPane,
-                "$interfaceId dumped to data/export/$interfaceId.dat"
-            )
+            JOptionPane.showMessageDialog(interfaceViewportScrollPane, "$interfaceId dumped to data/export/$interfaceId.dat")
         }
     }
-
 
     private fun getOrderedComps(interfaceId: Int): ArrayList<ComponentDefinition?>? {
         val comps: ArrayList<ComponentDefinition?> = ArrayList()
@@ -1296,150 +1365,161 @@ class InterfaceUI : JFrame() {
     }
 
     fun drawTree(id: Int) {
-        logger.info("Drawing componenttree ")
+        logger.info("Drawing component tree for interface [$id]")
         val tree = JTree(createInterfaceTree(id))
         tree.addTreeSelectionListener { e: TreeSelectionEvent? ->
             val selectedNode = tree.lastSelectedPathComponent as DefaultMutableTreeNode
             try {
                 if (selectedNode.userObject != null) {
-                    val id1 = selectedNode.userObject.toString().replace("Component ".toRegex(), "").toInt()
+                    val text = selectedNode.userObject.toString()
+                    val id1 = text.substringBefore(":").toIntOrNull() ?: return@addTreeSelectionListener
                     selectedComp = id1
                     setValues(currentInterface, id1)
                     repaint()
                 }
             } catch (ex: Exception) {
                 ex.printStackTrace()
-                logger.log(Level.SEVERE, "Error selecting component, error->$ex")
-
-                /* some roots aren't a root , better catch them instead of spamming console*/
+                logger.log(Level.SEVERE, "Error selecting component, error: $ex")
             }
         }
         componentScrollpane!!.setViewportView(tree)
     }
 
-    fun addDefaultComponent(id: Int) {
-        when (comboBox!!.selectedIndex) {
-            0 -> {
-                val defaultcloseButton = ComponentDefinition.getInterfaceComponent(6, 36)
-                if (defaultcloseButton != null) {
-                    defaultcloseButton.parentId = -1
-                }
-                Cache.store!!.indexes[3].putFile(
-                    currentInterface,
-                    ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
-                    defaultcloseButton!!.encode(
-                        copiedComp!!.hasScripts
-                    )
-                )
-                ComponentDefinition.getInterface(currentInterface, true) //since we need to reload the array
-                drawTree(currentInterface)
-            }
+    private fun addDefaultComponent(interfaceId: Int, selectedItem: String) {
+        if (selectedItem == "Select component...") {
+            JOptionPane.showMessageDialog(
+                null,
+                "Please select a component from the list.",
+                "No component selected",
+                JOptionPane.WARNING_MESSAGE
+            )
+            return
+        }
 
-            1 -> {
+        when (selectedItem) {
+            "Close button" -> {
+                val defaultCloseButton = ComponentDefinition.getInterfaceComponent(6, 36)
+                if (defaultCloseButton != null) {
+                    defaultCloseButton.parentId = -1
+                    Cache.store!!
+                        .indexes[3]
+                        .putFile(
+                            interfaceId,
+                            ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
+                            defaultCloseButton.encode(copiedComp?.hasScripts ?: false)
+                        )
+                }
+                ComponentDefinition.getInterface(interfaceId, true)
+                drawTree(interfaceId)
+            }
+            "Normal button" -> {
                 val container = ComponentDefinition.getInterfaceComponent(506, 1)
                 val text = ComponentDefinition.getInterfaceComponent(506, 2)
                 if (container != null) {
-                    Cache.store!!.indexes[3].putFile(
-                        currentInterface,
-                        ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
-                        container.encode(
-                            copiedComp!!.hasScripts
+                    Cache.store!!
+                        .indexes[3]
+                        .putFile(
+                            interfaceId,
+                            ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
+                            container.encode(copiedComp?.hasScripts ?: false)
                         )
-                    )
                 }
                 if (text != null) {
-                    Cache.store!!.indexes[3].putFile(
-                        currentInterface,
-                        ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
-                        text.encode(
-                            copiedComp!!.hasScripts
+                    Cache.store!!
+                        .indexes[3]
+                        .putFile(
+                            interfaceId,
+                            ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
+                            text.encode(copiedComp?.hasScripts ?: false)
                         )
-                    )
                 }
-                ComponentDefinition.getInterface(currentInterface, true) //since we need to reload the array
-                val n = ComponentDefinition.getInterfaceComponent(
-                    currentInterface,
-                    ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface) - 2
-                )
-                val xd = ComponentDefinition.getInterfaceComponent(
-                    currentInterface,
-                    ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface) - 1
-                )
-                if (n != null) {
-                    xd!!.parentId = n.componentHash
-                }
-                Cache.store!!.indexes[3].putFile(
-                    currentInterface,
-                    ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface) - 1,
-                    xd!!.encode(
-                        copiedComp!!.hasScripts
-                    )
-                )
-                ComponentDefinition.getInterface(currentInterface, true) //since we need to reload the array
-                drawTree(currentInterface)
-            }
 
-            2 -> {
+                ComponentDefinition.getInterface(interfaceId, true)
+
+                val lastIndex = ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId) - 1
+                val parentIndex = lastIndex - 1
+                val parentComp = ComponentDefinition.getInterfaceComponent(interfaceId, parentIndex)
+                val textComp = ComponentDefinition.getInterfaceComponent(interfaceId, lastIndex)
+                if (parentComp != null && textComp != null) {
+                    textComp.parentId = parentComp.componentHash
+                    Cache.store!!.indexes[3].putFile(interfaceId, lastIndex, textComp.encode(copiedComp?.hasScripts ?: false))
+                }
+                ComponentDefinition.getInterface(interfaceId, true)
+                drawTree(interfaceId)
+            }
+            "Start interface" -> {
                 val basic = ComponentDefinition.getInterfaceComponent(6, 0)
-                val place = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface)
+                val place = ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId)
                 if (basic != null) {
-                    Cache.store!!.indexes[3].putFile(
-                        currentInterface, place, basic.encode(
-                            copiedComp!!.hasScripts
-                        )
-                    )
+                    Cache.store!!.indexes[3].putFile(interfaceId, place, basic.encode(copiedComp?.hasScripts ?: false))
                 }
-                for (comp in ComponentDefinition.getChildsByParent(
-                    6,
-                    ComponentDefinition.getInterfaceComponent(6, 0)!!.componentHash
-                )) {
-                    if (comp.text!!.lowercase(Locale.getDefault()).contains("brimhaven")) comp.text =
-                        "My starter interface"
-                    comp.parentId++
-                    Cache.store!!.indexes[3].putFile(
-                        currentInterface,
-                        ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
-                        comp.encode(
-                            copiedComp!!.hasScripts
-                        )
-                    )
-                }
-                ComponentDefinition.getInterface(currentInterface, true) //since we need to reload the array
-                drawTree(currentInterface)
-            }
 
-            3 -> {
+                val children =
+                    ComponentDefinition.getChildsByParent(6, ComponentDefinition.getInterfaceComponent(6, 0)?.componentHash ?: 0)
+                for (comp in children) {
+                    comp.text = "Example text"
+                    comp.parentId++
+                    Cache.store!!
+                        .indexes[3]
+                        .putFile(
+                            interfaceId,
+                            ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
+                            comp.encode(copiedComp?.hasScripts ?: false)
+                        )
+                }
+                ComponentDefinition.getInterface(interfaceId, true)
+                drawTree(interfaceId)
+            }
+            "Basic custom hover" -> {
                 val hover = ComponentDefinition.getInterfaceComponent(6, 36)
                 if (hover != null) {
                     hover.parentId = -1
+                    hover.onMouseRepeat = null
+                    hover.onOptionClick = null
+                    hover.spriteId = 0
+                    hover.onMouseHoverScript?.set(2, 1)
+                    hover.onMouseLeaveScript?.set(2, 0)
+                    Cache.store!!
+                        .indexes[3]
+                        .putFile(
+                            interfaceId,
+                            ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
+                            hover.encode(copiedComp?.hasScripts ?: false)
+                        )
                 }
-                hover!!.onMouseRepeat = null
-                hover.onOptionClick = null
-                hover.spriteId = 0
-                hover.onMouseHoverScript?.set(2, 1)
-                hover.onMouseLeaveScript?.set(2, 0)
-                Cache.store!!.indexes[3].putFile(currentInterface, ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface), hover.encode(copiedComp!!.hasScripts))
-                ComponentDefinition.getInterface(currentInterface, true) //since we need to reload the array
-                drawTree(currentInterface)
+                ComponentDefinition.getInterface(interfaceId, true)
+                drawTree(interfaceId)
             }
-
-            4 -> {
+            "Basic button with pop-up" -> {
                 val popupButton = ComponentDefinition.getInterfaceComponent(762, 33)
                 val cont = ComponentDefinition.getInterfaceComponent(762, 119)
+
+                if (cont != null) cont.parentId = -1
+                if (popupButton != null) popupButton.parentId = -1
+
+                val place2 = ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId)
                 if (cont != null) {
-                    cont.parentId = -1
+                    Cache.store!!.indexes[3].putFile(interfaceId, place2, cont.encode(copiedComp?.hasScripts ?: false))
                 }
+
                 if (popupButton != null) {
-                    popupButton.parentId = -1
+                    popupButton.onMouseRepeat?.set(3, "Click here to change your preset settings.")
+                    val contComp = ComponentDefinition.getInterfaceComponent(interfaceId, place2)
+                    if (contComp != null) {
+                        popupButton.onMouseLeaveScript?.set(2, contComp.componentHash)
+                        popupButton.onMouseRepeat?.set(2, contComp.componentHash)
+                    }
+                    Cache.store!!
+                        .indexes[3]
+                        .putFile(
+                            interfaceId,
+                            ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
+                            popupButton.encode(copiedComp?.hasScripts ?: false)
+                        )
                 }
-                val place2 = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface)
-                Cache.store!!.indexes[3].putFile(currentInterface, place2, cont!!.encode(copiedComp!!.hasScripts))
-                popupButton!!.onMouseRepeat?.set(3, "Click here to change your preset settings.")
-                popupButton.onMouseLeaveScript?.set(2, ComponentDefinition.getInterfaceComponent(currentInterface, place2)!!.componentHash)
-                popupButton.onMouseRepeat?.set(2, ComponentDefinition.getInterfaceComponent(currentInterface, place2)!!.componentHash)
-                Cache.store!!.indexes[3].putFile(currentInterface, ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface), popupButton.encode(copiedComp!!.hasScripts))
-                ComponentDefinition.getInterface(currentInterface, true) //since we need to reload the array
-                drawTree(currentInterface)
+
+                ComponentDefinition.getInterface(interfaceId, true)
+                drawTree(interfaceId)
             }
         }
     }
@@ -1471,7 +1551,7 @@ class InterfaceUI : JFrame() {
         // drawBackground(g)
         val orderedComponents: List<ComponentDefinition?>? = this.getOrderedComps(interfaceId)
         if (orderedComponents == null) {
-            println("is null")
+            println("Components for interface [$interfaceId] are null, cannot draw.")
             return
         }
         for (component in orderedComponents) {
@@ -1484,11 +1564,9 @@ class InterfaceUI : JFrame() {
             val height = component.height
             val x = ComponentDefinition.getX(component, interfaceId)
             val y = ComponentDefinition.getY(component, interfaceId)
-            val parent =
-                InterfaceUtils.getParent(component.parentId) //ComponentDefinition.getParent(component, interfaceId);
+            val parent = InterfaceUtils.getParent(component.parentId) // ComponentDefinition.getParent(component, interfaceId);
             /* setting correct values of the parent ofcourse*/
-            if (parent != null) {
-            }
+            if (parent != null) {}
             if (component.type == ComponentConstants.SPRITE && component.spriteId > -1) {
                 var sprite: BufferedImage? = null
                 val unscaled = SpriteLoader.getSprite(component.spriteId) ?: return
@@ -1519,12 +1597,13 @@ class InterfaceUI : JFrame() {
                     component.width,
                     component.height
                 )
-                if (component.filled) g.fillRect(
-                    ComponentDefinition.getX(component, currentInterface),
-                    ComponentDefinition.getY(component, currentInterface),
-                    component.width,
-                    component.height
-                )
+                if (component.filled)
+                    g.fillRect(
+                        ComponentDefinition.getX(component, currentInterface),
+                        ComponentDefinition.getY(component, currentInterface),
+                        component.width,
+                        component.height
+                    )
             }
             if (component.type == ComponentConstants.MODEL && showModels) {
                 g.color = Color.BLUE
@@ -1539,10 +1618,9 @@ class InterfaceUI : JFrame() {
                 var sprite: BufferedImage? = null
                 if (ContainerHelper.isScrollBar(component)) {
                     try {
-                        sprite =
-                            ImageUtils.resize(ImageIO.read(File("data/scriptsprites/scrollbar.jpg")), width, height)
+                        sprite = ImageUtils.resize(ImageIO.read(File("data/scriptsprites/scroll_bar.png")), width, height)
                     } catch (e: IOException) {
-                        println("scrollbar.jpg not found")
+                        println("scroll_bar.png not found.")
                     }
                     g.drawImage(
                         sprite,
@@ -1554,7 +1632,7 @@ class InterfaceUI : JFrame() {
                     try {
                         sprite = ImageUtils.resize(ImageIO.read(File("data/scriptsprites/button.png")), width, height)
                     } catch (e: IOException) {
-                        println("button.png not found")
+                        println("button.png not found.")
                     }
                     g.drawImage(
                         sprite,
@@ -1595,7 +1673,7 @@ class InterfaceUI : JFrame() {
                 } else {
                     ComponentPosition.setValues(parent)
 
-                    //text in buttons, to center it lol capypasta
+                    // text in buttons, to center it lol capypasta
                     if (component.baseWidth == 0 && component.baseHeight == 0) {
                         val metrics = g.getFontMetrics(Font("Helvetica", 0, 11))
                         // Determine the X coordinate for the text
@@ -1603,7 +1681,8 @@ class InterfaceUI : JFrame() {
                         if (parent != null) {
                             x2 = parent.positionX + (parent.width - metrics.stringWidth(component.text)) / 2
                         }
-                        // Determine the Y coordinate for the text (note we add the ascent, as in java 2d 0 is top of the screen)
+                        // Determine the Y coordinate for the text (note we add the ascent, as in
+                        // java 2d 0 is top of the screen)
                         val y2 = parent!!.positionY + ((parent.height - metrics.height) / 2) + metrics.ascent
                         // Set the font
                         g.font = Font("Helvetica", 0, 11)
@@ -1614,8 +1693,8 @@ class InterfaceUI : JFrame() {
                         var positionX = ComponentDefinition.getX(component, interfaceId)
                         val positionY = ComponentDefinition.getY(component, interfaceId)
                         /*  not drAWING OUTSIDE THE CONTAINER*/
-                        if (parent != null && positionX > parent.width + parent.positionX) positionX =
-                            parent.width - component.width
+                        if (parent != null && positionX > parent.width + parent.positionX)
+                            positionX = parent.width - component.width
                         g.drawString(
                             component.text,
                             (positionX + component.width / 2 - rect.width / 2).toInt(),
@@ -1623,8 +1702,7 @@ class InterfaceUI : JFrame() {
                         )
                     }
                 }
-                if (component.text?.contains("</u>") == true) {
-                }
+                if (component.text?.contains("</u>") == true) {}
             }
         }
     }
@@ -1641,10 +1719,7 @@ class InterfaceUI : JFrame() {
                         setDefaultLookAndFeelDecorated(true)
                         JDialog.setDefaultLookAndFeelDecorated(true)
                     } catch (e: Exception) {
-                        JOptionPane.showMessageDialog(
-                            null,
-                            "" + e
-                        )
+                        JOptionPane.showMessageDialog(null, "" + e)
                         logger.log(Level.SEVERE, e.message)
                     }
 
@@ -1656,10 +1731,7 @@ class InterfaceUI : JFrame() {
                                 null,
                                 "Properties can not be found, make sure you've a config.properties file."
                             )
-                            logger.log(
-                                Level.SEVERE,
-                                "Properties can not be found, make sure you've a config.properties file.\""
-                            )
+                            logger.log(Level.SEVERE, "Properties can not be found, make sure you've a config.properties file.\"")
                         }
                     } else {
                         val path = args[0]
@@ -1669,6 +1741,7 @@ class InterfaceUI : JFrame() {
                     logger.info("Application started...")
                     Cache.init()
                     val frame = InterfaceUI()
+                    frame.setLocationRelativeTo(null)
                     frame.isVisible = true
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -1677,31 +1750,30 @@ class InterfaceUI : JFrame() {
         }
 
         /*private fun drawBackground(g: Graphics?) {
-            val clip = if ((g != null)) g.clipBounds else null
-            val w = if ((clip != null)) clip.width else Constants.VIEWPORT_WIDTH
-            val h = if ((clip != null)) clip.height else Constants.VIEWPORT_HEIGHT
+           val clip = if ((g != null)) g.clipBounds else null
+           val w = if ((clip != null)) clip.width else Constants.VIEWPORT_WIDTH
+           val h = if ((clip != null)) clip.height else Constants.VIEWPORT_HEIGHT
 
-            if (g != null) {
-                g.color = Color.BLACK
-            }
-            g!!.fillRect(0, 0, w, h)
-            g.color = Color(80, 80, 80)
-            val gridSize = 16
-            run {
-                var x = 0
-                while (x <= w) {
-                    g.drawLine(x, 0, x, h)
-                    x += gridSize
-                }
-            }
-            run {
-                var y = 0
-                while (y <= h) {
-                    g.drawLine(0, y, w, y)
-                    y += gridSize
-                }
-            }
-         */
+           if (g != null) {
+               g.color = Color.BLACK
+           }
+           g!!.fillRect(0, 0, w, h)
+           g.color = Color(80, 80, 80)
+           val gridSize = 16
+           run {
+               var x = 0
+               while (x <= w) {
+                   g.drawLine(x, 0, x, h)
+                   x += gridSize
+               }
+           }
+           run {
+               var y = 0
+               while (y <= h) {
+                   g.drawLine(0, y, w, y)
+                   y += gridSize
+               }
+           }
+        */
     }
 }
-

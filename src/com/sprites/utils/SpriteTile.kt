@@ -1,4 +1,4 @@
-package ui
+package com.sprites.utils
 
 import java.awt.*
 import javax.swing.*

@@ -55,4 +55,17 @@ object InterfaceUtils {
         }
         return intArray
     }
+
+    fun getComponentType(type: Int): String =
+        when (type) {
+            ComponentConstants.CONTAINER -> "Container"
+            ComponentConstants.TEXT -> "Text"
+            ComponentConstants.SPRITE -> "Sprite"
+            ComponentConstants.FIGURE -> "Figure"
+            ComponentConstants.MODEL -> "Model"
+            ComponentConstants.UNKNOWN -> "Line"
+            ComponentConstants.MODEL_LIST -> "Model List"
+            ComponentConstants.INVENTORY -> "Inventory"
+            else -> type.toString()
+        }
 }

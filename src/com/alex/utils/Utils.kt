@@ -39,37 +39,4 @@ object Utils {
     fun getNameHash(name: String): Int {
         return name.lowercase(Locale.getDefault()).hashCode()
     }
-
-    fun getInterfaceDefinitionsSize(store: Store): Int {
-        return store.indexes[3].lastArchiveId + 1
-    }
-
-    fun getInterfaceDefinitionsComponentsSize(store: Store, interfaceId: Int): Int {
-        return store.indexes[3].getLastFileId(interfaceId) + 1
-    }
-
-    fun getAnimationDefinitionsSize(store: Store): Int {
-        val lastArchiveId = store.indexes[20].lastArchiveId
-        return lastArchiveId * 128 + store.indexes[20].getValidFilesCount(lastArchiveId)
-    }
-
-    fun getItemDefinitionsSize(store: Store): Int {
-        val lastArchiveId = store.indexes[19].lastArchiveId
-        return lastArchiveId * 256 + store.indexes[19].getValidFilesCount(lastArchiveId)
-    }
-
-    fun getNPCDefinitionsSize(store: Store): Int {
-        val lastArchiveId = store.indexes[18].lastArchiveId
-        return lastArchiveId * 128 + store.indexes[18].getValidFilesCount(lastArchiveId)
-    }
-
-    fun getObjectDefinitionsSize(store: Store): Int {
-        val lastArchiveId = store.indexes[16].lastArchiveId
-        return lastArchiveId * 256 + store.indexes[16].getValidFilesCount(lastArchiveId)
-    }
-
-    fun getGraphicDefinitionsSize(store: Store): Int {
-        val lastArchiveId = store.indexes[21].lastArchiveId
-        return lastArchiveId * 256 + store.indexes[21].getValidFilesCount(lastArchiveId)
-    }
 }

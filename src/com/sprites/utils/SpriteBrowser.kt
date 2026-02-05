@@ -1,4 +1,4 @@
-package ui
+package com.sprites.utils
 
 import com.sprites.SpriteLoader
 import java.awt.*

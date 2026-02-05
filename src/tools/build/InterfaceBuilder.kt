@@ -11,26 +11,9 @@ object InterfaceBuilder {
     fun build() {
         val c = newInterface()
         Copy.to(c.targetInterface)
-            .from(685)
+            .from(672)
             .startAt(0)
-            .copy(0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13)
-            .addComponents(Consumer { comp: ComponentDefinition? ->
-                comp!!.parentId = -1
-                comp.type = 5
-                comp.baseX = 474
-                comp.baseY = 30
-                comp.baseWidth = 16
-                comp.baseHeight = 16
-
-                comp.rightclickOptions = arrayOf("Close")
-                comp.settings = IComponentSettings(323, -1)
-                comp.optionMask = 323
-                comp.spriteId = 831
-                comp.onMouseHoverScript = arrayOf(44, -2147483645, 832)
-                comp.onMouseLeaveScript = arrayOf(44, -2147483645, 831)
-                comp.onOptionClick = arrayOf(29)
-            })
-
+            .copyRange(0, 24)
             .save()
 
         printInterface(c.targetInterface)

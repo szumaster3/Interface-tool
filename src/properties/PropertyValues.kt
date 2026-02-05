@@ -4,58 +4,93 @@ import java.io.*
 import java.util.*
 
 /**
- *
- * @author paolo
+ * Manages all paths and property values.
  */
 object PropertyValues {
-    /**
-     * all the stored values
-     */
-    var cache_path: String? = null
+
+    /** Stored paths */
+    var cache_path: String? = "data/cache/"
     var dump_path: String = "dump/"
     var sprite_path: String? = null
+    var scripts_table_path: String? = "data/scriptsnotes/scripts_notes.csv"
 
-    /*
-	 * random
-	 */
+    /** Random input stream */
     var input: InputStream? = null
 
-
+    /**
+     * Loads configuration from config.properties.
+     * Creates config.properties and scripts CSV if they do not exist.
+     */
     @JvmStatic
-    @Throws(IOException::class)
     fun loadValues() {
+        val prop = Properties()
+        val propFileName = "config.properties"
+        val propFile = File(propFileName)
+
         try {
-            val prop = Properties()
-            val propFileName = "config.properties"
-
-            input = FileInputStream("config.properties")
-
-            if (input != null) {
+            if (propFile.exists()) {
+                input = FileInputStream(propFile)
                 prop.load(input)
+                println("Loaded config from $propFileName")
             } else {
-                throw FileNotFoundException("property file '$propFileName' not found in the classpath")
+                println("Config file not found. Creating default config at $propFileName")
+                // domyślne wartości
+                prop.setProperty("cache_path", cache_path ?: "data/cache/")
+                prop.setProperty("dump_path", dump_path)
+                prop.setProperty("sprite_path", sprite_path ?: "")
+                prop.setProperty("scripts_table_path", scripts_table_path ?: "data/scriptsnotes/scripts_notes.csv")
+
+                propFile.parentFile?.mkdirs()
+                FileOutputStream(propFile).use { out ->
+                    prop.store(out, "Default configuration")
+                }
             }
 
+            // Załaduj wartości z Properties
+            cache_path = prop.getProperty("cache_path") ?: cache_path
+            dump_path = prop.getProperty("dump_path") ?: dump_path
+            sprite_path = prop.getProperty("sprite_path") ?: sprite_path
+            scripts_table_path = prop.getProperty("scripts_table_path") ?: scripts_table_path
 
-            // get the property value and tools.print it out
-            println(prop.getProperty("cache_path"))
-            cache_path = prop.getProperty("cache_path")
-            dump_path = prop.getProperty("dump_path")
-            sprite_path = prop.getProperty("sprite_path")
+            // Tworzymy CSV jeśli nie istnieje
+            ensureScriptsTableExists()
+
         } catch (e: Exception) {
-            println("Exception: $e")
+            println("Exception while loading or creating config: $e")
         } finally {
-            input!!.close()
+            input?.close()
         }
     }
 
     @JvmStatic
     fun setCachePath(path: String) {
-        var path = path
-        if (!path.endsWith(File.separator)) path += File.separator
+        var fixedPath = path
+        if (!fixedPath.endsWith(File.separator)) fixedPath += File.separator
 
-        cache_path = path
+        cache_path = fixedPath
         dump_path = cache_path + "IFToolDumps" + File.separator
         sprite_path = cache_path
+        scripts_table_path = cache_path + "scripts_notes.csv"
+
+        ensureScriptsTableExists()
+    }
+
+    /**
+     * Creates the CSV file with header if it does not exist.
+     */
+    @JvmStatic
+    private fun ensureScriptsTableExists() {
+        try {
+            val file = File(scripts_table_path)
+            if (!file.exists()) {
+                file.parentFile?.mkdirs()
+                file.printWriter().use { out ->
+                    out.println("\"Script ID\"|\"Args\"|\"Description\"")
+                }
+                println("Created new scripts table at: ${file.absolutePath}")
+            }
+        } catch (e: Exception) {
+            println("Failed to create scripts table: $e")
+        }
     }
 }

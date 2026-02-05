@@ -241,8 +241,16 @@ class ComponentDefinition {
             if (animated) flag = flag or 0x4
             if (centreType) flag = flag or 0x2
             if (ignoreZBuffer) flag = flag or 0x8
-            if (viewportZ == 0 && (viewportX != 0 || viewportY != 0 || spritePitch != 0 || spriteRoll != 0 || spriteYaw != 0 || spriteScale != 100)) flag =
-                flag or 0x1
+            if (
+                viewportZ == 0 &&
+                (viewportX != 0 ||
+                        viewportY != 0 ||
+                        spritePitch != 0 ||
+                        spriteRoll != 0 ||
+                        spriteYaw != 0 ||
+                        spriteScale != 100)
+            )
+                flag = flag or 0x1
 
             out.writeByte(flag)
 
@@ -407,7 +415,6 @@ class ComponentDefinition {
                 scrollMaxV = stream.readUnsignedShort()
                 noClickThrough = stream.readUnsignedByte() == 1
             }
-
             ComponentConstants.SPRITE -> {
                 spriteId = stream.readInt()
                 angle2d = stream.readUnsignedShort()
@@ -420,7 +427,6 @@ class ComponentDefinition {
                 vFlip = stream.readUnsignedByte() == 1
                 hFlip = stream.readUnsignedByte() == 1
             }
-
             ComponentConstants.MODEL -> {
                 modelId = stream.readUnsignedShort()
                 if (modelId == 65535) modelId = -1
@@ -453,7 +459,6 @@ class ComponentDefinition {
                 if (aspectWidthType.toInt() != 0) dynamicWidth = stream.readUnsignedShort()
                 if (aspectHeightType.toInt() != 0) dynamicHeight = stream.readUnsignedShort()
             }
-
             ComponentConstants.TEXT -> {
                 fontId = stream.readUnsignedShort()
                 if (fontId == 65535) fontId = -1
@@ -466,13 +471,11 @@ class ComponentDefinition {
                 transparency = stream.readUnsignedByte()
                 multiline = stream.readUnsignedByte() == 1
             }
-
             ComponentConstants.FIGURE -> {
                 color = stream.readInt()
                 filled = stream.readUnsignedByte() == 1
                 transparency = stream.readUnsignedByte()
             }
-
             ComponentConstants.UNKNOWN -> {
                 lineWidth = stream.readUnsignedByte().toByte()
                 color = stream.readInt()
@@ -585,11 +588,12 @@ class ComponentDefinition {
 
         for (index in 0 until length) {
             val type = buffer.readUnsignedByte()
-            objects[index] = when {
-                type == ComponentConstants.CONTAINER -> buffer.readInt()
-                type == (0xFF.toByte().toInt()) -> buffer.readString()
-                else -> null
-            }
+            objects[index] =
+                when {
+                    type == ComponentConstants.CONTAINER -> buffer.readInt()
+                    type == (0xFF.toByte().toInt()) -> buffer.readString()
+                    else -> null
+                }
         }
 
         hasScripts = true
@@ -607,7 +611,6 @@ class ComponentDefinition {
         }
         return `is`
     }
-
 
     private fun encodeTriggers(arr: IntArray?, out: OutputStream) {
         val length = arr?.size ?: 0
@@ -658,16 +661,13 @@ class ComponentDefinition {
 
     companion object {
         private val logger = createLogger(ComponentDefinition::class.java.name)
-        var componentDefinition: Array<Array<ComponentDefinition?>?>? = arrayOfNulls<Array<ComponentDefinition?>?>(
-            interfaceDefinitionsSize
-        )
+        var componentDefinition: Array<Array<ComponentDefinition?>?>? =
+            arrayOfNulls<Array<ComponentDefinition?>?>(interfaceDefinitionsSize)
         private val storeIndex: Index? = Cache.store!!.indexes[3]
 
         fun getInterface(id: Int, reload: Boolean): Array<ComponentDefinition?>? {
             if (componentDefinition == null) {
-                componentDefinition = arrayOfNulls<Array<ComponentDefinition?>?>(
-                    storeIndex!!.lastArchiveId + 1
-                )
+                componentDefinition = arrayOfNulls<Array<ComponentDefinition?>?>(storeIndex!!.lastArchiveId + 1)
             }
 
             if (id < 0 || id >= componentDefinition!!.size) {
@@ -724,7 +724,6 @@ class ComponentDefinition {
         fun getInterfaceComponent(interfaceId: Int, componentId: Int): ComponentDefinition? {
             val components = getInterface(interfaceId, false)
             if (components == null || componentId < 0 || componentId >= components.size) {
-                logger.warning("Component $componentId in interface $interfaceId does not exist.")
                 return null
             }
             return components[componentId]

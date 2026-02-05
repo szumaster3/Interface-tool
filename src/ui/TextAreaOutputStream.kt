@@ -7,8 +7,9 @@ import javax.swing.SwingUtilities
 
 /**
  * Interface tool
- * paolo 27/07/2019
- * #Shnek6969
+ * @author paolo
+ * @date 27/07/2019
+ * @discord #Shnek6969
  */
 class TextAreaOutputStream(private val textArea: JTextArea, private val title: String) : OutputStream() {
     private val sb = StringBuilder()
@@ -17,11 +18,9 @@ class TextAreaOutputStream(private val textArea: JTextArea, private val title: S
         sb.append("$title> ")
     }
 
-    override fun flush() {
-    }
+    override fun flush() {}
 
-    override fun close() {
-    }
+    override fun close() {}
 
     @Throws(IOException::class)
     override fun write(b: Int) {

@@ -50,11 +50,6 @@ object SpriteDumper {
                     continue
                 }
             }
-
-            val progress = (i + 1).toDouble() / size * 100
-
-            //System.out.printf("%d out of %d %.2f%s\n", (i + 1),size, progress, "%");
-            logger.info((i + 1).toString() + " out of " + size + " " + Math.round(progress) + "%")
         }
     }
 }

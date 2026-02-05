@@ -13,10 +13,11 @@ class CopyTask internal constructor(private val parent: Copy, val sourceId: Int,
             this.modifier = modifier
         } else {
             val old = this.modifier
-            this.modifier = Consumer<ComponentDefinition> { c: ComponentDefinition ->
-                old!!.accept(c)
-                modifier.accept(c)
-            }
+            this.modifier =
+                Consumer<ComponentDefinition> { c: ComponentDefinition ->
+                    old!!.accept(c)
+                    modifier.accept(c)
+                }
         }
         return this
     }
@@ -269,9 +270,7 @@ class CopyTask internal constructor(private val parent: Copy, val sourceId: Int,
     }
 
     fun rightClickOptions(vararg options: String?): CopyTask {
-        return modify { c: ComponentDefinition ->
-            c.rightclickOptions = options as Array<String?>
-        }
+        return modify { c: ComponentDefinition -> c.rightclickOptions = options as Array<String?> }
     }
 
     fun mainOption(option: Int): CopyTask {

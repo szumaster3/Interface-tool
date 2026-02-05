@@ -12,7 +12,5 @@ object LaunchBuilder {
         loadValues()
         Cache.init()
         build()
-
-        //FigureInterface.create();
     }
 }

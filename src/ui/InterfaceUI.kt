@@ -505,6 +505,8 @@ class InterfaceUI : JFrame() {
                 cellRenderer = ComponentTreeRenderer(iconMap)
                 background = Color.BLACK
                 isOpaque = true
+                showsRootHandles = true
+                isRootVisible = true
             }
         val treeScroll =
             JScrollPane(componentTree).apply {
@@ -584,7 +586,7 @@ class InterfaceUI : JFrame() {
         val settingsPanel = JPanel(GridLayout(0, 1, 0, 1))
         val settingsFrame = createTitledPanel("Settings", settingsPanel)
 
-        val buttonPanel = JPanel(FlowLayout(FlowLayout.LEFT, 5, 0))
+        val buttonPanel = JPanel(FlowLayout(FlowLayout.LEFT, 5, 5))
         val btnSize = Dimension(Constants.BUTTON_WIDTH_SMALL, Constants.BUTTON_HEIGHT_SMALL)
         val btnCopy =
             JButton("Copy").apply {
@@ -637,7 +639,7 @@ class InterfaceUI : JFrame() {
                 layout = BoxLayout(this, BoxLayout.Y_AXIS)
 
                 add(SwingUtils.labeledField("Text", txt_text))
-                add(Box.createRigidArea(Dimension(0, 5)))
+                add(Box.createRigidArea(Dimension(0, 1)))
 
                 val twoColumn = JPanel(GridLayout(0, 2, 0, 0))
                 textTabData.filter { it.first != "Text" }.forEach { (label, field) -> twoColumn.add(SwingUtils.labeledField(label, field)) }
@@ -667,6 +669,10 @@ class InterfaceUI : JFrame() {
         val settingsData =
             listOf("Show Layer" to chckbxShowContainers, "Show Models" to chckbxShowModels, "Show Hidden" to chckbxShowHiddenComps)
 
+        chckbxShowContainers.selectedItem = true
+        chckbxShowModels.selectedItem = true
+        chckbxShowHiddenComps.selectedItem = false
+
         settingsData.forEach { (label, combo) ->
             val comp = SwingUtils.labeledField(label, combo)
 
@@ -695,11 +701,11 @@ class InterfaceUI : JFrame() {
             JPanel().apply {
                 layout = BoxLayout(this, BoxLayout.Y_AXIS)
                 add(buttonsFrame)
-                add(Box.createRigidArea(Dimension(0, 5)))
+                add(Box.createRigidArea(Dimension(0, 1)))
                 add(textFrame)
-                add(Box.createRigidArea(Dimension(0, 5)))
+                add(Box.createRigidArea(Dimension(0, 1)))
                 add(modelFrame)
-                add(Box.createRigidArea(Dimension(0, 5)))
+                add(Box.createRigidArea(Dimension(0, 1)))
                 add(settingsFrame)
             }
 

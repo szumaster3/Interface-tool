@@ -84,8 +84,7 @@ class ComponentDefinition {
     var optionCircumfix: String? = ""
     var optionMask: Int = 0
     var Option: Int = 0
-    private val option = 0
-    private var mask = 0
+    private var mask = -1
     var menuOptionsCount: Int = 0
 
     var dragDeadtime: Int = 0
@@ -185,13 +184,12 @@ class ComponentDefinition {
 
     fun encodeIf3(): ByteArray {
         val out = OutputStream()
+        out.writeByte(if (version.toInt() == -1) 255 else version.toInt())
 
-        out.writeByte(version.toInt())
-
-        val t = type and 0x7F
-        if (name != null && !name!!.isEmpty()) {
+        var t = type and 0x7F
+        if (!name.isNullOrEmpty()) {
             out.writeByte(t or 0x80)
-            out.writeString(name)
+            out.writeString(name!!)
         } else {
             out.writeByte(t)
         }
@@ -206,132 +204,148 @@ class ComponentDefinition {
         out.writeByte(xMode.toInt())
         out.writeByte(yMode.toInt())
 
-        out.writeShort(if (parentId == -1) 65535 else parentId and 0xFFFF)
-        out.writeByte(if (hidden) 1 else 0)
+        out.writeShort(
+            if (type != ComponentConstants.LAYER && parentId != -1)
+                parentId and 0xFFFF
+            else
+                65535
+        )
 
-        if (type == ComponentConstants.LAYER) {
-            out.writeShort(scrollMaxH)
-            out.writeShort(scrollMaxV)
-            out.writeByte(if (noClickThrough) 1 else 0)
-        }
+        var flags = 0
+        if (hidden) flags = flags or 0x1
+        if (noClickThrough) flags = flags or 0x2
+        out.writeByte(flags)
 
-        if (type == ComponentConstants.SPRITE) {
-            out.writeInt(spriteId)
-            out.writeShort(angle2d)
-            var spriteFlags = 0
-            if (spriteTiling) spriteFlags = spriteFlags or 1
-            if (hasAlpha) spriteFlags = spriteFlags or 2
-            out.writeByte(spriteFlags)
-            out.writeByte(transparency)
-            out.writeByte(borderThickness)
-            out.writeInt(shadowColor)
-            out.writeByte(if (vFlip) 1 else 0)
-            out.writeByte(if (hFlip) 1 else 0)
-        }
-
-        if (type == ComponentConstants.MODEL) {
-            out.writeShort(if (modelId == -1) 65535 else modelId)
-
-            var flag = 0
-            if (animated) flag = flag or 0x4
-            if (centreType) flag = flag or 0x2
-            if (ignoreZBuffer) flag = flag or 0x8
-            if (
-                viewportZ == 0 &&
-                (viewportX != 0 || viewportY != 0 || spritePitch != 0 || spriteRoll != 0 || spriteYaw != 0 || spriteScale != 100)
-            )
-                flag = flag or 0x1
-
-            out.writeByte(flag)
-
-            if ((flag and 0x1) != 0) {
-                out.writeShort(viewportX)
-                out.writeShort(viewportY)
-                out.writeShort(spritePitch)
-                out.writeShort(spriteRoll)
-                out.writeShort(spriteYaw)
-                out.writeShort(spriteScale)
-            } else if (centreType) {
-                out.writeShort(viewportX)
-                out.writeShort(viewportY)
-                out.writeShort(viewportZ)
-                out.writeShort(spritePitch)
-                out.writeShort(spriteRoll)
-                out.writeShort(spriteYaw)
-                out.writeShort(spriteScale)
+        when (type) {
+            ComponentConstants.LAYER -> {
+                out.writeShort(scrollMaxH)
+                out.writeShort(scrollMaxV)
+                out.writeByte(if (noClickThrough) 1 else 0)
             }
 
-            out.writeShort(if (modelAnimId == -1) 65535 else modelAnimId)
+            ComponentConstants.SPRITE -> {
+                out.writeInt(spriteId)
+                out.writeShort(angle2d)
 
-            if (aspectWidthType.toInt() != 0) out.writeShort(dynamicWidth)
-            if (aspectHeightType.toInt() != 0) out.writeShort(dynamicHeight)
+                var spriteFlags = 0
+                if (spriteTiling) spriteFlags = spriteFlags or 0x1
+                if (hasAlpha) spriteFlags = spriteFlags or 0x2
+                out.writeByte(spriteFlags)
+
+                out.writeByte(transparency)
+                out.writeByte(borderThickness)
+                out.writeInt(shadowColor)
+                out.writeByte(if (vFlip) 1 else 0)
+                out.writeByte(if (hFlip) 1 else 0)
+            }
+
+            ComponentConstants.MODEL -> {
+                out.writeShort(if (modelId == -1) 65535 else modelId)
+
+                var modelFlags = 0
+                if (animated) modelFlags = modelFlags or 0x4
+                if (centreType) modelFlags = modelFlags or 0x2
+                if (ignoreZBuffer) modelFlags = modelFlags or 0x8
+
+                val simple =
+                    viewportZ == 0 &&
+                            (viewportX != 0 || viewportY != 0 ||
+                                    spritePitch != 0 || spriteRoll != 0 ||
+                                    spriteYaw != 0 || spriteScale != 100)
+
+                if (simple) modelFlags = modelFlags or 0x1
+                out.writeByte(modelFlags)
+
+                if ((modelFlags and 0x1) != 0) {
+                    out.writeShort(viewportX)
+                    out.writeShort(viewportY)
+                    out.writeShort(spritePitch)
+                    out.writeShort(spriteRoll)
+                    out.writeShort(spriteYaw)
+                    out.writeShort(spriteScale)
+                } else {
+                    out.writeShort(viewportX)
+                    out.writeShort(viewportY)
+                    if (centreType) out.writeShort(viewportZ)
+                    out.writeShort(spritePitch)
+                    out.writeShort(spriteRoll)
+                    out.writeShort(spriteYaw)
+                    out.writeShort(spriteScale)
+                }
+
+                out.writeShort(if (modelAnimId == -1) 65535 else modelAnimId)
+                if (aspectWidthType.toInt() != 0 && dynamicWidth != 0)
+                    out.writeShort(dynamicWidth)
+
+                if (aspectHeightType.toInt() != 0 && dynamicHeight != 0)
+                    out.writeShort(dynamicHeight)
+            }
+
+            ComponentConstants.TEXT -> {
+                out.writeShort(if (fontId == -1) 65535 else fontId)
+                out.writeString(text ?: "")
+                out.writeByte(vPadding)
+                out.writeByte(textHorizontalAli)
+                out.writeByte(textVerticalAli)
+                out.writeByte(if (shadow) 1 else 0)
+                out.writeInt(color)
+                out.writeByte(transparency)
+                out.writeByte(if (multiline) 1 else 0)
+            }
+
+            ComponentConstants.FIGURE -> {
+                out.writeInt(color)
+                out.writeByte(if (filled) 1 else 0)
+                out.writeByte(transparency)
+            }
+
+            ComponentConstants.UNKNOWN -> {
+                out.writeByte(lineWidth.toInt())
+                out.writeInt(color)
+                out.writeByte(if (unknownProp_8) 1 else 0)
+            }
         }
 
-        if (type == ComponentConstants.TEXT) {
-            out.writeShort(if (fontId == -1) 65535 else fontId)
-            out.writeString(if (text != null) text else "")
-            out.writeByte(vPadding)
-            out.writeByte(textHorizontalAli)
-            out.writeByte(textVerticalAli)
-            out.writeByte(if (shadow) 1 else 0)
-            out.writeInt(color)
-            out.writeByte(transparency)
-            out.writeByte(if (multiline) 1 else 0)
-        }
-
-        if (type == ComponentConstants.FIGURE) {
-            out.writeInt(color)
-            out.writeByte(if (filled) 1 else 0)
-            out.writeByte(transparency)
-        }
-
-        if (type == ComponentConstants.UNKNOWN) {
-            out.writeByte(lineWidth.toInt())
-            out.writeInt(color)
-            out.writeByte(if (unknownProp_8) 1 else 0)
-        }
         out.write24BitInt(optionMask)
-        if (opId == null || opId!!.size == 0) {
+
+        if (opId == null) {
             out.writeByte(0)
         } else {
             for (i in opId!!.indices) {
                 val v = if (opId!![i] == -1) 4095 else opId!![i]
                 out.writeByte(((i + 1) shl 4) or (v shr 8))
                 out.writeByte(v and 0xFF)
-                out.writeByte((if (repeatCount != null && repeatCount!!.size > i) repeatCount!![i] else 0).toInt())
-                out.writeByte((if (modifier != null && modifier!!.size > i) modifier!![i] else 0).toInt())
+                out.writeByte(repeatCount?.getOrNull(i)?.toInt() ?: 0)
+                out.writeByte(modifier?.getOrNull(i)?.toInt() ?: 0)
             }
             out.writeByte(0)
         }
 
-        out.writeString(if (optionBase != null) optionBase else "")
-        val opCount = if (rightclickOptions == null) 0 else rightclickOptions!!.size
-        val cursorCount = menuOptionsCount shr 4
-        out.writeByte((cursorCount shl 4) or opCount)
-        if (opCount > 0) for (s in rightclickOptions!!) out.writeString(s ?: "")
+        out.writeString(optionBase ?: "")
 
-        if (cursorCount > 0) {
-            out.writeByte(Option)
-            out.writeShort(opCursors[Option])
-        }
-        if (cursorCount > 1) {
-            out.writeByte(option)
-            out.writeShort(opCursors[option])
-        }
+        val optionCount = rightclickOptions?.size ?: 0
+        val cursorCount = opCursors?.size ?: 0
+        out.writeByte((cursorCount shl 4) or optionCount)
+
+        if (optionCount > 0)
+            for (s in rightclickOptions!!)
+                out.writeString(s ?: "")
+
+        if (cursorCount > 0)
+            for (i in 0 until cursorCount)
+                out.writeShort(opCursors!![i])
 
         out.writeByte(dragDeadzone)
         out.writeByte(dragDeadtime)
         out.writeByte(if (dragRenderBehavior) 1 else 0)
-        out.writeString(if (optionCircumfix != null) optionCircumfix else "")
+        out.writeString(optionCircumfix ?: "")
+
         if ((optionMask shr 11 and 0x7F) != 0) {
             out.writeShort(mask)
             out.writeShort(targetOverCursor)
             out.writeShort(targetLeaveCursor)
         }
-        if (version >= 0) {
-            out.writeShort(mouseOverCursor)
-        }
-
+        settings= IComponentSettings(optionMask,mask)
         encodeScript(onLoadScript, out)
         encodeScript(onMouseHoverScript, out)
         encodeScript(onMouseLeaveScript, out)
@@ -352,6 +366,7 @@ class ComponentDefinition {
         encodeScript(onScroll, out)
         encodeScript(onVarcTransmit, out)
         encodeScript(onVarcStrTransmit, out)
+
         encodeTriggers(varpTriggers, out)
         encodeTriggers(inventoryTriggers, out)
         encodeTriggers(statTriggers, out)
@@ -523,9 +538,7 @@ class ComponentDefinition {
             targetLeaveCursor = stream.readUnsignedShort()
         }
 
-        if (version >= 0) mouseOverCursor = stream.readUnsignedShort()
-
-        settings = IComponentSettings(optionMask, mask)
+        settings= IComponentSettings(optionMask,mask)
 
         onLoadScript = decodeScript(stream)
         onMouseHoverScript = decodeScript(stream)
@@ -583,7 +596,7 @@ class ComponentDefinition {
             objects[index] =
                 when (type) {
                     0 -> buffer.readInt()
-                    1 -> buffer.readString()
+                    1 -> getString(buffer)
                     else -> null
                 }
         }
@@ -635,7 +648,7 @@ class ComponentDefinition {
         spriteId = -1
         xMode = 0.toByte()
         anInt4748 = -1
-        settings = IComponentSettings(0, -1)
+        settings = IComponentSettings(mask, -1)
         contentType = 0
         anInt4811 = 0
         baseHeight = 0

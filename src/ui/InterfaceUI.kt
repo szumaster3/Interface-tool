@@ -42,6 +42,8 @@ import ui.theme.ComponentTreeRenderer
 import ui.theme.DepthComboBox
 import ui.theme.IconLibrary
 import ui.theme.SpinnerTextField
+import javax.swing.JList
+
 
 class InterfaceUI : JFrame() {
     var progressMonitor: ProgressMonitor? = null
@@ -96,7 +98,7 @@ class InterfaceUI : JFrame() {
     private val txt_option5 = SpinnerTextField(10)
     private val txt_modex = SpinnerTextField(10)
     private val txt_positionmodeY = SpinnerTextField(10)
-
+    private val txt_optionMask = SpinnerTextField(10)
     private val txt_border = SpinnerTextField(10)
     private val txt_sprite = SpinnerTextField(10)
     private val txt_modeHeight = SpinnerTextField(10)
@@ -114,6 +116,9 @@ class InterfaceUI : JFrame() {
     private val txt_modelZoom = SpinnerTextField(10)
     private val txt_yali = SpinnerTextField(10)
     private var txt_interId = SpinnerTextField(10)
+    private var txt_dynamicWidth = SpinnerTextField(10)
+    private var txt_dynamicHeight = SpinnerTextField(10)
+
     private var ifListScrollPane: JScrollPane? = null
     private var result: BufferedImage? = null
 
@@ -130,6 +135,7 @@ class InterfaceUI : JFrame() {
     private val txt_onVarpTransmit = JTextField()
     private val txt_onInvTransmit = JTextField()
     private val txt_onStatTransmit = JTextField()
+
     private val txt_onTimer = JTextField()
     private val txt_varpTriggers = JTextField()
     private val txt_onOptionClick = JTextField()
@@ -147,12 +153,13 @@ class InterfaceUI : JFrame() {
     private val txt_onVarcTransmit = JTextField()
     private val txt_onVarcStrTransmit = JTextField()
 
+    private var updating = false
+
     private fun constructWestPanel() {
         val panel = JPanel(BorderLayout())
         panel.minimumSize = Dimension(Constants.LEFT_SCROLLPANE_WIDTH, Constants.DEFAULT_EDITOR_HEIGHT)
         panel.maximumSize = Dimension(Constants.LEFT_SCROLLPANE_WIDTH, Constants.DEFAULT_EDITOR_HEIGHT)
         panel.preferredSize = Dimension(Constants.LEFT_SCROLLPANE_WIDTH, Constants.DEFAULT_EDITOR_HEIGHT)
-
         val searchPanel = JPanel(FlowLayout())
         txt_interId = SpinnerTextField(10)
         txt_interId.setBounds(Constants.CONTENT_PADDING, Constants.CONTENT_PADDING, Constants.SEARCHBOX_WIDTH, Constants.SEARCHBOX_HEIGHT)
@@ -169,7 +176,6 @@ class InterfaceUI : JFrame() {
             }
         searchPanel.add(btnFind)
         panel.add(searchPanel, BorderLayout.NORTH)
-
         interface_list = JList(populateList())
         interface_list!!.selectionMode = ListSelectionModel.SINGLE_SELECTION
         interface_list!!.addListSelectionListener { evt ->
@@ -192,7 +198,6 @@ class InterfaceUI : JFrame() {
                 verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
                 preferredSize = Dimension(Constants.LEFT_SCROLLPANE_WIDTH, Constants.VIEWPORT_HEIGHT)
             }
-
         val moreButtonsPanel = JPanel()
         moreButtonsPanel.layout = BoxLayout(moreButtonsPanel, BoxLayout.Y_AXIS)
 
@@ -205,7 +210,6 @@ class InterfaceUI : JFrame() {
                 selectedIndex = 0
                 maximumSize = Dimension(Int.MAX_VALUE, Constants.BUTTON_HEIGHT)
                 alignmentX = Component.CENTER_ALIGNMENT
-
                 addPopupMenuListener(
                     object : javax.swing.event.PopupMenuListener {
                         override fun popupMenuWillBecomeVisible(e: javax.swing.event.PopupMenuEvent?) {}
@@ -217,7 +221,6 @@ class InterfaceUI : JFrame() {
                         override fun popupMenuCanceled(e: javax.swing.event.PopupMenuEvent?) {}
                     }
                 )
-
                 addActionListener {
                     val selected = selectedItem
                     if (selected is InterfaceRenderer) {
@@ -241,7 +244,6 @@ class InterfaceUI : JFrame() {
                 .apply {
                     selectedIndex = 0
                     maximumSize = Dimension(Int.MAX_VALUE, Constants.BUTTON_HEIGHT)
-
                     addPopupMenuListener(
                         object : javax.swing.event.PopupMenuListener {
                             override fun popupMenuWillBecomeVisible(e: javax.swing.event.PopupMenuEvent?) {}
@@ -262,56 +264,76 @@ class InterfaceUI : JFrame() {
                 maximumSize = Dimension(Int.MAX_VALUE, Constants.BUTTON_HEIGHT)
                 alignmentX = Component.CENTER_ALIGNMENT
                 addActionListener {
-                    val defaultComp =
-                        ComponentDefinition().apply {
-                            componentId = ComponentDefinition.interfaceDefinitionsSize
-                            type = ComponentConstants.SPRITE
-                            optionBase = ""
-                            baseX = 0
-                            baseY = 0
-                            baseWidth = 18
-                            baseHeight = 18
-                            spriteId = 18
-                            parentId = -1
-                        }
+                    val newInterfaceId = ComponentDefinition.interfaceDefinitionsSize
+                    val defaultButton = ComponentDefinition.getInterfaceComponent(830, 0)
+                    defaultButton!!.parentId = -1
+                    Cache.store!!.indexes[3].putFile(newInterfaceId, 0, defaultButton.encode(true))
+                    ComponentDefinition.componentDefinition = ComponentDefinition.componentDefinition!!.copyOf(newInterfaceId + 1)
+                    currentInterface = newInterfaceId
+                    val newInterfaceListModel = populateList()
+                    (interface_list as JList<String>).model = newInterfaceListModel
+                    val indexToSelect =
+                        (0 until newInterfaceListModel.size).firstOrNull {
+                            newInterfaceListModel.getElementAt(it) == "Interface: $newInterfaceId"
+                        } ?: 0
+                    (interface_list as JList<String>).selectedIndex = indexToSelect
+                    (interface_list as JList<String>).ensureIndexIsVisible(indexToSelect)
+                    val newCompListModel = createComponentList(currentInterface)
+                    componentList.model = newCompListModel
+                    selectedComp = 0
+                    if (newCompListModel.size > 0) {
+                        componentList.selectedIndex = 0
+                        componentList.ensureIndexIsVisible(0)
+                        selectedComp = componentList.selectedValue.toString().substringBefore(":").trim().toInt()
+                    }
 
-                    Cache.store!!.indexes[3].putFile(defaultComp.componentId, 0, defaultComp.encode(true))
-
-                    ComponentDefinition.componentDefinition = arrayOfNulls(ComponentDefinition.interfaceDefinitionsSize)
-
-                    val newModel = populateList()
-                    interface_list!!.model = newModel
-
-                    interface_list!!.setSelectedValue("Interface: ${defaultComp.componentId}", true)
-
-                    drawTree(defaultComp.componentId)
-                    viewportPanel?.repaint()
+                    val newTreeModel = createInterfaceTree(currentInterface)
+                    componentTree.model = newTreeModel
+                    drawTree(currentInterface)
                 }
             }
+
         val deleteInterfaceButton =
             JButton("Delete Selected").apply {
                 maximumSize = Dimension(Int.MAX_VALUE, Constants.BUTTON_HEIGHT)
                 alignmentX = Component.CENTER_ALIGNMENT
                 addActionListener {
+                    if (currentInterface == -1) return@addActionListener
+
                     val option =
                         JOptionPane.showConfirmDialog(
                             null,
-                            "Are you sure that you want to remove interface $currentInterface?",
+                            "Are you sure that you want to clear components in interface $currentInterface?",
                             "Warning",
                             JOptionPane.YES_NO_OPTION
                         )
                     if (option == JOptionPane.YES_OPTION) {
                         val size = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface)
                         for (i in 0 until size) {
-                            if (i == 0) addBaseComponent(currentInterface, true)
-                            else Cache.store!!.indexes[3].removeFile(currentInterface, i)
+                            if (i == 0) addBaseComponent(currentInterface, true) else Cache.store!!.indexes[3].removeFile(currentInterface, i)
                         }
+
                         Cache.init()
                         ComponentDefinition.componentDefinition = arrayOfNulls(ComponentDefinition.interfaceDefinitionsSize)
+
+                        val newCompListModel = createComponentList(currentInterface)
+                        componentList.model = newCompListModel
+                        selectedComp =
+                            if (newCompListModel.size > 0) {
+                                componentList.selectedIndex = 0
+                                componentList.ensureIndexIsVisible(0)
+                                componentList.selectedValue.toString().substringBefore(":").trim().toInt()
+                            } else -1
+
+                        val newTreeModel = createInterfaceTree(currentInterface)
+                        componentTree.model = newTreeModel
+
                         drawTree(currentInterface)
+                        logger.info("Viewing: [$currentInterface]:[$selectedComp]")
                     }
                 }
             }
+
         val viewLabel = JLabel("View:")
         val viewCombo =
             JComboBox(arrayOf("by type", "by layer")).apply {
@@ -329,7 +351,6 @@ class InterfaceUI : JFrame() {
                 maximumSize = Dimension(Int.MAX_VALUE, Constants.BUTTON_HEIGHT)
                 alignmentX = Component.CENTER_ALIGNMENT
                 isOpaque = false
-
                 add(viewLabel)
                 add(Box.createRigidArea(Dimension(6, 0)))
                 add(viewCombo)
@@ -337,13 +358,10 @@ class InterfaceUI : JFrame() {
 
         interfaceOptionsPanel.add(JLabel("Render Option").apply { alignmentX = Component.CENTER_ALIGNMENT })
         interfaceOptionsPanel.add(Box.createRigidArea(Dimension(0, 5)))
-
         interfaceOptionsPanel.add(rendererCombo)
         interfaceOptionsPanel.add(Box.createRigidArea(Dimension(0, 5)))
-
         interfaceOptionsPanel.add(viewPanel)
         interfaceOptionsPanel.add(Box.createRigidArea(Dimension(0, 5)))
-
         interfaceOptionsPanel.add(newInterfaceButton)
         interfaceOptionsPanel.add(Box.createRigidArea(Dimension(0, 5)))
         interfaceOptionsPanel.add(deleteInterfaceButton)
@@ -392,7 +410,6 @@ class InterfaceUI : JFrame() {
 
         moreButtonsPanel.add(premadeScroll)
         moreButtonsPanel.add(Box.createRigidArea(Dimension(0, 10)))
-
         val actionsPanel = JPanel()
         actionsPanel.layout = BoxLayout(actionsPanel, BoxLayout.Y_AXIS)
         actionsPanel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
@@ -407,10 +424,7 @@ class InterfaceUI : JFrame() {
                         drawTree(currentInterface)
                         setValues(currentInterface, selectedComp)
                     } else {
-                        JOptionPane.showMessageDialog(
-                            interfaceViewportScrollPane,
-                            "Please select a component & interface before saving it."
-                        )
+                        JOptionPane.showMessageDialog(interfaceViewportScrollPane, "Please select a component & interface before saving it.")
                     }
                 }
             }
@@ -448,6 +462,7 @@ class InterfaceUI : JFrame() {
                     }
                 }
             }
+
         actionsPanel.add(Box.createRigidArea(Dimension(0, 5)))
         actionsPanel.add(saveButton)
         actionsPanel.add(Box.createRigidArea(Dimension(0, 5)))
@@ -631,7 +646,8 @@ class InterfaceUI : JFrame() {
                 "op4" to txt_option4,
                 "Y Align" to txt_yali,
                 "op5" to txt_option5,
-                "Has shadow" to chckbxShadow
+                "Has shadow" to chckbxShadow,
+                "Op mask" to txt_optionMask
             )
 
         val textPanel =
@@ -660,7 +676,9 @@ class InterfaceUI : JFrame() {
                 "Sprite Yaw" to txt_yaw,
                 "Animated" to chckbxAnimated,
                 "Sprite Roll" to txt_roll,
-                "Ignore Z Buffer" to chckbxIgnoreZ
+                "Ignore Z Buffer" to chckbxIgnoreZ,
+                "Dynamic Width" to txt_dynamicWidth,
+                "Dynamic Height" to txt_dynamicHeight,
             )
         val modelPanel = JPanel(GridLayout(0, 2, 0, 0))
         modelTabData.forEach { (label, field) -> modelPanel.add(SwingUtils.labeledField(label, field)) }
@@ -801,8 +819,6 @@ class InterfaceUI : JFrame() {
             val comp = ComponentDefinition.getInterfaceComponent(7, 1)
             comp?.baseX = 0
             comp?.baseY = 0
-            comp?.baseWidth = 1
-            comp?.baseHeight = 1
             comp?.parentId = -1
             comp?.componentHash = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface) + (currentInterface shl 16)
             Cache.store!!
@@ -973,7 +989,7 @@ class InterfaceUI : JFrame() {
             "Width Mode" to txt_widthMode,
             "Scroll X" to txt_scrollX,
             "Scroll Y" to txt_scrollY,
-            "Hover" to chckbxHover,
+            "Hover" to chckbxHover
         )
             .forEach { (label, field) -> topPanel.add(SwingUtils.labeledField(label, field)) }
 
@@ -1188,6 +1204,9 @@ class InterfaceUI : JFrame() {
         txt_border.getTextField().text = comp.borderThickness.toString()
         txt_color.getTextField().text = comp.color.toString()
         txt_trans.getTextField().text = comp.transparency.toString()
+        txt_optionMask.getTextField().text = comp.optionMask.toString()
+        txt_dynamicWidth.getTextField().text = comp.dynamicWidth.toString()
+        txt_dynamicHeight.getTextField().text = comp.dynamicHeight.toString()
 
         chckbxHorizontalFlip.selectedItem = comp.hFlip
         chckbxVerticalFlip.selectedItem = comp.vFlip
@@ -1448,14 +1467,18 @@ class InterfaceUI : JFrame() {
         var c = ComponentDefinition.getInterfaceComponent(inter, comp)
 
         if (c == null) {
-            c = ComponentDefinition()
-            c.componentId = comp
-            c.type = ComponentConstants.SPRITE
-            c.optionBase = ""
-            c.contentType = 0
-            if (ComponentDefinition.componentDefinition!![inter] == null)
+            c = ComponentDefinition().apply {
+                componentId = comp
+                type = ComponentConstants.SPRITE
+                optionBase = ""
+                contentType = 0
+            }
+
+            if (ComponentDefinition.componentDefinition!![inter] == null) {
                 ComponentDefinition.componentDefinition!![inter] =
                     arrayOfNulls(ComponentDefinition.getInterfaceDefinitionsComponentsSize(inter))
+            }
+
             ComponentDefinition.componentDefinition!![inter]!![comp] = c
         }
 
@@ -1482,32 +1505,26 @@ class InterfaceUI : JFrame() {
                 c.transparency = parseIntSafe(txt_trans.getTextField().text, 255)
                 c.borderThickness = parseIntSafe(txt_border.getTextField().text, 0)
                 c.shadowColor = 0
-
                 c.spriteTiling = (chckbxRepeat.selectedItem as? String)?.toBoolean() ?: false
                 c.hasAlpha = (chckbxHasAlpha.selectedItem as? String)?.toBoolean() ?: false
                 c.vFlip = (chckbxVerticalFlip.selectedItem as? String)?.toBoolean() ?: false
                 c.hFlip = (chckbxHorizontalFlip.selectedItem as? String)?.toBoolean() ?: false
-
-                c.flag = 0
-                if (c.spriteTiling) c.flag = c.flag or 1
-                if (c.hasAlpha) c.flag = c.flag or 2
             }
             ComponentConstants.MODEL -> {
                 c.modelId = parseIntSafe(txt_model.getTextField().text, -1)
                 c.modelAnimId = parseIntSafe(txt_animationId.getTextField().text, -1)
                 c.spriteScale = parseIntSafe(txt_modelZoom.getTextField().text, 100)
-                c.spriteTiling = (chckbxRepeat.selectedItem as? String)?.toBoolean() ?: false
-                c.hasAlpha = (chckbxHasAlpha.selectedItem as? String)?.toBoolean() ?: false
                 c.animated = (chckbxAnimated.selectedItem as? String)?.toBoolean() ?: false
                 c.centreType = (chckbxCentre.selectedItem as? String)?.toBoolean() ?: false
                 c.ignoreZBuffer = (chckbxIgnoreZ.selectedItem as? String)?.toBoolean() ?: false
-
                 c.viewportX = parseIntSafe(txt_viewportX.getTextField().text, 0)
                 c.viewportY = parseIntSafe(txt_viewportY.getTextField().text, 0)
                 c.viewportZ = parseIntSafe(txt_viewportZ.getTextField().text, 0)
                 c.spritePitch = parseIntSafe(txt_pitch.getTextField().text, 0)
                 c.spriteRoll = parseIntSafe(txt_roll.getTextField().text, 0)
                 c.spriteYaw = parseIntSafe(txt_yaw.getTextField().text, 0)
+                if (c.aspectWidthType.toInt() != 0) c.dynamicWidth = parseIntSafe(txt_dynamicWidth.getTextField().text, 0)
+                if (c.aspectHeightType.toInt() != 0) c.dynamicHeight = parseIntSafe(txt_dynamicHeight.getTextField().text, 0)
             }
             ComponentConstants.TEXT -> {
                 c.text = txt_text.getTextField().text
@@ -1526,13 +1543,15 @@ class InterfaceUI : JFrame() {
                 c.transparency = parseIntSafe(txt_trans.getTextField().text, 255)
             }
         }
-        c.optionMask = 0
-        c.rightclickOptions = null
 
-        if (!txt_leftclick.getTextField().text.isEmpty()) {
+        if (!txt_leftclick.getTextField().text.isNullOrEmpty()) {
             c.rightclickOptions = arrayOf(txt_leftclick.getTextField().text)
-            c.optionMask = ComponentConstants.CLICK_MASK
         }
+
+        if (c.rightclickOptions == null || c.rightclickOptions!!.isEmpty()) {
+            c.optionMask = parseIntSafe(txt_optionMask.getTextField().text, -1)
+        }
+
         c.onLoadScript = InterfaceUtils.getScriptArray(txt_onload.text)
         c.onMouseHoverScript = InterfaceUtils.getScriptArray(txt_fullonhover.text)
         c.onMouseLeaveScript = InterfaceUtils.getScriptArray(txt_mouseLeave.text)
@@ -1566,6 +1585,7 @@ class InterfaceUI : JFrame() {
         drawTree(inter)
         logger.info("Saved IF3 [$inter:$comp]")
     }
+
 
     private fun parseIntSafe(value: String, defaultValue: Int): Int {
         return try {

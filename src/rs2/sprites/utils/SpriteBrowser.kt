@@ -33,7 +33,7 @@ class SpriteBrowser(
 
         selectBtn.addActionListener {
             selectedTile?.let {
-                onSelect(it.spriteId, it.width, it.height)
+                onSelect(it.spriteId, it.spriteWidth, it.spriteHeight)
                 dispose()
             }
         }

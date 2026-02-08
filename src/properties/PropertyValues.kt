@@ -3,24 +3,19 @@ package properties
 import java.io.*
 import java.util.*
 
-/**
- * Manages all paths and property values.
- */
+
 object PropertyValues {
 
-    /** Stored paths */
+    
     var cache_path: String? = "data/cache/"
     var dump_path: String = "dump/"
     var sprite_path: String? = null
     var scripts_table_path: String? = "data/scriptsnotes/scripts_notes.csv"
 
-    /** Random input stream */
+    
     var input: InputStream? = null
 
-    /**
-     * Loads configuration from config.properties.
-     * Creates config.properties and scripts CSV if they do not exist.
-     */
+    
     @JvmStatic
     fun loadValues() {
         val prop = Properties()
@@ -34,7 +29,7 @@ object PropertyValues {
                 println("Loaded config from $propFileName")
             } else {
                 println("Config file not found. Creating default config at $propFileName")
-                // domyślne wartości
+
                 prop.setProperty("cache_path", cache_path ?: "data/cache/")
                 prop.setProperty("dump_path", dump_path)
                 prop.setProperty("sprite_path", sprite_path ?: "")
@@ -46,13 +41,13 @@ object PropertyValues {
                 }
             }
 
-            // Załaduj wartości z Properties
+
             cache_path = prop.getProperty("cache_path") ?: cache_path
             dump_path = prop.getProperty("dump_path") ?: dump_path
             sprite_path = prop.getProperty("sprite_path") ?: sprite_path
             scripts_table_path = prop.getProperty("scripts_table_path") ?: scripts_table_path
 
-            // Tworzymy CSV jeśli nie istnieje
+
             ensureScriptsTableExists()
 
         } catch (e: Exception) {
@@ -75,9 +70,7 @@ object PropertyValues {
         ensureScriptsTableExists()
     }
 
-    /**
-     * Creates the CSV file with header if it does not exist.
-     */
+    
     @JvmStatic
     private fun ensureScriptsTableExists() {
         try {

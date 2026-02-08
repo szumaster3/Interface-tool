@@ -1,10 +1,10 @@
 package tools.build
 
-import com.logging.LogFactory
-import com.rs.cache.Cache
-import com.rs.cache.loaders.ComponentDefinition
 import java.util.function.Consumer
 import java.util.logging.Logger
+import rs2.cache.Cache
+import rs2.cache.loaders.ComponentDefinition
+import rs2.logging.LogFactory
 import ui.InterfaceUI
 
 class Copy private constructor(val targetInterface: Int) {

@@ -1,9 +1,9 @@
 package tools.build
 
-import com.rs.cache.Cache
-import properties.PropertyValues.loadValues
-import tools.build.InterfaceBuilder.build
 import java.io.IOException
+import properties.PropertyValues.loadValues
+import rs2.cache.Cache
+import tools.build.InterfaceBuilder.build
 
 object LaunchBuilder {
     @Throws(IOException::class)

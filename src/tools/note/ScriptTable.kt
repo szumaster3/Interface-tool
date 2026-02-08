@@ -13,6 +13,7 @@ import properties.PropertyValues
 class ScriptTable : JFrame("Script Table") {
     private val file: File
         get() = File(PropertyValues.scripts_table_path ?: "data/scriptsnotes/scripts_notes.csv")
+
     private val tableModel = DefaultTableModel(arrayOf("Script ID", "Args", "Description"), 0)
     private val table = JTable(tableModel)
     private val saveBtn = JButton("Save")
@@ -32,10 +33,11 @@ class ScriptTable : JFrame("Script Table") {
         val addRowBtn = JButton("Add Row").apply { addActionListener { tableModel.addRow(arrayOf("", "", "")) } }
         saveBtn.apply { addActionListener { save() } }
 
-        val bottomPanel = JPanel().apply{
-            add(addRowBtn)
-            add(saveBtn)
-        }
+        val bottomPanel =
+            JPanel().apply {
+                add(addRowBtn)
+                add(saveBtn)
+            }
 
         add(scrollPane, BorderLayout.CENTER)
         add(bottomPanel, BorderLayout.SOUTH)
@@ -43,62 +45,70 @@ class ScriptTable : JFrame("Script Table") {
         updateButtonState()
         tableModel.addTableModelListener { updateButtonState() }
 
-        table.addMouseListener(object : MouseAdapter()
-        {
-            override fun mousePressed(e: MouseEvent) {
-                if (SwingUtilities.isRightMouseButton(e))
-                {
-                    val row = table.rowAtPoint(e.point)
-                    if (row != -1) {
+        table.addMouseListener(
+            object : MouseAdapter() {
+                override fun mousePressed(e: MouseEvent) {
+                    if (SwingUtilities.isRightMouseButton(e)) {
+                        val row = table.rowAtPoint(e.point)
+                        if (row != -1) {
 
-                        val confirm = JOptionPane.showConfirmDialog(
-                            this@ScriptTable,
-                            "Delete this row?",
-                            "Confirm Delete",
-                            JOptionPane.YES_NO_OPTION
-                        )
+                            val confirm =
+                                JOptionPane.showConfirmDialog(
+                                    this@ScriptTable,
+                                    "Delete this row?",
+                                    "Confirm Delete",
+                                    JOptionPane.YES_NO_OPTION
+                                )
 
-                        if (confirm == JOptionPane.YES_OPTION)
-                        {
-                            tableModel.removeRow(row)
+                            if (confirm == JOptionPane.YES_OPTION) {
+                                tableModel.removeRow(row)
+                            }
                         }
                     }
                 }
             }
-        })
+        )
 
-        table.setDefaultRenderer(Any::class.java, object : DefaultTableCellRenderer()
-        {
-            override fun getTableCellRendererComponent(
-                table: JTable?, value: Any?, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int
-            ): Component {
-                val comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column)
-                val isEmptyRow = (0 until tableModel.columnCount).all { tableModel.getValueAt(row, it).toString().isBlank() }
-                if (table != null) {
-                    comp.background = if (isEmptyRow) Color(140, 140, 140)
-                    else if (isSelected) table.selectionBackground else table.background
+        table.setDefaultRenderer(
+            Any::class.java,
+            object : DefaultTableCellRenderer() {
+                override fun getTableCellRendererComponent(
+                    table: JTable?,
+                    value: Any?,
+                    isSelected: Boolean,
+                    hasFocus: Boolean,
+                    row: Int,
+                    column: Int
+                ): Component {
+                    val comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column)
+                    val isEmptyRow = (0 until tableModel.columnCount).all { tableModel.getValueAt(row, it).toString().isBlank() }
+                    if (table != null) {
+                        comp.background =
+                            if (isEmptyRow) Color(140, 140, 140) else if (isSelected) table.selectionBackground else table.background
+                    }
+                    return comp
                 }
-                return comp
             }
-        })
+        )
 
-        addWindowListener(object : java.awt.event.WindowAdapter() {
-            override fun windowClosing(e: java.awt.event.WindowEvent?) {
-                if (saveBtn.isEnabled) save()
+        addWindowListener(
+            object : java.awt.event.WindowAdapter() {
+                override fun windowClosing(e: java.awt.event.WindowEvent?) {
+                    if (saveBtn.isEnabled) save()
+                }
             }
-        })
+        )
 
         isVisible = true
     }
 
-    private fun load()
-    {
+    private fun load() {
         if (!file.exists()) return
         try {
             file.readLines().forEach { line ->
                 val trimmed = line.trim()
                 if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("\"Script ID\"")) return@forEach
-                val cols = parse    (line)
+                val cols = parse(line)
                 if (cols.size >= 3 && cols.any { it.isNotBlank() }) {
                     tableModel.addRow(arrayOf(cols[0], cols[1], cols[2]))
                 }
@@ -109,8 +119,7 @@ class ScriptTable : JFrame("Script Table") {
     }
 
     private fun save() {
-        if (tableModel.rowCount == 0 ||
-            tableModel.dataVector.all { row -> (row as Vector<*>).all { it.toString().isBlank() } }) return
+        if (tableModel.rowCount == 0 || tableModel.dataVector.all { row -> (row as Vector<*>).all { it.toString().isBlank() } }) return
 
         try {
             file.parentFile?.mkdirs()
@@ -139,10 +148,12 @@ class ScriptTable : JFrame("Script Table") {
         line.forEach { char ->
             when (char) {
                 '"' -> inQuotes = !inQuotes
-                '|' -> if (inQuotes) current.append(char) else {
-                    result.add(current.toString().trim())
-                    current = StringBuilder()
-                }
+                '|' ->
+                    if (inQuotes) current.append(char)
+                    else {
+                        result.add(current.toString().trim())
+                        current = StringBuilder()
+                    }
                 else -> current.append(char)
             }
         }
@@ -151,7 +162,7 @@ class ScriptTable : JFrame("Script Table") {
     }
 
     private fun updateButtonState() {
-        saveBtn.isEnabled = tableModel.rowCount > 0 &&
-                tableModel.dataVector.any { row -> (row as Vector<*>).any { it.toString().isNotBlank() } }
+        saveBtn.isEnabled =
+            tableModel.rowCount > 0 && tableModel.dataVector.any { row -> (row as Vector<*>).any { it.toString().isNotBlank() } }
     }
 }

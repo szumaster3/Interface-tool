@@ -5,12 +5,6 @@ import java.io.OutputStream
 import javax.swing.JTextArea
 import javax.swing.SwingUtilities
 
-/**
- * Interface tool
- * @author paolo
- * @date 27/07/2019
- * @discord #Shnek6969
- */
 class TextAreaOutputStream(private val textArea: JTextArea, private val title: String) : OutputStream() {
     private val sb = StringBuilder()
 

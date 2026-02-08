@@ -1,7 +1,7 @@
 package tools.print
 
-import com.rs.cache.loaders.ComponentDefinition
-import com.rs.cache.loaders.IComponentSettings
+import rs2.cache.loaders.ComponentDefinition
+import rs2.cache.loaders.IComponentSettings
 import java.io.FileWriter
 import java.lang.reflect.Field
 import java.util.logging.Logger
@@ -66,17 +66,22 @@ object GenericPrinter {
     private fun shouldPrint(f: Field, v: Any?): Boolean {
         if (v == null) return false
 
+
+        if (f.name == "componentDefinition") return false
         val type = f.type
-        if (Array<Array<ComponentDefinition>>::class.java.isAssignableFrom(type)) return false
+        if (type.isArray && ComponentDefinition::class.java.isAssignableFrom(type.componentType)) return false
+        if (v is Array<*> && v.isNotEmpty() && v[0] is ComponentDefinition) return false
+
         if (Logger::class.java.isAssignableFrom(type)) return false
         if (IComponentSettings::class.java.isAssignableFrom(type)) return true
 
-        if (type == String::class.java) return !(v as String).trim { it <= ' ' }.isEmpty()
+        if (type == String::class.java) return (v as String).trim().isNotEmpty()
         if (type == Boolean::class.javaPrimitiveType || type == Boolean::class.java) return v as Boolean
         if (Number::class.java.isAssignableFrom(type) || type.isPrimitive) {
             val `val` = (v as Number).toDouble()
             return `val` != 0.0 && `val` != -1.0
         }
+
 
         if (type.isArray) {
             val compType = type.componentType
@@ -138,8 +143,15 @@ object GenericPrinter {
         for (f in fields) {
             f.isAccessible = true
             val value = f[comp]
-            if (value is Array<*> && value.isArrayOf<Any>()) {
-                val arr = value as Array<Any>
+
+
+            if (f.name == "componentDefinition") continue
+            if (value is Array<*> && value.isNotEmpty() && value[0] is ComponentDefinition) continue
+
+
+            if (value is Array<*>) {
+                if (value.isNotEmpty() && value.all { it is ComponentDefinition }) continue
+                val arr = value
                 if (arr.size > 0) {
                     out.write("comp." + f.name + " = new Object[]{" + formatArray(arr) + "};\n")
                 }
@@ -153,15 +165,16 @@ object GenericPrinter {
     }
 
     @Throws(Exception::class)
-    private fun formatArray(arr: Array<Any>): String {
+    private fun formatArray(arr: Array<*>): String {
         val sb = StringBuilder()
         for (i in arr.indices) {
-            sb.append(format(arr[i]))
+            val v = arr[i]
+            if (v is ComponentDefinition) continue
+            sb.append(format(v))
             if (i < arr.size - 1) sb.append(", ")
         }
         return sb.toString()
     }
-
     private fun formatIntArray(arr: IntArray): String {
         val sb = StringBuilder()
         for (i in arr.indices) {

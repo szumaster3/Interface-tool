@@ -1,7 +1,7 @@
 package tools.print
 
-import com.rs.cache.Cache
 import properties.PropertyValues.loadValues
+import rs2.cache.Cache
 import tools.print.GenericPrinter.printInterface
 
 object Printer {
@@ -11,6 +11,6 @@ object Printer {
         loadValues()
         Cache.init()
 
-        printInterface(834)
+        printInterface(762)
     }
 }

@@ -1,7 +1,7 @@
 package tools.build
 
-import com.rs.cache.loaders.ComponentDefinition
 import java.util.function.Consumer
+import rs2.cache.loaders.ComponentDefinition
 
 class CopyTask internal constructor(private val parent: Copy, val sourceId: Int, val targetId: Int) {
     var modifier: Consumer<ComponentDefinition>? = null

@@ -3,13 +3,13 @@ package rs2.cache.loaders
 import com.alex.io.InputStream
 import com.alex.io.OutputStream
 import com.alex.store.Index
-import java.util.*
-import kotlin.math.max
 import rs2.cache.Cache
 import rs2.interfaces.ComponentConstants
 import rs2.interfaces.InterfaceUtils.getParent
 import rs2.interfaces.draw.ComponentPosition.setValues
 import rs2.logging.LogFactory.createLogger
+import java.util.*
+import kotlin.math.max
 
 class ComponentDefinition {
     var version: Byte = 0
@@ -500,7 +500,7 @@ class ComponentDefinition {
             }
         }
 
-        optionBase = stream.readString()
+        optionBase = getString(stream)
 
         val optionFlags = stream.readUnsignedByte()
         val optionCount = optionFlags and 0xF
@@ -508,7 +508,7 @@ class ComponentDefinition {
 
         if (optionCount > 0) {
             rightclickOptions = arrayOfNulls(optionCount)
-            for (i in 0 until optionCount) rightclickOptions!![i] = stream.readString()
+            for (i in 0 until optionCount) rightclickOptions!![i] = getString(stream)
         }
 
         if (cursorCount > 0) {
@@ -519,7 +519,7 @@ class ComponentDefinition {
         dragDeadzone = stream.readUnsignedByte()
         dragDeadtime = stream.readUnsignedByte()
         dragRenderBehavior = stream.readUnsignedByte() == 1
-        optionCircumfix = stream.readString()
+        optionCircumfix = getString(stream)
 
         if ((optionMask shr 11 and 0x7F) != 0) {
             mask = stream.readUnsignedShort()
@@ -614,6 +614,15 @@ class ComponentDefinition {
         for (index in 0 until length) {
             out.writeInt(arr!![index])
         }
+    }
+
+    fun getString(stream: InputStream): String {
+        val s = StringBuilder()
+        var b: Int
+        while ((stream.readByte().also { b = it }) != 0) {
+            s.append(b.toChar())
+        }
+        return s.toString()
     }
 
     init {

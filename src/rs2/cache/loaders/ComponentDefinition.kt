@@ -587,7 +587,7 @@ class ComponentDefinition {
             objects[index] =
                 when (type) {
                     0 -> buffer.readInt()
-                    1 -> buffer.readString()
+                    1 -> getString(buffer)
                     else -> null
                 }
         }

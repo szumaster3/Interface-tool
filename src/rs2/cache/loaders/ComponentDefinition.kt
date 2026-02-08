@@ -135,19 +135,15 @@ class ComponentDefinition {
     var anInt4681: Int = 0
     var anInt4683: Int = 0
     var anInt4687: Int = 0
-    var anInt4700: Int = 1
     var anInt4703: Int = 0
     var anInt4709: Int = 0
-    var anInt4714: Int = 2
     var anInt4718: Int = 0
     var anInt4719: Int = 0
     var anInt4734: Int = 0
     var anInt4747: Int = 0
     var anInt4748: Int = 0
-    var anInt4752: Int = 1
     var anInt4780: Int = 0
     var anInt4783: Int = 0
-    var anInt4792: Int = 1
     var anInt4797: Int = 0
     var anInt4801: Int = 0
     var anInt4810: Int = 0
@@ -179,9 +175,9 @@ class ComponentDefinition {
     var lineWidth: Byte = 0
     var unknownProp_8: Boolean = false
 
-    var anIntArray4705: IntArray? = null
-    var aByteArray4806: ByteArray? = null
-    var aByteArray4733: ByteArray? = null
+    var opId: IntArray? = null
+    var repeatCount: ByteArray? = null
+    var modifier: ByteArray? = null
 
     fun encode(hasScripts: Boolean): ByteArray {
         return encodeIf3()
@@ -295,15 +291,15 @@ class ComponentDefinition {
             out.writeByte(if (unknownProp_8) 1 else 0)
         }
         out.write24BitInt(optionMask)
-        if (anIntArray4705 == null || anIntArray4705!!.size == 0) {
+        if (opId == null || opId!!.size == 0) {
             out.writeByte(0)
         } else {
-            for (i in anIntArray4705!!.indices) {
-                val v = if (anIntArray4705!![i] == -1) 4095 else anIntArray4705!![i]
+            for (i in opId!!.indices) {
+                val v = if (opId!![i] == -1) 4095 else opId!![i]
                 out.writeByte(((i + 1) shl 4) or (v shr 8))
                 out.writeByte(v and 0xFF)
-                out.writeByte((if (aByteArray4806 != null && aByteArray4806!!.size > i) aByteArray4806!![i] else 0).toInt())
-                out.writeByte((if (aByteArray4733 != null && aByteArray4733!!.size > i) aByteArray4733!![i] else 0).toInt())
+                out.writeByte((if (repeatCount != null && repeatCount!!.size > i) repeatCount!![i] else 0).toInt())
+                out.writeByte((if (modifier != null && modifier!!.size > i) modifier!![i] else 0).toInt())
             }
             out.writeByte(0)
         }
@@ -479,9 +475,9 @@ class ComponentDefinition {
         optionMask = stream.read24BitInt()
         var key = stream.readUnsignedByte()
         if (key != 0) {
-            anIntArray4705 = IntArray(11)
-            aByteArray4806 = ByteArray(11)
-            aByteArray4733 = ByteArray(11)
+            opId = IntArray(11)
+            repeatCount = ByteArray(11)
+            modifier = ByteArray(11)
 
             while (key != 0) {
                 val index = (key shr 4) - 1
@@ -492,9 +488,9 @@ class ComponentDefinition {
                 val modifier = stream.readByte().toByte()
 
                 if (index >= 0 && index < 11) {
-                    anIntArray4705!![index] = value
-                    aByteArray4806!![index] = repeat
-                    aByteArray4733!![index] = modifier
+                    opId!![index] = value
+                    repeatCount!![index] = repeat
+                    this.modifier!![index] = modifier
                 }
                 key = stream.readUnsignedByte()
             }
@@ -587,7 +583,7 @@ class ComponentDefinition {
             objects[index] =
                 when (type) {
                     0 -> buffer.readInt()
-                    1 -> getString(buffer)
+                    1 -> buffer.readString()
                     else -> null
                 }
         }

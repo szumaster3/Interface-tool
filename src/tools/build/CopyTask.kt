@@ -157,16 +157,8 @@ class CopyTask internal constructor(private val parent: Copy, val sourceId: Int,
         return modify { cd: ComponentDefinition -> cd.targetOverCursor = `val` }
     }
 
-    fun anInt4700(`val`: Int): CopyTask {
-        return modify { cd: ComponentDefinition -> cd.anInt4700 = `val` }
-    }
-
     fun anInt4703(`val`: Int): CopyTask {
         return modify { cd: ComponentDefinition -> cd.anInt4703 = `val` }
-    }
-
-    fun anInt4714(`val`: Int): CopyTask {
-        return modify { cd: ComponentDefinition -> cd.anInt4714 = `val` }
     }
 
     fun anInt4718(`val`: Int): CopyTask {
@@ -286,7 +278,7 @@ class CopyTask internal constructor(private val parent: Copy, val sourceId: Int,
     }
 
     fun anIntArray4705(`val`: IntArray?): CopyTask {
-        return modify { cd: ComponentDefinition -> cd.anIntArray4705 = `val` }
+        return modify { cd: ComponentDefinition -> cd.opId = `val` }
     }
 
     fun varpTriggers(`val`: IntArray?): CopyTask {

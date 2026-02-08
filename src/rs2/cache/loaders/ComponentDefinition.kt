@@ -676,12 +676,12 @@ class ComponentDefinition {
     companion object {
         private val logger = createLogger(ComponentDefinition::class.java.name)
         var componentDefinition: Array<Array<ComponentDefinition?>?>? = arrayOfNulls<Array<ComponentDefinition?>?>(interfaceDefinitionsSize)
-        private val storeIndex: Index? = Cache.store!!.indexes[3]
+        private val storeIndex = Cache.store!!.indexes[3]
 
         @JvmStatic
         fun getInterface(id: Int, reload: Boolean): Array<ComponentDefinition?>? {
             if (componentDefinition == null) {
-                componentDefinition = arrayOfNulls<Array<ComponentDefinition?>?>(storeIndex!!.lastArchiveId + 1)
+                componentDefinition = arrayOfNulls<Array<ComponentDefinition?>?>(storeIndex.lastArchiveId + 1)
             }
 
             if (id < 0 || id >= componentDefinition!!.size) {
@@ -689,34 +689,33 @@ class ComponentDefinition {
                 return null
             }
 
-            val componentsSize = getInterfaceDefinitionsComponentsSize(id)
-            if (componentsSize <= 0) {
-
-                return null
+            if (componentDefinition!![id] != null && !reload) {
+                return componentDefinition!![id]
             }
 
-            if (componentDefinition!![id] == null || reload) {
-                componentDefinition!![id] = arrayOfNulls(componentsSize)
+            val filesCount = storeIndex!!.getValidFilesCount(id)
+            if (filesCount <= 0) return null
 
-                for (i in 0 until componentsSize) {
-                    val data = storeIndex!!.getFile(id, i)
-                    if (data == null) {
+            val if3Components = mutableListOf<ComponentDefinition?>()
 
-                        continue
-                    }
+            for (i in 0 until filesCount) {
+                val data = storeIndex.getFile(id, i) ?: continue
+                val version = data[0].toInt() and 0xFF
+                if (version != 255) continue
 
-                    val defs = ComponentDefinition()
-                    defs.componentHash = (id shl 16) or (i and 0xFFFF)
-                    try {
-                        defs.decode(InputStream(data), i, id)
-                    } catch (e: Exception) {
-
-                        continue
-                    }
-                    componentDefinition!![id]!![i] = defs
+                val defs = ComponentDefinition()
+                defs.componentHash = (id shl 16) or i
+                try {
+                    defs.decode(InputStream(data), i, id)
+                    if3Components.add(defs)
+                } catch (_: Exception) {
+                    continue
                 }
             }
 
+            if (if3Components.isEmpty()) return null
+
+            componentDefinition!![id] = if3Components.toTypedArray()
             return componentDefinition!![id]
         }
 
@@ -725,7 +724,7 @@ class ComponentDefinition {
             if (storeIndex == null || !storeIndex.archiveExists(id)) {
                 return 0
             }
-            return max(storeIndex.getValidFilesCount(id).toDouble(), 0.0).toInt()
+            return max(storeIndex.getValidFilesCount(id), 0)
         }
 
         val interfaceDefinitionsSize: Int

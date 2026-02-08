@@ -816,7 +816,7 @@ class InterfaceUI : JFrame() {
         btnAddText.preferredSize = buttonSize
         btnAddText.addActionListener { _: ActionEvent? ->
             if (currentInterface <= 0) return@addActionListener
-            val comp = ComponentDefinition.getInterfaceComponent(7, 1)
+            val comp = ComponentDefinition.getInterfaceComponent(752, 5)
             comp?.baseX = 0
             comp?.baseY = 0
             comp?.parentId = -1
@@ -1547,10 +1547,7 @@ class InterfaceUI : JFrame() {
         if (!txt_leftclick.getTextField().text.isNullOrEmpty()) {
             c.rightclickOptions = arrayOf(txt_leftclick.getTextField().text)
         }
-
-        if (c.rightclickOptions == null || c.rightclickOptions!!.isEmpty()) {
-            c.optionMask = parseIntSafe(txt_optionMask.getTextField().text, -1)
-        }
+        c.optionMask = parseIntSafe(txt_optionMask.getTextField().text, 0)
 
         c.onLoadScript = InterfaceUtils.getScriptArray(txt_onload.text)
         c.onMouseHoverScript = InterfaceUtils.getScriptArray(txt_fullonhover.text)

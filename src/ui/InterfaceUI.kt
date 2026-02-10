@@ -1103,7 +1103,6 @@ class InterfaceUI : JFrame() {
 
         val menuBar = JMenuBar()
         jMenuBar = menuBar
-
         val mnCredits = JMenu("Credits")
         mnCredits.addMouseListener(
             object : MouseAdapter() {
@@ -1141,24 +1140,29 @@ class InterfaceUI : JFrame() {
 
         val mntmDumpSprites = JMenuItem("Export sprites")
         mntmDumpSprites.addActionListener { _: ActionEvent? ->
-            val max = Cache.store!!.indexes[Constants.SPRITES_INDEX].lastArchiveId + 1
+
+            val spriteIndex = Cache.store!!.indexes[Constants.SPRITES_INDEX]
+            val max = spriteIndex.lastArchiveId + 1
             val progressMonitor = ProgressMonitor(menuBar, "Export sprites", "", 0, max)
-
+setLocationRelativeTo(null)
             Thread {
-                for (i in 0..max) {
-                    if (progressMonitor.isCanceled) {
-                        break
+                for (i in 0 until max) {
+                    if (progressMonitor.isCanceled) break
+
+
+                    SpriteDumper.dump(i)
+
+                    SwingUtilities.invokeLater {
+                        progressMonitor.setProgress(i + 1)
+                        progressMonitor.note = "Export sprite ${i + 1} of ${max-1}"
                     }
 
-                    SpriteDumper.dump()
-                    SwingUtilities.invokeLater {
-                        progressMonitor.setProgress(i)
-                        progressMonitor.note = "Export sprite $i of $max"
-                    }
+                    try { Thread.sleep(5) } catch (ignored: InterruptedException) {}
                 }
+
                 SwingUtilities.invokeLater { progressMonitor.close() }
-            }
-                .start()
+
+            }.start()
         }
         mnAbout.add(mntmDumpSprites)
 
@@ -1166,7 +1170,7 @@ class InterfaceUI : JFrame() {
         mntmPackInterface.isEnabled = false
         mntmPackInterface.addActionListener { _: ActionEvent? -> }
         mnAbout.add(mntmPackInterface)
-
+        menuBar.add(mnCredits)
         pack()
         revalidate()
     }

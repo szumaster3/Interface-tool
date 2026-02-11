@@ -4,7 +4,7 @@ import properties.Constants
 import rs2.cache.loaders.ComponentDefinition
 import rs2.interfaces.InterfaceUtils
 
-object ComponentPosition2 {
+object EditorDrawPosition {
 
     fun realPosition(component: ComponentDefinition, parentWidth: Int, parentHeight: Int) {
 

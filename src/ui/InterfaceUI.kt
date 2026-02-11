@@ -27,10 +27,11 @@ import rs2.cache.loaders.ComponentDefinition
 import rs2.interfaces.ComponentConstants
 import rs2.interfaces.InterfaceRenderer
 import rs2.interfaces.InterfaceUtils
-import rs2.interfaces.draw.ComponentPosition
-import rs2.interfaces.draw.ComponentPosition2
-import rs2.interfaces.draw.DrawInterface
-import rs2.interfaces.draw.DrawInterface2
+import rs2.interfaces.draw.OldschoolDrawPosition
+import rs2.interfaces.draw.EditorDrawPosition
+import rs2.interfaces.draw.OldschoolDraw
+import rs2.interfaces.draw.EditorDraw
+import rs2.interfaces.render.InterfaceMouseController
 import rs2.logging.LogFactory
 import rs2.sprites.ColorPicker
 import rs2.sprites.SpriteDumper
@@ -122,7 +123,6 @@ class InterfaceUI : JFrame() {
     private var ifListScrollPane: JScrollPane? = null
     private var result: BufferedImage? = null
 
-    private var currentInterface = -1
     private var selectedComp = -1
     private var copiedComp: ComponentDefinition? = null
 
@@ -896,7 +896,7 @@ class InterfaceUI : JFrame() {
 
                     when (currentRenderer) {
                         InterfaceRenderer.CLASSIC ->
-                            DrawInterface.drawInterfaceToGraphics(
+                            OldschoolDraw.drawInterfaceToGraphics(
                                 g,
                                 currentInterface,
                                 chckbxShowContainers.selectedItem as Boolean,
@@ -904,7 +904,7 @@ class InterfaceUI : JFrame() {
                                 chckbxShowModels.selectedItem as Boolean
                             )
                         InterfaceRenderer.NEW ->
-                            DrawInterface2.drawInterfaceToGraphics(
+                            EditorDraw.drawInterfaceToGraphics(
                                 g,
                                 currentInterface,
                                 chckbxShowContainers.selectedItem as Boolean,
@@ -917,7 +917,7 @@ class InterfaceUI : JFrame() {
                         g.color = Color.WHITE
                         when (currentRenderer) {
                             InterfaceRenderer.CLASSIC -> {
-                                ComponentPosition.setValues(selectedComponent)
+                                OldschoolDrawPosition.setValues(selectedComponent)
                                 g.drawRect(
                                     ComponentDefinition.getX(selectedComponent!!, currentInterface),
                                     ComponentDefinition.getY(selectedComponent!!, currentInterface),
@@ -926,7 +926,7 @@ class InterfaceUI : JFrame() {
                                 )
                             }
                             InterfaceRenderer.NEW -> {
-                                ComponentPosition2.setValues(selectedComponent)
+                                EditorDrawPosition.setValues(selectedComponent)
                                 g.drawRect(
                                     ComponentDefinition.getX(selectedComponent!!, currentInterface),
                                     ComponentDefinition.getY(selectedComponent!!, currentInterface),
@@ -1091,6 +1091,7 @@ class InterfaceUI : JFrame() {
     }
 
     init {
+        instance = this
         title = "Interface Editor"
         contentPane.layout = BorderLayout()
         defaultCloseOperation = EXIT_ON_CLOSE
@@ -1169,8 +1170,35 @@ setLocationRelativeTo(null)
         val mntmPackInterface = JMenuItem("Pack interface")
         mntmPackInterface.isEnabled = false
         mntmPackInterface.addActionListener { _: ActionEvent? -> }
+
+        val lockButton = JToggleButton("Mouse Locked")
+        lockButton.isFocusable = false
+        lockButton.isContentAreaFilled = false
+        lockButton.isOpaque = false
+        lockButton.toolTipText = "Lock/Unlock Mouse"
+
+        val fm = lockButton.getFontMetrics(lockButton.font)
+        val maxTextWidth = maxOf(
+            fm.stringWidth("Mouse Locked"),
+            fm.stringWidth("Mouse Active")
+        )
+        val buttonWidth = maxTextWidth + 35
+        val buttonHeight = lockButton.preferredSize.height
+        val fixedSize = Dimension(buttonWidth, buttonHeight)
+
+        lockButton.preferredSize = fixedSize
+        lockButton.minimumSize = fixedSize
+        lockButton.maximumSize = fixedSize
+
+        lockButton.addActionListener {
+            val status = lockButton.isSelected
+            InterfaceMouseController(viewportPanel!!,enabled = status)
+            lockButton.text = if (status) "Mouse Active" else "Mouse Locked"
+        }
+
         mnAbout.add(mntmPackInterface)
         menuBar.add(mnCredits)
+        menuBar.add(lockButton)
         pack()
         revalidate()
     }
@@ -1884,8 +1912,10 @@ setLocationRelativeTo(null)
     }
 
     companion object {
+        lateinit var instance: InterfaceUI
+            private set
         private val logger: Logger = LogFactory.createLogger(InterfaceUI::class.java.name)
-
+        var currentInterface = -1
         @JvmField var selectedComponent: ComponentDefinition? = null
 
         @JvmStatic
@@ -1936,7 +1966,7 @@ setLocationRelativeTo(null)
 
             for (i in allComps.indices) {
                 if (allComps[i] == null) continue
-                ComponentPosition.setValues(allComps[i])
+                OldschoolDrawPosition.setValues(allComps[i])
                 var found = false
                 for (c in comps) {
                     if (c?.componentId == allComps[i]?.componentId) found = true
@@ -1946,5 +1976,12 @@ setLocationRelativeTo(null)
 
             return comps
         }
+    }
+
+    fun updateComponentFields(comp: ComponentDefinition) {
+        txt_x.getTextField().text = comp.baseX.toString()
+        txt_y.getTextField().text = comp.baseY.toString()
+        txt_width.getTextField().text = comp.baseWidth.toString()
+        txt_height.getTextField().text = comp.baseHeight.toString()
     }
 }

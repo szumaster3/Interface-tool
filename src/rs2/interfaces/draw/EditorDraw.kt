@@ -16,8 +16,8 @@ import rs2.logging.LogFactory
 import rs2.sprites.ImageUtils
 import rs2.sprites.SpriteLoader
 
-object DrawInterface2 {
-    private val logger: Logger = LogFactory.createLogger(DrawInterface2::class.java.name)
+object EditorDraw {
+    private val logger: Logger = LogFactory.createLogger(EditorDraw::class.java.name)
     private var result: BufferedImage? = null
 
     fun getOrderedComps(interfaceId: Int): ArrayList<ComponentDefinition>? {
@@ -39,7 +39,7 @@ object DrawInterface2 {
         for (comp in allComps) {
             comp ?: continue
 
-            ComponentPosition2.setValues(comp)
+            EditorDrawPosition.setValues(comp)
             val found = comps.any { it.componentId == comp.componentId }
 
             if (!found) {
@@ -81,7 +81,7 @@ object DrawInterface2 {
 
         for (component in orderedComponents) {
 
-            ComponentPosition2.setValues(component)
+            EditorDrawPosition.setValues(component)
 
             if (InterfaceUtils.isHidden(component) && !showHidden) {
                 continue
@@ -186,7 +186,7 @@ object DrawInterface2 {
                         (component.positionY + component.height / 2 + rect.height / 2).roundToInt()
                     )
                 } else if (parent != null) {
-                    ComponentPosition.setValues(parent)
+                    OldschoolDrawPosition.setValues(parent)
 
                     if (component.baseWidth == 0 && component.baseHeight == 0) {
                         val metrics = g.fontMetrics

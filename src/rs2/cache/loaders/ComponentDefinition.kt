@@ -2,11 +2,10 @@ package rs2.cache.loaders
 
 import com.alex.io.InputStream
 import com.alex.io.OutputStream
-import com.alex.store.Index
 import rs2.cache.Cache
 import rs2.interfaces.ComponentConstants
 import rs2.interfaces.InterfaceUtils.getParent
-import rs2.interfaces.draw.ComponentPosition.setValues
+import rs2.interfaces.draw.OldschoolDrawPosition.setValues
 import rs2.logging.LogFactory.createLogger
 import java.util.*
 import kotlin.math.max

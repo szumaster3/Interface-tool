@@ -16,7 +16,7 @@ import rs2.interfaces.ContainerHelper.isButton
 import rs2.interfaces.ContainerHelper.isScrollBar
 import rs2.interfaces.InterfaceUtils.getParent
 import rs2.interfaces.InterfaceUtils.isHidden
-import rs2.interfaces.draw.ComponentPosition.setValues
+import rs2.interfaces.draw.OldschoolDrawPosition.setValues
 import rs2.sprites.ImageUtils.horizontalFlip
 import rs2.sprites.ImageUtils.imageToBufferedImage
 import rs2.sprites.ImageUtils.verticalFlip
@@ -24,7 +24,7 @@ import rs2.sprites.SpriteLoader.getSprite
 import ui.InterfaceUI
 import ui.InterfaceUI.Companion.getOrderedComps
 
-object DrawInterface {
+object OldschoolDraw {
     private val DEFAULT_OUTLINE = Color(140, 140, 140)
     private const val SELECTED_ALPHA = 80
 
@@ -49,7 +49,7 @@ object DrawInterface {
         }
     }
 
-    private fun computeAbsolutePosition(comp: ComponentDefinition?): Point {
+    fun computeAbsolutePosition(comp: ComponentDefinition?): Point {
         if (comp == null) return Point(0, 0)
         setValues(comp)
         var ax = comp.positionX

@@ -1,13 +1,15 @@
 package tools.build
 
-import java.util.function.Consumer
-import java.util.logging.Logger
 import rs2.cache.Cache
 import rs2.cache.loaders.ComponentDefinition
 import rs2.logging.LogFactory
 import ui.InterfaceUI
+import java.util.function.Consumer
+import java.util.logging.Logger
 
-class Copy private constructor(val targetInterface: Int) {
+class Copy private constructor(
+    val targetInterface: Int,
+) {
     private val tasks: MutableList<CopyTask> = ArrayList()
 
     private var src = 0
@@ -45,7 +47,10 @@ class Copy private constructor(val targetInterface: Int) {
         return this
     }
 
-    fun copyRange(from: Int, to: Int): Copy {
+    fun copyRange(
+        from: Int,
+        to: Int,
+    ): Copy {
         for (i in from..to) {
             copy(i)
         }
@@ -112,9 +117,7 @@ class Copy private constructor(val targetInterface: Int) {
         private val logger: Logger = LogFactory.createLogger(InterfaceUI::class.java.name)
 
         @JvmStatic
-        fun to(targetInterface: Int): Copy {
-            return Copy(targetInterface)
-        }
+        fun to(targetInterface: Int): Copy = Copy(targetInterface)
 
         @JvmStatic
         fun newInterface(): Copy {
@@ -123,13 +126,19 @@ class Copy private constructor(val targetInterface: Int) {
         }
 
         @JvmStatic
-        fun newInterface(templateInterface: Int, templateComponent: Int): Copy {
+        fun newInterface(
+            templateInterface: Int,
+            templateComponent: Int,
+        ): Copy {
             val id = createInterface(templateInterface, templateComponent)
             return Copy(id)
         }
 
         @JvmStatic
-        fun createInterface(templateInterface: Int, templateComponent: Int): Int {
+        fun createInterface(
+            templateInterface: Int,
+            templateComponent: Int,
+        ): Int {
             val newId = ComponentDefinition.interfaceDefinitionsSize
             val base = ComponentDefinition.getInterfaceComponent(templateInterface, templateComponent)
 

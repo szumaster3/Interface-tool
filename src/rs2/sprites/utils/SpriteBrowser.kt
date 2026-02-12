@@ -9,9 +9,8 @@ import javax.swing.border.EmptyBorder
 
 class SpriteBrowser(
     parent: JFrame?,
-    private val onSelect: (spriteId: Int, width: Int, height: Int) -> Unit
+    private val onSelect: (spriteId: Int, width: Int, height: Int) -> Unit,
 ) : JDialog(parent, "Sprite Browser", true) {
-
     private var selectedTile: SpriteTile? = null
 
     init {
@@ -37,7 +36,6 @@ class SpriteBrowser(
 
         selectBtn.isEnabled = false
         exportBtn.isEnabled = false
-
 
         selectBtn.addActionListener {
             selectedTile?.let {
@@ -66,37 +64,36 @@ class SpriteBrowser(
 
             override fun process(chunks: List<SpriteTile>) {
                 for (tile in chunks) {
-
                     val raw = SpriteLoader.getRaw(tile.spriteId)
                     val archive = raw?.let { SpriteArchive.decode(it) }
-
 
                     if (archive != null && archive.size() > 1) {
                         tile.addFrameIndicator(archive.size())
                     }
 
-                    tile.addMouseListener(object : java.awt.event.MouseAdapter() {
-                        override fun mouseClicked(e: java.awt.event.MouseEvent) {
-                            selectedTile?.selected = false
-                            selectedTile = tile
-                            tile.selected = true
+                    tile.addMouseListener(
+                        object : java.awt.event.MouseAdapter() {
+                            override fun mouseClicked(e: java.awt.event.MouseEvent) {
+                                selectedTile?.selected = false
+                                selectedTile = tile
+                                tile.selected = true
 
-                            selectBtn.isEnabled = true
-                            exportBtn.isEnabled = true
+                                selectBtn.isEnabled = true
+                                exportBtn.isEnabled = true
 
-
-                            if (e.clickCount == 2 && archive != null && archive.size() > 1) {
-                                SpriteFramesDialogue(
-                                    this@SpriteBrowser,
-                                    tile.spriteId,
-                                    archive
-                                ) { frameId ->
-                                    onSelect(tile.spriteId, archive.width, archive.height)
-                                    dispose()
+                                if (e.clickCount == 2 && archive != null && archive.size() > 1) {
+                                    SpriteFramesDialogue(
+                                        this@SpriteBrowser,
+                                        tile.spriteId,
+                                        archive,
+                                    ) { frameId ->
+                                        onSelect(tile.spriteId, archive.width, archive.height)
+                                        dispose()
+                                    }
                                 }
                             }
-                        }
-                    })
+                        },
+                    )
 
                     grid.add(tile)
                 }
@@ -109,17 +106,20 @@ class SpriteBrowser(
     }
 
     private fun importSprites() {
-        val chooser = JFileChooser().apply {
-            isMultiSelectionEnabled = true
-            fileFilter = javax.swing.filechooser.FileNameExtensionFilter("PNG Images", "png")
-        }
+        val chooser =
+            JFileChooser().apply {
+                isMultiSelectionEnabled = true
+                fileFilter = javax.swing.filechooser.FileNameExtensionFilter("PNG Images", "png")
+            }
         if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return
 
-        val spriteId = JOptionPane.showInputDialog(
-            this,
-            "Sprite ID:",
-            SpriteLoader.numSprites.toString()
-        )?.toIntOrNull() ?: return
+        val spriteId =
+            JOptionPane
+                .showInputDialog(
+                    this,
+                    "Sprite ID:",
+                    SpriteLoader.numSprites.toString(),
+                )?.toIntOrNull() ?: return
 
         try {
             val archive = SpriteImportUtil.importFromPngs(chooser.selectedFiles.toList())

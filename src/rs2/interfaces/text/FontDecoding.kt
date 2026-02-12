@@ -23,10 +23,11 @@ object FontDecoding {
         return arr
     }
 
-    private fun getCharIndex(c: Char): Int = when {
-        c.isDigit() -> 48 + c.digitToInt()
-        c.isUpperCase() -> 55 + c.digitToInt()
-        c.isLowerCase() -> 87 + c.digitToInt()
-        else -> 0
-    }
+    private fun getCharIndex(c: Char): Int =
+        when {
+            c.isDigit() -> 48 + c.digitToInt()
+            c.isUpperCase() -> 55 + c.digitToInt()
+            c.isLowerCase() -> 87 + c.digitToInt()
+            else -> 0
+        }
 }

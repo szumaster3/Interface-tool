@@ -6,10 +6,12 @@ import javax.swing.border.EmptyBorder
 import javax.swing.plaf.basic.BasicComboBoxRenderer
 import javax.swing.plaf.basic.BasicComboBoxUI
 
-class DepthComboBoxUI(private val arrowIcon: Icon, private val arrowSize: Int = 15) : BasicComboBoxUI() {
-
-    override fun createArrowButton(): JButton {
-        return JButton(arrowIcon).apply {
+class DepthComboBoxUI(
+    private val arrowIcon: Icon,
+    private val arrowSize: Int = 15,
+) : BasicComboBoxUI() {
+    override fun createArrowButton(): JButton =
+        JButton(arrowIcon).apply {
             border = BorderFactory.createEmptyBorder(0, 0, 0, 2)
             isContentAreaFilled = false
             background = Color(150, 170, 170, 230)
@@ -18,16 +20,20 @@ class DepthComboBoxUI(private val arrowIcon: Icon, private val arrowSize: Int = 
             minimumSize = Dimension(arrowSize, 30)
             maximumSize = Dimension(arrowSize, 30)
         }
-    }
 
-    override fun paintCurrentValueBackground(g: Graphics, bounds: Rectangle, hasFocus: Boolean) {
+    override fun paintCurrentValueBackground(
+        g: Graphics,
+        bounds: Rectangle,
+        hasFocus: Boolean,
+    ) {
         g.color = comboBox.background
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height)
     }
 }
 
-class DepthComboBox<T>(items: Array<T>) : JComboBox<T>(items) {
-
+class DepthComboBox<T>(
+    items: Array<T>,
+) : JComboBox<T>(items) {
     companion object {
         val arrowIcon: Icon = ImageIcon(IconLibrary.ARROW_KEY_DOWN)
     }
@@ -45,7 +51,7 @@ class DepthComboBox<T>(items: Array<T>) : JComboBox<T>(items) {
                     value: Any?,
                     index: Int,
                     isSelected: Boolean,
-                    cellHasFocus: Boolean
+                    cellHasFocus: Boolean,
                 ): Component {
                     val label = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus) as JLabel
                     label.horizontalAlignment = JLabel.CENTER

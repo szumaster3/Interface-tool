@@ -1,9 +1,9 @@
 package tools.build
 
-import java.io.IOException
 import properties.PropertyValues.loadValues
 import rs2.cache.Cache
 import tools.build.InterfaceBuilder.build
+import java.io.IOException
 
 object LaunchBuilder {
     @Throws(IOException::class)

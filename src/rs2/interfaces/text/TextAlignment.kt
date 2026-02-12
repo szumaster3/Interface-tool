@@ -1,6 +1,5 @@
 package rs2.interfaces.text
 
-
 object TextAlignment {
     const val LEFT: Int = 0
     const val TOP: Int = 0

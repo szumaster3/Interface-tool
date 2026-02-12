@@ -3,11 +3,13 @@ package rs2.interfaces.render
 import java.util.ArrayDeque
 
 object InterfaceUndoManager {
-
     private val undoStack = ArrayDeque<() -> Unit>()
     private val redoStack = ArrayDeque<() -> Unit>()
 
-    fun push(undo: () -> Unit, redo: () -> Unit) {
+    fun push(
+        undo: () -> Unit,
+        redo: () -> Unit,
+    ) {
         undoStack.addFirst(undo)
         redoStack.clear()
     }
@@ -25,5 +27,6 @@ object InterfaceUndoManager {
     }
 
     fun canUndo() = undoStack.isNotEmpty()
+
     fun canRedo() = redoStack.isNotEmpty()
 }

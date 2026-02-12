@@ -1,5 +1,26 @@
 package ui
 
+import properties.Constants
+import properties.PropertyValues.loadValues
+import properties.PropertyValues.setCachePath
+import rs2.cache.Cache
+import rs2.cache.loaders.ComponentDefinition
+import rs2.interfaces.ComponentConstants
+import rs2.interfaces.draw.InterfaceRenderMode
+import rs2.interfaces.InterfaceUtils
+import rs2.interfaces.draw.InterfaceDraw
+import rs2.interfaces.render.InterfaceMouseController
+import rs2.logging.LogFactory
+import rs2.sprites.ColorPicker
+import rs2.sprites.SpriteDumper
+import rs2.sprites.utils.SpriteBrowser
+import tools.note.ScriptTable
+import tools.print.GenericPrinter
+import tools.print.GenericPrinter.printInterface
+import ui.theme.ComponentTreeRenderer
+import ui.theme.DepthComboBox
+import ui.theme.IconLibrary
+import ui.theme.SpinnerTextField
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ItemEvent
@@ -19,31 +40,6 @@ import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
-import properties.Constants
-import properties.PropertyValues.loadValues
-import properties.PropertyValues.setCachePath
-import rs2.cache.Cache
-import rs2.cache.loaders.ComponentDefinition
-import rs2.interfaces.ComponentConstants
-import rs2.interfaces.InterfaceRenderer
-import rs2.interfaces.InterfaceUtils
-import rs2.interfaces.draw.OldschoolDrawPosition
-import rs2.interfaces.draw.EditorDrawPosition
-import rs2.interfaces.draw.OldschoolDraw
-import rs2.interfaces.draw.EditorDraw
-import rs2.interfaces.render.InterfaceMouseController
-import rs2.logging.LogFactory
-import rs2.sprites.ColorPicker
-import rs2.sprites.SpriteDumper
-import rs2.sprites.utils.SpriteBrowser
-import tools.note.ScriptTable
-import tools.print.GenericPrinter
-import tools.print.GenericPrinter.printInterface
-import ui.theme.ComponentTreeRenderer
-import ui.theme.DepthComboBox
-import ui.theme.IconLibrary
-import ui.theme.SpinnerTextField
-import javax.swing.JList
 
 class InterfaceUI : JFrame() {
     var progressMonitor: ProgressMonitor? = null
@@ -66,61 +62,61 @@ class InterfaceUI : JFrame() {
     private var chckbxHasAlpha = DepthComboBox(arrayOf(true, false))
     private var chckbxShadow = DepthComboBox(arrayOf(true, false))
     private var chckbxFilled = DepthComboBox(arrayOf(true, false))
-    private val chckbxHidden = DepthComboBox(arrayOf(true, false))
-    private val chckbx_modelOrtho = DepthComboBox(arrayOf(true, false))
-    private val chckbx_unknownModelProp5 = DepthComboBox(arrayOf(true, false))
+    private var chckbxHidden = DepthComboBox(arrayOf(true, false))
+    private var chckbx_modelOrtho = DepthComboBox(arrayOf(true, false))
+    private var chckbx_unknownModelProp5 = DepthComboBox(arrayOf(true, false))
 
-    private val txt_modelId = SpinnerTextField(10)
-    private val txt_modelAnimId = SpinnerTextField(10)
-    private val txt_modelXAngle = SpinnerTextField(10)
-    private val txt_modelYAngle = SpinnerTextField(10)
-    private val txt_modelYOffset = SpinnerTextField(10)
-    private val txt_modelZoom = SpinnerTextField(10)
-    private val txt_unknownModelProp1 = SpinnerTextField(10)
-    private val txt_unknownModelProp2 = SpinnerTextField(10)
-    private val txt_unknownModelProp3 = SpinnerTextField(10)
-    private val txt_unknownModelProp4 = SpinnerTextField(10)
+    private var txt_modelId = SpinnerTextField(10)
+    private var txt_modelAnimId = SpinnerTextField(10)
+    private var txt_modelXAngle = SpinnerTextField(10)
+    private var txt_modelYAngle = SpinnerTextField(10)
+    private var txt_modelYOffset = SpinnerTextField(10)
+    private var txt_modelZoom = SpinnerTextField(10)
+    private var txt_unknownModelProp1 = SpinnerTextField(10)
+    private var txt_unknownModelProp2 = SpinnerTextField(10)
+    private var txt_unknownModelProp3 = SpinnerTextField(10)
+    private var txt_unknownModelProp4 = SpinnerTextField(10)
 
-    private var currentRenderer: InterfaceRenderer = InterfaceRenderer.CLASSIC
-    private val txt_vpadding = SpinnerTextField(10)
+    private var currentRenderer: InterfaceRenderMode = InterfaceRenderMode.CLASSIC
+    private var txt_vpadding = SpinnerTextField(10)
 
-    private val txt_type = DepthComboBox(arrayOf("Layer", "Text", "Sprite", "Figure", "Model"))
+    private var txt_type = DepthComboBox(arrayOf("Layer", "Text", "Sprite", "Figure", "Model"))
 
-    private val txt_hash = SpinnerTextField(10)
+    private var txt_hash = SpinnerTextField(10)
 
-    private val txt_x = SpinnerTextField(10)
-    private val txt_y = SpinnerTextField(10)
-    private val txt_height = SpinnerTextField(10)
-    private val txt_width = SpinnerTextField(10)
-    private val txt_text = SpinnerTextField(10)
-    private val txt_leftclick = SpinnerTextField(10)
-    private val txt_overlayer = SpinnerTextField(10)
-    private val txt_option1 = SpinnerTextField(10)
-    private val txt_option2 = SpinnerTextField(10)
-    private val txt_option3 = SpinnerTextField(10)
-    private val txt_option4 = SpinnerTextField(10)
-    private val txt_option5 = SpinnerTextField(10)
-    private val txt_modex = SpinnerTextField(10)
-    private val txt_positionmodeY = SpinnerTextField(10)
-    private val txt_optionMask = SpinnerTextField(10)
-    private val txt_border = SpinnerTextField(10)
-    private val txt_sprite = SpinnerTextField(10)
-    private val txt_modeHeight = SpinnerTextField(10)
-    private val txt_widthMode = SpinnerTextField(10)
+    private var txt_x = SpinnerTextField(10)
+    private var txt_y = SpinnerTextField(10)
+    private var txt_height = SpinnerTextField(10)
+    private var txt_width = SpinnerTextField(10)
+    private var txt_text = SpinnerTextField(10)
+    private var txt_leftclick = SpinnerTextField(10)
+    private var txt_overlayer = SpinnerTextField(10)
+    private var txt_option1 = SpinnerTextField(10)
+    private var txt_option2 = SpinnerTextField(10)
+    private var txt_option3 = SpinnerTextField(10)
+    private var txt_option4 = SpinnerTextField(10)
+    private var txt_option5 = SpinnerTextField(10)
+    private var txt_modex = SpinnerTextField(10)
+    private var txt_positionmodeY = SpinnerTextField(10)
+    private var txt_optionMask = SpinnerTextField(10)
+    private var txt_border = SpinnerTextField(10)
+    private var txt_sprite = SpinnerTextField(10)
+    private var txt_modeHeight = SpinnerTextField(10)
+    private var txt_widthMode = SpinnerTextField(10)
 
-    private val txt_lineWidth = SpinnerTextField(10)
-    private val chckbx_unknownProp8 = DepthComboBox(arrayOf(true, false))
+    private var txt_lineWidth = SpinnerTextField(10)
+    private var chckbx_unknownProp8 = DepthComboBox(arrayOf(true, false))
 
-    private val txt_optionCircumfix = SpinnerTextField(10)
-    private val txt_optionBase = SpinnerTextField(10)
+    private var txt_optionCircumfix = SpinnerTextField(10)
+    private var txt_optionBase = SpinnerTextField(10)
 
-    private val txt_font = SpinnerTextField(10)
-    private val txt_color = SpinnerTextField(10)
-    private val txt_trans = SpinnerTextField(10)
-    private val txt_scrollX = SpinnerTextField(10)
-    private val txt_scrollY = SpinnerTextField(10)
-    private val txt_xali = SpinnerTextField(10)
-    private val txt_yali = SpinnerTextField(10)
+    private var txt_font = SpinnerTextField(10)
+    private var txt_color = SpinnerTextField(10)
+    private var txt_trans = SpinnerTextField(10)
+    private var txt_scrollX = SpinnerTextField(10)
+    private var txt_scrollY = SpinnerTextField(10)
+    private var txt_xali = SpinnerTextField(10)
+    private var txt_yali = SpinnerTextField(10)
     private var txt_interId = SpinnerTextField(10)
     private var txt_dynamicWidth = SpinnerTextField(10)
     private var txt_dynamicHeight = SpinnerTextField(10)
@@ -131,33 +127,32 @@ class InterfaceUI : JFrame() {
     private var selectedComp = -1
     private var copiedComp: ComponentDefinition? = null
 
-    private val txt_onMouseRepeat = JTextField()
-    private val txt_fullonhover = JTextField()
-    private val txt_mouseLeave = JTextField()
-    private val txt_onload = JTextField()
-    private val txt_onUseWith = JTextField()
-    private val txt_onUse = JTextField()
-    private val txt_onVarpTransmit = JTextField()
-    private val txt_onInvTransmit = JTextField()
-    private val txt_onStatTransmit = JTextField()
+    private var txt_onMouseRepeat = JTextField()
+    private var txt_fullonhover = JTextField()
+    private var txt_mouseLeave = JTextField()
+    private var txt_onload = JTextField()
+    private var txt_onUseWith = JTextField()
+    private var txt_onUse = JTextField()
+    private var txt_onVarpTransmit = JTextField()
+    private var txt_onInvTransmit = JTextField()
+    private var txt_onStatTransmit = JTextField()
 
-    private val txt_onTimer = JTextField()
-    private val txt_varpTriggers = JTextField()
-    private val txt_onOptionClick = JTextField()
-    private val txt_inventoryTriggers = JTextField()
-    private val txt_statTriggers = JTextField()
-    private val txt_varcTriggers = JTextField()
-    private val txt_varcStrTriggers = JTextField()
-    private val txt_onClickRepeat = JTextField()
-    private val txt_onDrag = JTextField()
-    private val txt_onRelease = JTextField()
-    private val txt_onHold = JTextField()
-    private val txt_onDragStart = JTextField()
-    private val txt_onDragRelease = JTextField()
-    private val txt_onScroll = JTextField()
-    private val txt_onVarcTransmit = JTextField()
-    private val txt_onVarcStrTransmit = JTextField()
-
+    private var txt_onTimer = JTextField()
+    private var txt_varpTriggers = JTextField()
+    private var txt_onOptionClick = JTextField()
+    private var txt_inventoryTriggers = JTextField()
+    private var txt_statTriggers = JTextField()
+    private var txt_varcTriggers = JTextField()
+    private var txt_varcStrTriggers = JTextField()
+    private var txt_onClickRepeat = JTextField()
+    private var txt_onDrag = JTextField()
+    private var txt_onRelease = JTextField()
+    private var txt_onHold = JTextField()
+    private var txt_onDragStart = JTextField()
+    private var txt_onDragRelease = JTextField()
+    private var txt_onScroll = JTextField()
+    private var txt_onVarcTransmit = JTextField()
+    private var txt_onVarcStrTransmit = JTextField()
 
     private var updating = false
 
@@ -212,7 +207,7 @@ class InterfaceUI : JFrame() {
         interfaceOptionsPanel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
 
         val rendererCombo =
-            JComboBox(arrayOf(*InterfaceRenderer.values())).apply {
+            JComboBox(arrayOf(*InterfaceRenderMode.values())).apply {
                 selectedIndex = 0
                 maximumSize = Dimension(Int.MAX_VALUE, Constants.BUTTON_HEIGHT)
                 alignmentX = Component.CENTER_ALIGNMENT
@@ -225,11 +220,11 @@ class InterfaceUI : JFrame() {
                         }
 
                         override fun popupMenuCanceled(e: javax.swing.event.PopupMenuEvent?) {}
-                    }
+                    },
                 )
                 addActionListener {
                     val selected = selectedItem
-                    if (selected is InterfaceRenderer) {
+                    if (selected is InterfaceRenderMode) {
                         currentRenderer = selected
                         viewportPanel?.repaint()
                     }
@@ -244,24 +239,23 @@ class InterfaceUI : JFrame() {
                     "Normal button",
                     "Start interface",
                     "Basic custom hover",
-                    "Basic button with pop-up"
-                )
-            )
-                .apply {
-                    selectedIndex = 0
-                    maximumSize = Dimension(Int.MAX_VALUE, Constants.BUTTON_HEIGHT)
-                    addPopupMenuListener(
-                        object : javax.swing.event.PopupMenuListener {
-                            override fun popupMenuWillBecomeVisible(e: javax.swing.event.PopupMenuEvent?) {}
+                    "Basic button with pop-up",
+                ),
+            ).apply {
+                selectedIndex = 0
+                maximumSize = Dimension(Int.MAX_VALUE, Constants.BUTTON_HEIGHT)
+                addPopupMenuListener(
+                    object : javax.swing.event.PopupMenuListener {
+                        override fun popupMenuWillBecomeVisible(e: javax.swing.event.PopupMenuEvent?) {}
 
-                            override fun popupMenuWillBecomeInvisible(e: javax.swing.event.PopupMenuEvent?) {
-                                viewportPanel?.repaint()
-                            }
-
-                            override fun popupMenuCanceled(e: javax.swing.event.PopupMenuEvent?) {}
+                        override fun popupMenuWillBecomeInvisible(e: javax.swing.event.PopupMenuEvent?) {
+                            viewportPanel?.repaint()
                         }
-                    )
-                }
+
+                        override fun popupMenuCanceled(e: javax.swing.event.PopupMenuEvent?) {}
+                    },
+                )
+            }
 
         javax.swing.UIManager.put("ComboBox.popupRendererUseLightweightPopup", true)
 
@@ -290,7 +284,12 @@ class InterfaceUI : JFrame() {
                     if (newCompListModel.size > 0) {
                         componentList.selectedIndex = 0
                         componentList.ensureIndexIsVisible(0)
-                        selectedComp = componentList.selectedValue.toString().substringBefore(":").trim().toInt()
+                        selectedComp =
+                            componentList.selectedValue
+                                .toString()
+                                .substringBefore(":")
+                                .trim()
+                                .toInt()
                     }
 
                     val newTreeModel = createInterfaceTree(currentInterface)
@@ -311,12 +310,18 @@ class InterfaceUI : JFrame() {
                             null,
                             "Are you sure that you want to clear components in interface $currentInterface?",
                             "Warning",
-                            JOptionPane.YES_NO_OPTION
+                            JOptionPane.YES_NO_OPTION,
                         )
                     if (option == JOptionPane.YES_OPTION) {
                         val size = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface)
                         for (i in 0 until size) {
-                            if (i == 0) addBaseComponent(currentInterface, true) else Cache.store!!.indexes[3].removeFile(currentInterface, i)
+                            if (i ==
+                                0
+                            ) {
+                                addBaseComponent(currentInterface, true)
+                            } else {
+                                Cache.store!!.indexes[3].removeFile(currentInterface, i)
+                            }
                         }
 
                         Cache.init()
@@ -328,8 +333,14 @@ class InterfaceUI : JFrame() {
                             if (newCompListModel.size > 0) {
                                 componentList.selectedIndex = 0
                                 componentList.ensureIndexIsVisible(0)
-                                componentList.selectedValue.toString().substringBefore(":").trim().toInt()
-                            } else -1
+                                componentList.selectedValue
+                                    .toString()
+                                    .substringBefore(":")
+                                    .trim()
+                                    .toInt()
+                            } else {
+                                -1
+                            }
 
                         val newTreeModel = createInterfaceTree(currentInterface)
                         componentTree.model = newTreeModel
@@ -362,7 +373,7 @@ class InterfaceUI : JFrame() {
                 add(viewCombo)
             }
 
-        interfaceOptionsPanel.add(JLabel("Render Option").apply { alignmentX = Component.CENTER_ALIGNMENT })
+        interfaceOptionsPanel.add(JLabel("Render mode").apply { alignmentX = Component.CENTER_ALIGNMENT })
         interfaceOptionsPanel.add(Box.createRigidArea(Dimension(0, 5)))
         interfaceOptionsPanel.add(rendererCombo)
         interfaceOptionsPanel.add(Box.createRigidArea(Dimension(0, 5)))
@@ -394,7 +405,7 @@ class InterfaceUI : JFrame() {
                             premadeComponentsPanel,
                             "Please select a component from the list.",
                             "No component selected",
-                            JOptionPane.WARNING_MESSAGE
+                            JOptionPane.WARNING_MESSAGE,
                         )
                         return@addActionListener
                     }
@@ -430,7 +441,10 @@ class InterfaceUI : JFrame() {
                         drawTree(currentInterface)
                         setValues(currentInterface, selectedComp)
                     } else {
-                        JOptionPane.showMessageDialog(interfaceViewportScrollPane, "Please select a component & interface before saving it.")
+                        JOptionPane.showMessageDialog(
+                            interfaceViewportScrollPane,
+                            "Please select a component & interface before saving it.",
+                        )
                     }
                 }
             }
@@ -446,7 +460,7 @@ class InterfaceUI : JFrame() {
                             null,
                             "Interface $currentInterface printed successfully.",
                             "Success",
-                            JOptionPane.INFORMATION_MESSAGE
+                            JOptionPane.INFORMATION_MESSAGE,
                         )
                     }
                 }
@@ -463,7 +477,7 @@ class InterfaceUI : JFrame() {
                             null,
                             "Component $selectedComp from Interface $currentInterface printed successfully.",
                             "Success",
-                            JOptionPane.INFORMATION_MESSAGE
+                            JOptionPane.INFORMATION_MESSAGE,
                         )
                     }
                 }
@@ -495,11 +509,13 @@ class InterfaceUI : JFrame() {
         contentPane.add(panel, BorderLayout.WEST)
     }
 
-    private fun createTitledPanel(title: String, content: JPanel) =
-        JPanel(BorderLayout()).apply {
-            border = BorderFactory.createTitledBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED), title)
-            add(content, BorderLayout.CENTER)
-        }
+    private fun createTitledPanel(
+        title: String,
+        content: JPanel,
+    ) = JPanel(BorderLayout()).apply {
+        border = BorderFactory.createTitledBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED), title)
+        add(content, BorderLayout.CENTER)
+    }
 
     private fun constructEastPanel() {
         val panel = JPanel(BorderLayout())
@@ -515,7 +531,7 @@ class InterfaceUI : JFrame() {
                 "Line" to ImageIcon(IconLibrary.LINE_ICON),
                 "Model List" to ImageIcon(IconLibrary.MODEL_LIST_ICON),
                 "Inventory" to ImageIcon(IconLibrary.INVENTORY_ICON),
-                "Interface" to ImageIcon(IconLibrary.INTERFACE_ICON)
+                "Interface" to ImageIcon(IconLibrary.INTERFACE_ICON),
             )
 
         val tabbedPane = JTabbedPane()
@@ -544,20 +560,26 @@ class InterfaceUI : JFrame() {
                 foreground = Color.GREEN
                 isOpaque = true
 
-                cellRenderer = ListCellRenderer { _, value, _, isSelected, _ ->
-                    val label =
-                        JLabel().apply {
-                            isOpaque = true
-                            font = Font("JetBrains Mono", Font.PLAIN, 12)
-                            val text = value?.toString() ?: ""
-                            this.text = text
-                            val type = text.substringAfter(":").trim().removePrefix("(").removeSuffix(")")
-                            icon = iconMap[type]
-                            background = if (isSelected) Color.DARK_GRAY else Color.BLACK
-                            foreground = if (isSelected) Color.GREEN.brighter() else Color.GREEN
-                        }
-                    label
-                }
+                cellRenderer =
+                    ListCellRenderer { _, value, _, isSelected, _ ->
+                        val label =
+                            JLabel().apply {
+                                isOpaque = true
+                                font = Font("JetBrains Mono", Font.PLAIN, 12)
+                                val text = value?.toString() ?: ""
+                                this.text = text
+                                val type =
+                                    text
+                                        .substringAfter(":")
+                                        .trim()
+                                        .removePrefix("(")
+                                        .removeSuffix(")")
+                                icon = iconMap[type]
+                                background = if (isSelected) Color.DARK_GRAY else Color.BLACK
+                                foreground = if (isSelected) Color.GREEN.brighter() else Color.GREEN
+                            }
+                        label
+                    }
             }
         val listScroll =
             JScrollPane(componentList).apply {
@@ -600,7 +622,12 @@ class InterfaceUI : JFrame() {
         componentList.addListSelectionListener { e ->
             if (!e.valueIsAdjusting) {
                 val value = componentList.selectedValue ?: return@addListSelectionListener
-                val id = value.toString().substringBefore(":").trim().toIntOrNull() ?: return@addListSelectionListener
+                val id =
+                    value
+                        .toString()
+                        .substringBefore(":")
+                        .trim()
+                        .toIntOrNull() ?: return@addListSelectionListener
                 selectionHandler(id)
             }
         }
@@ -638,43 +665,56 @@ class InterfaceUI : JFrame() {
                 border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
                 add(buttonPanel, BorderLayout.CENTER)
             }
-        val textTabData = listOf(
-            "Left Click" to txt_leftclick,	"Option 1" to txt_option1,
-            "V Padding" to txt_vpadding,	"Option 2" to txt_option2,
-            "Has Shadow" to chckbxShadow,	"Option 3" to txt_option3,
-            "X Align" to txt_xali,	"Option 4" to txt_option4,
-            "Y Align" to txt_yali,	"Option 5" to txt_option5,
-            "Option Mask" to txt_optionMask
-
-        )
+        val textTabData =
+            listOf(
+                "Left Click" to txt_leftclick,
+                "Option 1" to txt_option1,
+                "V Padding" to txt_vpadding,
+                "Option 2" to txt_option2,
+                "Has Shadow" to chckbxShadow,
+                "Option 3" to txt_option3,
+                "X Align" to txt_xali,
+                "Option 4" to txt_option4,
+                "Y Align" to txt_yali,
+                "Option 5" to txt_option5,
+                "Option Mask" to txt_optionMask,
+            )
 
         txt_text.getTextField().horizontalAlignment = JTextField.LEFT
 
-        val textPanel = JPanel().apply {
-            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+        val textPanel =
+            JPanel().apply {
+                layout = BoxLayout(this, BoxLayout.Y_AXIS)
 
-            add(SwingUtils.labeledField("Text", txt_text))
-            add(Box.createRigidArea(Dimension(0, 5)))
+                add(SwingUtils.labeledField("Text", txt_text))
+                add(Box.createRigidArea(Dimension(0, 5)))
 
-            val twoColumn = JPanel(GridLayout(0, 2, 5, 5))
-            textTabData.filter { it.first != "Text" }.forEach { (label, field) ->
-                if (field is JTextField) field.horizontalAlignment = JTextField.LEFT
-                twoColumn.add(SwingUtils.labeledField(label, field))
+                val twoColumn = JPanel(GridLayout(0, 2, 5, 5))
+                textTabData.filter { it.first != "Text" }.forEach { (label, field) ->
+                    if (field is JTextField) field.horizontalAlignment = JTextField.LEFT
+                    twoColumn.add(SwingUtils.labeledField(label, field))
+                }
+                add(twoColumn)
             }
-            add(twoColumn)
-        }
 
         val textFrame = createTitledPanel("Text", textPanel)
-        val modelTabData = listOf(
-            "Model ID" to txt_modelId,	"Animation ID" to txt_modelAnimId,
-            "X Angle" to txt_modelXAngle,	"Prop 1" to txt_unknownModelProp1,
-            "Y Angle" to txt_modelYAngle,	"Prop 2" to txt_unknownModelProp2,
-            "Y Offset" to txt_modelYOffset,	"Prop 3" to txt_unknownModelProp3,
-            "Model Zoom" to txt_modelZoom,	"Prop 4" to txt_unknownModelProp4,
-            "Ortho" to chckbx_modelOrtho,	"DynWidth" to txt_dynamicWidth,
-            "Prop 5" to chckbx_unknownModelProp5,	"Dyneight" to txt_dynamicHeight
-
-        )
+        val modelTabData =
+            listOf(
+                "Model ID" to txt_modelId,
+                "Animation ID" to txt_modelAnimId,
+                "X Angle" to txt_modelXAngle,
+                "Prop 1" to txt_unknownModelProp1,
+                "Y Angle" to txt_modelYAngle,
+                "Prop 2" to txt_unknownModelProp2,
+                "Y Offset" to txt_modelYOffset,
+                "Prop 3" to txt_unknownModelProp3,
+                "Model Zoom" to txt_modelZoom,
+                "Prop 4" to txt_unknownModelProp4,
+                "Ortho" to chckbx_modelOrtho,
+                "DynWidth" to txt_dynamicWidth,
+                "Prop 5" to chckbx_unknownModelProp5,
+                "Dyneight" to txt_dynamicHeight,
+            )
 
         val modelPanel = JPanel(GridLayout(0, 2, 0, 0))
         modelTabData.forEach { (label, field) -> modelPanel.add(SwingUtils.labeledField(label, field)) }
@@ -705,7 +745,7 @@ class InterfaceUI : JFrame() {
                     override fun popupMenuCanceled(e: PopupMenuEvent?) {
                         contentPane.repaint()
                     }
-                }
+                },
             )
 
             settingsPanel.add(comp)
@@ -763,9 +803,11 @@ class InterfaceUI : JFrame() {
 
         if (c != null) {
             message =
-                if (c.type == ComponentConstants.LAYER)
+                if (c.type == ComponentConstants.LAYER) {
                     "Are you sure that you want to remove component $selectedComp from interface $currentInterface? NOTE: this component is a container, childs will be removed as well."
-                else "Are you sure that you want to remove component $selectedComp from interface $currentInterface?"
+                } else {
+                    "Are you sure that you want to remove component $selectedComp from interface $currentInterface?"
+                }
         }
 
         val option = JOptionPane.showConfirmDialog(this, message, "Confirmation", JOptionPane.YES_NO_OPTION)
@@ -884,52 +926,31 @@ class InterfaceUI : JFrame() {
 
         viewportPanel =
             object : JPanel() {
-
                 override fun paintComponent(g: Graphics) {
                     super.paintComponent(g)
 
                     if (currentInterface == -1) return
 
-                    when (currentRenderer) {
-                        InterfaceRenderer.CLASSIC ->
-                            OldschoolDraw.drawInterfaceToGraphics(
-                                g,
-                                currentInterface,
-                                chckbxShowContainers.selectedItem as Boolean,
-                                chckbxShowHiddenComps.selectedItem as Boolean,
-                                chckbxShowModels.selectedItem as Boolean
-                            )
-                        InterfaceRenderer.NEW ->
-                            EditorDraw.drawInterfaceToGraphics(
-                                g,
-                                currentInterface,
-                                chckbxShowContainers.selectedItem as Boolean,
-                                chckbxShowHiddenComps.selectedItem as Boolean,
-                                chckbxShowModels.selectedItem as Boolean
-                            )
-                    }
+                    InterfaceDraw.editMode = (currentRenderer == InterfaceRenderMode.CLASSIC)
 
-                    if (selectedComponent != null && (selectedComponent!!.componentHash shr 16) == currentInterface) {
-                        g.color = Color.WHITE
-                        when (currentRenderer) {
-                            InterfaceRenderer.CLASSIC -> {
-                                OldschoolDrawPosition.setValues(selectedComponent)
-                                g.drawRect(
-                                    ComponentDefinition.getX(selectedComponent!!, currentInterface),
-                                    ComponentDefinition.getY(selectedComponent!!, currentInterface),
-                                    selectedComponent!!.width,
-                                    selectedComponent!!.height
-                                )
-                            }
-                            InterfaceRenderer.NEW -> {
-                                EditorDrawPosition.setValues(selectedComponent)
-                                g.drawRect(
-                                    ComponentDefinition.getX(selectedComponent!!, currentInterface),
-                                    ComponentDefinition.getY(selectedComponent!!, currentInterface),
-                                    selectedComponent!!.width,
-                                    selectedComponent!!.height
-                                )
-                            }
+                    InterfaceDraw.drawInterfaceToGraphics(
+                        g,
+                        currentInterface,
+                        chckbxShowContainers.selectedItem as Boolean,
+                        chckbxShowHiddenComps.selectedItem as Boolean,
+                        chckbxShowModels.selectedItem as Boolean,
+                    )
+
+                    selectedComponent?.let { comp ->
+                        if ((comp.componentHash shr 16) == currentInterface) {
+                            g.color = Color.WHITE
+                            InterfaceDraw.setValues(comp)
+                            g.drawRect(
+                                ComponentDefinition.getX(comp, currentInterface),
+                                ComponentDefinition.getY(comp, currentInterface),
+                                comp.width,
+                                comp.height,
+                            )
                         }
                     }
                 }
@@ -944,7 +965,7 @@ class InterfaceUI : JFrame() {
         tabbedPane!!.preferredSize =
             Dimension(
                 Constants.DEFAULT_EDITOR_WIDTH - Constants.LEFT_SCROLLPANE_WIDTH - Constants.RIGHT_SCROLLPANE_WIDTH,
-                Constants.DEFAULT_EDITOR_HEIGHT - Constants.VIEWPORT_HEIGHT - Constants.BUTTON_HEIGHT - 4
+                Constants.DEFAULT_EDITOR_HEIGHT - Constants.VIEWPORT_HEIGHT - Constants.BUTTON_HEIGHT - 4,
             )
         tabbedPane!!.addTab("Standard", null, constructGeneralTab())
         tabbedPane!!.addTab("Configs", null, constructTriggersTab())
@@ -963,17 +984,30 @@ class InterfaceUI : JFrame() {
         topPanel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
 
         listOf(
-            "Hash" to txt_hash,	"Type" to txt_type,	"Hide" to chckbxHidden,
-            "Overlayer" to txt_overlayer,	"Hover" to chckbxHover,	"Sprite ID" to txt_sprite,
-            "X" to txt_x, 	"X Mode" to txt_modex, 	"Tiling" to chckbxRepeat,
-            "Y" to txt_y,	"Y Mode" to txt_positionmodeY,	"H Flip" to chckbxHorizontalFlip,
-            "Width" to txt_width,	"Width Mode" to txt_widthMode,	"V Flip" to chckbxVerticalFlip,
-            "Height" to txt_height,	"Height Mode" to txt_modeHeight,	"Color" to txt_color,
-            "Scroll X" to txt_scrollX,	"Font ID" to txt_font,	"Alpha" to txt_trans,
-            "Scroll Y" to txt_scrollY,	"B Thickness" to txt_border,
-
-            )
-            .forEach { (label, field) -> topPanel.add(SwingUtils.labeledField(label, field)) }
+            "Hash" to txt_hash,
+            "Type" to txt_type,
+            "Hide" to chckbxHidden,
+            "Overlayer" to txt_overlayer,
+            "Hover" to chckbxHover,
+            "Sprite ID" to txt_sprite,
+            "X" to txt_x,
+            "X Mode" to txt_modex,
+            "Tiling" to chckbxRepeat,
+            "Y" to txt_y,
+            "Y Mode" to txt_positionmodeY,
+            "H Flip" to chckbxHorizontalFlip,
+            "Width" to txt_width,
+            "Width Mode" to txt_widthMode,
+            "V Flip" to chckbxVerticalFlip,
+            "Height" to txt_height,
+            "Height Mode" to txt_modeHeight,
+            "Color" to txt_color,
+            "Scroll X" to txt_scrollX,
+            "Font ID" to txt_font,
+            "Alpha" to txt_trans,
+            "Scroll Y" to txt_scrollY,
+            "B Thickness" to txt_border,
+        ).forEach { (label, field) -> topPanel.add(SwingUtils.labeledField(label, field)) }
 
         val scriptsContent = JPanel()
         scriptsContent.layout = BoxLayout(scriptsContent, BoxLayout.Y_AXIS)
@@ -998,12 +1032,11 @@ class InterfaceUI : JFrame() {
             "onDragRelease" to txt_onDragRelease,
             "onScroll" to txt_onScroll,
             "onVarcTransmit" to txt_onVarcTransmit,
-            "onVarcstrTransmit" to txt_onVarcStrTransmit
-        )
-            .forEach { (label, field) ->
-                scriptsContent.add(SwingUtils.labeledField(label, field))
-                scriptsContent.add(Box.createRigidArea(Dimension(0, 1)))
-            }
+            "onVarcstrTransmit" to txt_onVarcStrTransmit,
+        ).forEach { (label, field) ->
+            scriptsContent.add(SwingUtils.labeledField(label, field))
+            scriptsContent.add(Box.createRigidArea(Dimension(0, 1)))
+        }
 
         val pickerAddBtn = SwingUtils.labeledTwoButtons("Picker", "Sprites")
         val innerPanel = pickerAddBtn.getComponent(0) as? JPanel
@@ -1012,15 +1045,15 @@ class InterfaceUI : JFrame() {
 
         btn1?.addActionListener {
             val comp = selectedComponent ?: return@addActionListener
-            val picker = ColorPicker(comp, txt_color) {
-                setValues(currentInterface, selectedComponent!!.componentId)
-                repaint()
-            }
+            val picker =
+                ColorPicker(comp, txt_color) {
+                    setValues(currentInterface, selectedComponent!!.componentId)
+                    repaint()
+                }
             picker.pack()
             picker.setLocationRelativeTo(null)
             picker.isVisible = true
         }
-
 
         btn2?.addActionListener {
             SpriteBrowser(this) { spriteId, w, h ->
@@ -1066,17 +1099,16 @@ class InterfaceUI : JFrame() {
             "statTriggers" to txt_statTriggers,
             "varcTriggers" to txt_varcTriggers,
             "varcStrTriggers" to txt_varcStrTriggers,
-        )
-            .forEach { (label, field) ->
-                val row = SwingUtils.labeledField(label, field)
+        ).forEach { (label, field) ->
+            val row = SwingUtils.labeledField(label, field)
 
-                row.preferredSize = Dimension(0, 25)
-                row.maximumSize = Dimension(Int.MAX_VALUE, 25)
-                row.minimumSize = Dimension(0, 25)
+            row.preferredSize = Dimension(0, 25)
+            row.maximumSize = Dimension(Int.MAX_VALUE, 25)
+            row.minimumSize = Dimension(0, 25)
 
-                triggersContent.add(row)
-                triggersContent.add(Box.createRigidArea(Dimension(0, 2)))
-            }
+            triggersContent.add(row)
+            triggersContent.add(Box.createRigidArea(Dimension(0, 2)))
+        }
 
         root.add(triggersContent)
         return root
@@ -1105,10 +1137,10 @@ class InterfaceUI : JFrame() {
                     val message =
                         JLabel(
                             "<html><center>" +
-                                    "<h2>Interface Editor</h2>" +
-                                    "<p>Made by: Shnek<br>Discord: Cara Shnek#6969</p>" +
-                                    "<p>Major code refactoring & improvements by: Ceikry</p>" +
-                                    "<p>Recent changes - szumaster 05.02.2026</p></center></html>"
+                                "<h2>Interface Editor</h2>" +
+                                "<p>Made by: Shnek<br>Discord: Cara Shnek#6969</p>" +
+                                "<p>Major code refactoring & improvements by: Ceikry</p>" +
+                                "<p>Recent changes - szumaster 05.02.2026</p></center></html>",
                         )
                     message.border = BorderFactory.createEmptyBorder(10, 10, 10, 10)
                     dialog.add(message, BorderLayout.CENTER)
@@ -1124,7 +1156,7 @@ class InterfaceUI : JFrame() {
                     dialog.setLocationRelativeTo(this@InterfaceUI)
                     dialog.isVisible = true
                 }
-            }
+            },
         )
         menuBar.add(mnCredits)
 
@@ -1137,24 +1169,25 @@ class InterfaceUI : JFrame() {
             val spriteIndex = Cache.store!!.indexes[Constants.SPRITES_INDEX]
             val max = spriteIndex.lastArchiveId + 1
             val progressMonitor = ProgressMonitor(menuBar, "Export sprites", "", 0, max)
-setLocationRelativeTo(null)
+            setLocationRelativeTo(null)
             Thread {
                 for (i in 0 until max) {
                     if (progressMonitor.isCanceled) break
-
 
                     SpriteDumper.dump(i)
 
                     SwingUtilities.invokeLater {
                         progressMonitor.setProgress(i + 1)
-                        progressMonitor.note = "Export sprite ${i + 1} of ${max-1}"
+                        progressMonitor.note = "Export sprite ${i + 1} of ${max - 1}"
                     }
 
-                    try { Thread.sleep(5) } catch (ignored: InterruptedException) {}
+                    try {
+                        Thread.sleep(5)
+                    } catch (ignored: InterruptedException) {
+                    }
                 }
 
                 SwingUtilities.invokeLater { progressMonitor.close() }
-
             }.start()
         }
         mnAbout.add(mntmDumpSprites)
@@ -1170,10 +1203,11 @@ setLocationRelativeTo(null)
         lockButton.toolTipText = "Lock/Unlock Mouse"
 
         val fm = lockButton.getFontMetrics(lockButton.font)
-        val maxTextWidth = maxOf(
-            fm.stringWidth("Mouse Locked"),
-            fm.stringWidth("Mouse Active")
-        )
+        val maxTextWidth =
+            maxOf(
+                fm.stringWidth("Mouse Locked"),
+                fm.stringWidth("Mouse Active"),
+            )
         val buttonWidth = maxTextWidth + 35
         val buttonHeight = lockButton.preferredSize.height
         val fixedSize = Dimension(buttonWidth, buttonHeight)
@@ -1184,7 +1218,7 @@ setLocationRelativeTo(null)
 
         lockButton.addActionListener {
             val status = lockButton.isSelected
-            InterfaceMouseController(viewportPanel!!,enabled = status)
+            InterfaceMouseController(viewportPanel!!, enabled = status)
             lockButton.text = if (status) "Mouse Active" else "Mouse Locked"
         }
 
@@ -1195,7 +1229,10 @@ setLocationRelativeTo(null)
         revalidate()
     }
 
-    fun setValues(inter: Int, componentId: Int) {
+    fun setValues(
+        inter: Int,
+        componentId: Int,
+    ) {
         logger.info("Viewing: [$inter]:[$componentId]")
         cleanValues()
 
@@ -1204,14 +1241,16 @@ setLocationRelativeTo(null)
 
         txt_hash.getTextField().text = comp.componentHash.toString()
 
-        txt_type.selectedItem = when (comp.type) {
-            ComponentConstants.LAYER -> "Layer"
-            ComponentConstants.TEXT -> "Text"
-            ComponentConstants.SPRITE -> "Sprite"
-            ComponentConstants.FIGURE -> "Figure"
-            ComponentConstants.MODEL -> "Model"
-            else -> comp.type.toString()
-        }
+        txt_type.selectedItem =
+            when (comp.type) {
+                ComponentConstants.LAYER -> "Layer"
+                ComponentConstants.TEXT -> "Text"
+                ComponentConstants.SPRITE -> "Sprite"
+                ComponentConstants.FIGURE -> "Figure"
+                ComponentConstants.MODEL -> "Model"
+                ComponentConstants.UNKNOWN -> "Line"
+                else -> comp.type.toString()
+            }
 
         txt_x.getTextField().text = comp.baseX.toString()
         txt_y.getTextField().text = comp.baseY.toString()
@@ -1228,52 +1267,45 @@ setLocationRelativeTo(null)
 
         chckbxHover.selectedItem = comp.type == ComponentConstants.LAYER && comp.noClickThrough
 
+        txt_sprite.getTextField().text = comp.spriteId.toString()
+        txt_border.getTextField().text = comp.borderThickness.toString()
+        txt_trans.getTextField().text = comp.transparency.toString()
+        chckbxHorizontalFlip.selectedItem = comp.hFlip
+        chckbxVerticalFlip.selectedItem = comp.vFlip
+        chckbxRepeat.selectedItem = comp.spriteTiling
+        chckbxHasAlpha.selectedItem = comp.hasAlpha
 
-            txt_sprite.getTextField().text = comp.spriteId.toString()
-            txt_border.getTextField().text = comp.borderThickness.toString()
-            txt_trans.getTextField().text = comp.transparency.toString()
-            chckbxHorizontalFlip.selectedItem = comp.hFlip
-            chckbxVerticalFlip.selectedItem = comp.vFlip
-            chckbxRepeat.selectedItem = comp.spriteTiling
-            chckbxHasAlpha.selectedItem = comp.hasAlpha
+        txt_text.getTextField().text = comp.text
+        txt_font.getTextField().text = comp.fontId.toString()
+        txt_xali.getTextField().text = comp.textHorizontalAli.toString()
+        txt_yali.getTextField().text = comp.textVerticalAli.toString()
+        txt_vpadding.getTextField().text = comp.vPadding.toString()
+        chckbxShadow.selectedItem = comp.shadow
 
+        txt_color.getTextField().text = comp.color.toString()
+        chckbxFilled.selectedItem = comp.filled
+        txt_trans.getTextField().text = comp.transparency.toString()
 
+        txt_scrollX.getTextField().text = comp.scrollMaxH.toString()
+        txt_scrollY.getTextField().text = comp.scrollMaxV.toString()
 
-            txt_text.getTextField().text = comp.text
-            txt_font.getTextField().text = comp.fontId.toString()
-            txt_xali.getTextField().text = comp.textHorizontalAli.toString()
-            txt_yali.getTextField().text = comp.textVerticalAli.toString()
-            txt_vpadding.getTextField().text = comp.vPadding.toString()
-            chckbxShadow.selectedItem = comp.shadow
+        txt_modelId.getTextField().text = comp.modelId.toString()
+        txt_modelAnimId.getTextField().text = comp.modelAnimId.toString()
+        txt_modelXAngle.getTextField().text = comp.modelXAngle.toString()
+        txt_modelYAngle.getTextField().text = comp.modelYAngle.toString()
+        txt_modelYOffset.getTextField().text = comp.modelYOffset.toString()
+        txt_modelZoom.getTextField().text = comp.modelZoom.toString()
+        txt_unknownModelProp1.getTextField().text = comp.unknownModelProp1.toString()
+        txt_unknownModelProp2.getTextField().text = comp.unknownModelProp2.toString()
+        txt_unknownModelProp3.getTextField().text = comp.unknownModelProp3.toString()
+        txt_unknownModelProp4.getTextField().text = comp.unknownModelProp4.toString()
+        chckbx_modelOrtho.selectedItem = comp.modelOrtho
+        chckbx_unknownModelProp5.selectedItem = comp.unknownModelProp5
+        txt_dynamicWidth.getTextField().text = comp.dynamicWidth.toString()
+        txt_dynamicHeight.getTextField().text = comp.dynamicHeight.toString()
 
-
-
-            txt_color.getTextField().text = comp.color.toString()
-            chckbxFilled.selectedItem = comp.filled
-            txt_trans.getTextField().text = comp.transparency.toString()
-
-
-
-            txt_scrollX.getTextField().text = comp.scrollMaxH.toString()
-            txt_scrollY.getTextField().text = comp.scrollMaxV.toString()
-
-
-
-            txt_modelId.getTextField().text = comp.modelId.toString()
-            txt_modelAnimId.getTextField().text = comp.modelAnimId.toString()
-            txt_modelXAngle.getTextField().text = comp.modelXAngle.toString()
-            txt_modelYAngle.getTextField().text = comp.modelYAngle.toString()
-            txt_modelYOffset.getTextField().text = comp.modelYOffset.toString()
-            txt_modelZoom.getTextField().text = comp.modelZoom.toString()
-            txt_unknownModelProp1.getTextField().text = comp.unknownModelProp1.toString()
-            txt_unknownModelProp2.getTextField().text = comp.unknownModelProp2.toString()
-            txt_unknownModelProp3.getTextField().text = comp.unknownModelProp3.toString()
-            txt_unknownModelProp4.getTextField().text = comp.unknownModelProp4.toString()
-            chckbx_modelOrtho.selectedItem = comp.modelOrtho
-            chckbx_unknownModelProp5.selectedItem = comp.unknownModelProp5
-            txt_dynamicWidth.getTextField().text = comp.dynamicWidth.toString()
-            txt_dynamicHeight.getTextField().text = comp.dynamicHeight.toString()
-
+        txt_lineWidth.getTextField().text = comp.lineWidth.toString()
+        chckbx_unknownProp8.selectedItem = comp.unknownProp_8
 
         txt_optionMask.getTextField().text = comp.optionMask.toString()
 
@@ -1471,9 +1503,11 @@ setLocationRelativeTo(null)
     }
 
     private fun cleanTab(container: Container) {
-        for (c in container.components) if (c is JTextField && c.isEnabled()) {
-            val ctrl = c
-            if (ctrl.isEditable) ctrl.text = null
+        for (c in container.components) {
+            if (c is JTextField && c.isEnabled()) {
+                val ctrl = c
+                if (ctrl.isEditable) ctrl.text = null
+            }
         }
     }
 
@@ -1483,32 +1517,22 @@ setLocationRelativeTo(null)
         }
     }
 
-    fun saveInterface(inter: Int, compId: Int) {
+    fun saveInterface(
+        inter: Int,
+        compId: Int,
+    ) {
         var c = ComponentDefinition.getInterfaceComponent(inter, compId)
 
-        if (c == null) {
-            c = ComponentDefinition().apply {
-                componentId = compId
-                contentType = 0
-                optionBase = ""
+        c!!.type =
+            when (txt_type.selectedItem?.toString()) {
+                "Layer" -> ComponentConstants.LAYER
+                "Text" -> ComponentConstants.TEXT
+                "Sprite" -> ComponentConstants.SPRITE
+                "Figure" -> ComponentConstants.FIGURE
+                "Model" -> ComponentConstants.MODEL
+                "Line" -> ComponentConstants.UNKNOWN
+                else -> ComponentConstants.SPRITE
             }
-
-            if (ComponentDefinition.componentDefinition!![inter] == null) {
-                ComponentDefinition.componentDefinition!![inter] =
-                    arrayOfNulls(ComponentDefinition.getInterfaceDefinitionsComponentsSize(inter))
-            }
-
-            ComponentDefinition.componentDefinition!![inter]!![compId] = c
-        }
-
-        c.type = when (txt_type.selectedItem?.toString()) {
-            "Layer" -> ComponentConstants.LAYER
-            "Text" -> ComponentConstants.TEXT
-            "Sprite" -> ComponentConstants.SPRITE
-            "Figure" -> ComponentConstants.FIGURE
-            "Model" -> ComponentConstants.MODEL
-            else -> ComponentConstants.SPRITE
-        }
 
         c.parentId = parseIntSafe(txt_overlayer.getTextField().text, -1)
         c.baseX = parseIntSafe(txt_x.getTextField().text, 0)
@@ -1531,7 +1555,6 @@ setLocationRelativeTo(null)
         c.rightclickOptions = null
 
         when (c.type) {
-
             ComponentConstants.LAYER -> {
                 c.scrollMaxH = parseIntSafe(txt_scrollX.getTextField().text, 0)
                 c.scrollMaxV = parseIntSafe(txt_scrollY.getTextField().text, 0)
@@ -1572,17 +1595,25 @@ setLocationRelativeTo(null)
                 c.modelOrtho = (chckbx_modelOrtho.selectedItem as? Boolean) ?: false
                 c.unknownModelProp5 = (chckbx_unknownModelProp5.selectedItem as? Boolean) ?: false
 
-                if (c.aspectWidthType.toInt() != 0)
+                if (c.aspectWidthType.toInt() != 0) {
                     c.dynamicWidth = parseIntSafe(txt_dynamicWidth.getTextField().text, 0)
+                }
 
-                if (c.aspectHeightType.toInt() != 0)
+                if (c.aspectHeightType.toInt() != 0) {
                     c.dynamicHeight = parseIntSafe(txt_dynamicHeight.getTextField().text, 0)
+                }
             }
 
             ComponentConstants.FIGURE -> {
                 c.color = parseIntSafe(txt_color.getTextField().text, 0)
                 c.transparency = parseIntSafe(txt_trans.getTextField().text, 255)
                 c.filled = (chckbxFilled.selectedItem as? Boolean) ?: false
+            }
+
+            ComponentConstants.UNKNOWN -> {
+                c.color = parseIntSafe(txt_lineWidth.getTextField().text, 0)
+                c.color = parseIntSafe(txt_color.getTextField().text, 0)
+                c.unknownProp_8 = (chckbx_unknownProp8.selectedItem as? Boolean) ?: false
             }
         }
 
@@ -1593,7 +1624,7 @@ setLocationRelativeTo(null)
             txt_option2,
             txt_option3,
             txt_option4,
-            txt_option5
+            txt_option5,
         ).forEachIndexed { i, field ->
             val t = field.getTextField().text
             if (!t.isNullOrBlank()) opts[i] = t
@@ -1636,13 +1667,15 @@ setLocationRelativeTo(null)
         logger.info("Saved [$inter:$compId]")
     }
 
-    private fun parseIntSafe(value: String, defaultValue: Int): Int {
-        return try {
+    private fun parseIntSafe(
+        value: String,
+        defaultValue: Int,
+    ): Int =
+        try {
             value.toInt()
         } catch (e: NumberFormatException) {
             defaultValue
         }
-    }
 
     private fun getAllComponents(interfaceId: Int): List<ComponentDefinition> {
         val list = ArrayList<ComponentDefinition>()
@@ -1664,7 +1697,11 @@ setLocationRelativeTo(null)
         return model
     }
 
-    private fun buildTree(parentNode: DefaultMutableTreeNode, interfaceId: Int, parentHash: Int) {
+    private fun buildTree(
+        parentNode: DefaultMutableTreeNode,
+        interfaceId: Int,
+        parentHash: Int,
+    ) {
         val childs = ComponentDefinition.getChildsByParent(interfaceId, parentHash)
 
         for (c in childs) {
@@ -1686,7 +1723,8 @@ setLocationRelativeTo(null)
                 if (iface != null && iface.toString().isNotBlank()) {
                     listModel.addElement("Interface: $i")
                 }
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
         return listModel
     }
@@ -1710,7 +1748,10 @@ setLocationRelativeTo(null)
         return DefaultTreeModel(root)
     }
 
-    private fun addBaseComponent(interfaceId: Int, useScripts: Boolean) {
+    private fun addBaseComponent(
+        interfaceId: Int,
+        useScripts: Boolean,
+    ) {
         val defaultButton = ComponentDefinition.getInterfaceComponent(7, 1)
         if (defaultButton != null) {
             defaultButton.parentId = -1
@@ -1732,14 +1773,16 @@ setLocationRelativeTo(null)
             Cache.store!!.indexes[3].putFile(currentInterface, containerPlace, copiedComp!!.encode(copiedComp!!.hasScripts))
             val childs = ComponentDefinition.getChildsByParent(copiedComp!!.interfaceId, copiedComp!!.componentHash)
             for (c in childs) {
-                if (c.type == ComponentConstants.LAYER) {} else
+                if (c.type == ComponentConstants.LAYER) {
+                } else {
                     Cache.store!!
                         .indexes[3]
                         .putFile(
                             currentInterface,
                             ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
-                            c.encode(copiedComp!!.hasScripts)
+                            c.encode(copiedComp!!.hasScripts),
                         )
+                }
             }
             ComponentDefinition.getInterface(currentInterface, true)
             val size = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface)
@@ -1760,7 +1803,7 @@ setLocationRelativeTo(null)
                 .putFile(
                     currentInterface,
                     ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface),
-                    copiedComp!!.encode(copiedComp!!.hasScripts)
+                    copiedComp!!.encode(copiedComp!!.hasScripts),
                 )
         }
         ComponentDefinition.getInterface(currentInterface, true)
@@ -1770,7 +1813,11 @@ setLocationRelativeTo(null)
     @Throws(FileNotFoundException::class, IOException::class)
     fun exportInterface(interfaceId: Int) {
         val file = File("data/export/$interfaceId.dat")
-        val data = Cache.store!!.indexes[3].getArchive(interfaceId).data
+        val data =
+            Cache.store!!
+                .indexes[3]
+                .getArchive(interfaceId)
+                .data
         FileOutputStream(file).use { fos ->
             fos.write(data)
             fos.close()
@@ -1793,13 +1840,16 @@ setLocationRelativeTo(null)
         }
     }
 
-    private fun addDefaultComponent(interfaceId: Int, selectedItem: String) {
+    private fun addDefaultComponent(
+        interfaceId: Int,
+        selectedItem: String,
+    ) {
         if (selectedItem == "Select component...") {
             JOptionPane.showMessageDialog(
                 null,
                 "Please select a component from the list.",
                 "No component selected",
-                JOptionPane.WARNING_MESSAGE
+                JOptionPane.WARNING_MESSAGE,
             )
             return
         }
@@ -1814,12 +1864,13 @@ setLocationRelativeTo(null)
                         .putFile(
                             interfaceId,
                             ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
-                            defaultCloseButton.encode(copiedComp?.hasScripts ?: false)
+                            defaultCloseButton.encode(copiedComp?.hasScripts ?: false),
                         )
                 }
                 ComponentDefinition.getInterface(interfaceId, true)
                 drawTree(interfaceId)
             }
+
             "Normal button" -> {
                 val container = ComponentDefinition.getInterfaceComponent(506, 1)
                 val text = ComponentDefinition.getInterfaceComponent(506, 2)
@@ -1829,7 +1880,7 @@ setLocationRelativeTo(null)
                         .putFile(
                             interfaceId,
                             ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
-                            container.encode(copiedComp?.hasScripts ?: false)
+                            container.encode(copiedComp?.hasScripts ?: false),
                         )
                 }
                 if (text != null) {
@@ -1838,7 +1889,7 @@ setLocationRelativeTo(null)
                         .putFile(
                             interfaceId,
                             ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
-                            text.encode(copiedComp?.hasScripts ?: false)
+                            text.encode(copiedComp?.hasScripts ?: false),
                         )
                 }
 
@@ -1855,6 +1906,7 @@ setLocationRelativeTo(null)
                 ComponentDefinition.getInterface(interfaceId, true)
                 drawTree(interfaceId)
             }
+
             "Start interface" -> {
                 val basic = ComponentDefinition.getInterfaceComponent(6, 0)
                 val place = ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId)
@@ -1871,12 +1923,13 @@ setLocationRelativeTo(null)
                         .putFile(
                             interfaceId,
                             ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
-                            comp.encode(copiedComp?.hasScripts ?: false)
+                            comp.encode(copiedComp?.hasScripts ?: false),
                         )
                 }
                 ComponentDefinition.getInterface(interfaceId, true)
                 drawTree(interfaceId)
             }
+
             "Basic custom hover" -> {
                 val hover = ComponentDefinition.getInterfaceComponent(6, 36)
                 if (hover != null) {
@@ -1891,12 +1944,13 @@ setLocationRelativeTo(null)
                         .putFile(
                             interfaceId,
                             ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
-                            hover.encode(copiedComp?.hasScripts ?: false)
+                            hover.encode(copiedComp?.hasScripts ?: false),
                         )
                 }
                 ComponentDefinition.getInterface(interfaceId, true)
                 drawTree(interfaceId)
             }
+
             "Basic button with pop-up" -> {
                 val popupButton = ComponentDefinition.getInterfaceComponent(762, 33)
                 val cont = ComponentDefinition.getInterfaceComponent(762, 119)
@@ -1921,7 +1975,7 @@ setLocationRelativeTo(null)
                         .putFile(
                             interfaceId,
                             ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
-                            popupButton.encode(copiedComp?.hasScripts ?: false)
+                            popupButton.encode(copiedComp?.hasScripts ?: false),
                         )
                 }
 
@@ -1936,6 +1990,7 @@ setLocationRelativeTo(null)
             private set
         private val logger: Logger = LogFactory.createLogger(InterfaceUI::class.java.name)
         var currentInterface = -1
+
         @JvmField var selectedComponent: ComponentDefinition? = null
 
         @JvmStatic
@@ -1986,7 +2041,7 @@ setLocationRelativeTo(null)
 
             for (i in allComps.indices) {
                 if (allComps[i] == null) continue
-                OldschoolDrawPosition.setValues(allComps[i])
+                InterfaceDraw.setValues(allComps[i])
                 var found = false
                 for (c in comps) {
                     if (c?.componentId == allComps[i]?.componentId) found = true

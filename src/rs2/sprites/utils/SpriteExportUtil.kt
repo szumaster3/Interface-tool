@@ -5,11 +5,10 @@ import java.io.File
 import javax.imageio.ImageIO
 
 object SpriteExportUtil {
-
     fun exportSprite(
         archive: SpriteArchive,
         spriteId: Int,
-        directory: File
+        directory: File,
     ) {
         directory.mkdirs()
 

@@ -5,13 +5,13 @@ import java.io.File
 import javax.imageio.ImageIO
 
 object SpriteImportUtil {
-
     fun importFromPngs(files: List<File>): SpriteArchive {
         require(files.isNotEmpty()) { "No PNG files selected." }
 
-        val images = files.map {
-            ImageIO.read(it) ?: error("Failed to read PNG: ${it.name}")
-        }
+        val images =
+            files.map {
+                ImageIO.read(it) ?: error("Failed to read PNG: ${it.name}")
+            }
 
         val width = images.first().width
         val height = images.first().height

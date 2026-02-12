@@ -9,9 +9,8 @@ class SpriteFramesDialogue(
     parent: Window?,
     private val spriteId: Int,
     private val archive: SpriteArchive,
-    private val onSelect: (frameId: Int) -> Unit
+    private val onSelect: (frameId: Int) -> Unit,
 ) : JDialog(parent, "Sprite Frames: $spriteId", ModalityType.APPLICATION_MODAL) {
-
     private var selectedFrame: FrameTile? = null
     private val grid = JPanel(GridLayout(0, 6, 8, 8))
 
@@ -54,14 +53,16 @@ class SpriteFramesDialogue(
             val img = archive.getSprite(i) ?: continue
             val tile = FrameTile(i, img)
 
-            tile.addMouseListener(object : java.awt.event.MouseAdapter() {
-                override fun mouseClicked(e: java.awt.event.MouseEvent) {
-                    selectedFrame?.selected = false
-                    selectedFrame = tile
-                    tile.selected = true
-                    chooseBtn.isEnabled = true
-                }
-            })
+            tile.addMouseListener(
+                object : java.awt.event.MouseAdapter() {
+                    override fun mouseClicked(e: java.awt.event.MouseEvent) {
+                        selectedFrame?.selected = false
+                        selectedFrame = tile
+                        tile.selected = true
+                        chooseBtn.isEnabled = true
+                    }
+                },
+            )
 
             grid.add(tile)
         }

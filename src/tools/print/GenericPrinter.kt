@@ -7,12 +7,15 @@ import java.io.FileWriter
 import java.lang.reflect.Field
 
 object GenericPrinter {
+    private val outputDir =
+        File("data/prints/").apply {
+            if (!exists()) mkdirs()
+        }
 
-    private val outputDir = File("data/prints/").apply {
-        if (!exists()) mkdirs()
-    }
-
-    fun printComponent(interfaceId: Int, componentId: Int) {
+    fun printComponent(
+        interfaceId: Int,
+        componentId: Int,
+    ) {
         try {
             val file = File(outputDir, "component_${interfaceId}_$componentId.txt")
             FileWriter(file).use { out ->
@@ -48,7 +51,10 @@ object GenericPrinter {
     }
 
     @Throws(Exception::class)
-    private fun printComponent(comp: ComponentDefinition?, out: FileWriter) {
+    private fun printComponent(
+        comp: ComponentDefinition?,
+        out: FileWriter,
+    ) {
         var clazz: Class<*>? = comp!!.javaClass
         while (clazz != null) {
             for (field in clazz.declaredFields) {
@@ -68,7 +74,10 @@ object GenericPrinter {
         println(">>> Copied component: ${comp.interfaceId}:${comp.componentId}")
     }
 
-    private fun shouldPrint(field: Field, value: Any?): Boolean {
+    private fun shouldPrint(
+        field: Field,
+        value: Any?,
+    ): Boolean {
         if (value == null) return false
 
         val name = field.name
@@ -124,7 +133,10 @@ object GenericPrinter {
         return sb.toString()
     }
 
-    private fun printScripts(comp: ComponentDefinition?, out: FileWriter) {
+    private fun printScripts(
+        comp: ComponentDefinition?,
+        out: FileWriter,
+    ) {
         val fields = comp!!.javaClass.declaredFields
         for (field in fields) {
             field.isAccessible = true

@@ -26,7 +26,7 @@ object SpriteDumper {
             } catch (e: Exception) {
                 logger.log(
                     Level.SEVERE,
-                    "Could not dump sprite $archiveId error -> ${e.message}"
+                    "Could not dump sprite $archiveId error -> ${e.message}",
                 )
             }
         }

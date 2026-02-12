@@ -1,19 +1,21 @@
 package rs2.interfaces.render
 
-import rs2.interfaces.draw.OldschoolDraw
-import rs2.interfaces.draw.OldschoolDrawPosition
-import ui.InterfaceUI
 import rs2.cache.loaders.ComponentDefinition
-import java.awt.*
-import java.awt.event.*
+import rs2.interfaces.draw.InterfaceDraw
+import ui.InterfaceUI
+import java.awt.Component
+import java.awt.Cursor
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import kotlin.math.max
 
 class InterfaceMouseController(
     private val panel: Component,
     private val grid: Int = 8,
-    val enabled: Boolean = false
+    val enabled: Boolean = false,
 ) : MouseAdapter() {
-
     private var draggingComp: ComponentDefinition? = null
     private var resizingComp: ComponentDefinition? = null
     private var activeHandle: ResizeHandle? = null
@@ -26,27 +28,31 @@ class InterfaceMouseController(
     private var startBaseH = 0
 
     init {
-        if(enabled) {
+        if (enabled) {
             panel.addMouseListener(this)
             panel.addMouseMotionListener(this)
         }
     }
 
-    private fun snap(v: Int, e: MouseEvent): Int {
+    private fun snap(
+        v: Int,
+        e: MouseEvent,
+    ): Int {
         if (e.isAltDown) return v
         return (v / grid) * grid
     }
 
     private fun getResizeHandle(
         comp: ComponentDefinition,
-        mouse: Point
+        mouse: Point,
     ): ResizeHandle? {
-
-        val abs = OldschoolDraw.computeAbsolutePosition(comp)
+        val abs = InterfaceDraw.computeAbsolutePosition(comp)
         val s = 6
 
-        fun hit(px: Int, py: Int) =
-            Rectangle(px - s, py - s, s * 2, s * 2).contains(mouse)
+        fun hit(
+            px: Int,
+            py: Int,
+        ) = Rectangle(px - s, py - s, s * 2, s * 2).contains(mouse)
 
         val x = abs.x
         val y = abs.y
@@ -67,14 +73,17 @@ class InterfaceMouseController(
     }
 
     override fun mousePressed(e: MouseEvent) {
-        val comp = InterfaceHitTest.findComponentAt(
-            e.x, e.y, InterfaceUI.currentInterface
-        ) ?: return
+        val comp =
+            InterfaceHitTest.findComponentAt(
+                e.x,
+                e.y,
+                InterfaceUI.currentInterface,
+            ) ?: return
 
         InterfaceUI.selectedComponent = comp
         InterfaceUI.instance.updateComponentFields(comp)
 
-        OldschoolDrawPosition.setValues(comp)
+        InterfaceDraw.setValues(comp)
 
         startMouse = e.point
         startBaseX = comp.baseX
@@ -102,7 +111,7 @@ class InterfaceMouseController(
             comp.baseX = snap(startBaseX + dx, e)
             comp.baseY = snap(startBaseY + dy, e)
 
-            OldschoolDrawPosition.setValues(comp)
+            InterfaceDraw.setValues(comp)
             InterfaceUI.instance.updateComponentFields(comp)
             panel.repaint()
             return
@@ -110,11 +119,13 @@ class InterfaceMouseController(
 
         resizingComp?.let { comp ->
             when (activeHandle) {
-                ResizeHandle.E ->
+                ResizeHandle.E -> {
                     comp.baseWidth = max(1, snap(startBaseW + dx, e))
+                }
 
-                ResizeHandle.S ->
+                ResizeHandle.S -> {
                     comp.baseHeight = max(1, snap(startBaseH + dy, e))
+                }
 
                 ResizeHandle.SE -> {
                     comp.baseWidth = max(1, snap(startBaseW + dx, e))
@@ -153,7 +164,7 @@ class InterfaceMouseController(
                 else -> {}
             }
 
-            OldschoolDrawPosition.setValues(comp)
+            InterfaceDraw.setValues(comp)
             InterfaceUI.instance.updateComponentFields(comp)
             panel.repaint()
         }

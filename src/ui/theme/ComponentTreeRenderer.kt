@@ -1,5 +1,6 @@
 package ui.theme
 
+import ui.ComponentNode
 import java.awt.Color
 import java.awt.Component
 import javax.swing.Icon
@@ -7,10 +8,10 @@ import javax.swing.ImageIcon
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeCellRenderer
-import ui.ComponentNode
 
-class ComponentTreeRenderer(private val iconMap: Map<String, Icon>) : DefaultTreeCellRenderer() {
-
+class ComponentTreeRenderer(
+    private val iconMap: Map<String, Icon>,
+) : DefaultTreeCellRenderer() {
     init {
         backgroundNonSelectionColor = Color.BLACK
         backgroundSelectionColor = Color.DARK_GRAY
@@ -25,9 +26,8 @@ class ComponentTreeRenderer(private val iconMap: Map<String, Icon>) : DefaultTre
         expanded: Boolean,
         leaf: Boolean,
         row: Int,
-        hasFocus: Boolean
+        hasFocus: Boolean,
     ): Component {
-
         super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
 
         val node = value as? DefaultMutableTreeNode

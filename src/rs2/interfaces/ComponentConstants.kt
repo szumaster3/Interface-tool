@@ -1,6 +1,5 @@
 package rs2.interfaces
 
-
 object ComponentConstants {
     const val LAYER: Int = 0
     const val MODEL_LIST: Int = 1

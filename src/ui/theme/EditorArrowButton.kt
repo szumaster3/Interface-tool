@@ -1,14 +1,16 @@
 package ui.theme
 
-import java.awt.Graphics
-import javax.swing.*
-import javax.swing.plaf.basic.BasicButtonUI
 import ui.theme.IconLibrary.ARROW_KEY_DOWN
 import ui.theme.IconLibrary.ARROW_KEY_LEFT
 import ui.theme.IconLibrary.ARROW_KEY_RIGHT
 import ui.theme.IconLibrary.ARROW_KEY_UP
+import java.awt.Graphics
+import javax.swing.*
+import javax.swing.plaf.basic.BasicButtonUI
 
-class EditorArrowButton(private val dir: Int) : BasicButtonUI() {
+class EditorArrowButton(
+    private val dir: Int,
+) : BasicButtonUI() {
     private val icon: Icon?
 
     init {
@@ -24,7 +26,10 @@ class EditorArrowButton(private val dir: Int) : BasicButtonUI() {
         this.icon = tempIcon
     }
 
-    override fun paint(g: Graphics, c: JComponent) {
+    override fun paint(
+        g: Graphics,
+        c: JComponent,
+    ) {
         val b = c as JButton
         if (icon != null) {
             val x = (b.width - icon.iconWidth) / 2

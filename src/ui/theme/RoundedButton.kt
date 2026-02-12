@@ -4,13 +4,16 @@ import java.awt.*
 import javax.swing.*
 import javax.swing.BorderFactory
 
-class RoundedButton(text: String, iconPath: String? = null, private val iconPosition: IconPosition = IconPosition.CENTER) : JButton(text) {
-
+class RoundedButton(
+    text: String,
+    iconPath: String? = null,
+    private val iconPosition: IconPosition = IconPosition.CENTER,
+) : JButton(text) {
     private var pngIcon: Image? = null
 
     enum class IconPosition {
         CENTER,
-        LEFT
+        LEFT,
     }
 
     init {
@@ -92,12 +95,15 @@ class RoundedButton(text: String, iconPath: String? = null, private val iconPosi
         if (pressed) g2.translate(0, -1)
     }
 
-    private fun drawBevel(g2: Graphics2D, arc: Int, pressed: Boolean) {
+    private fun drawBevel(
+        g2: Graphics2D,
+        arc: Int,
+        pressed: Boolean,
+    ) {
         val bright = Color(255, 255, 255)
         val dark = Color(130, 130, 130)
 
         if (!pressed) {
-
             g2.color = bright
             g2.drawLine(1, 1, width - 2, 1)
             g2.drawLine(1, 1, 1, height - 2)
@@ -106,7 +112,6 @@ class RoundedButton(text: String, iconPath: String? = null, private val iconPosi
             g2.drawLine(1, height - 2, width - 2, height - 2)
             g2.drawLine(width - 2, 1, width - 2, height - 2)
         } else {
-
             g2.color = dark
             g2.drawLine(1, 1, width - 2, 1)
             g2.drawLine(1, 1, 1, height - 2)

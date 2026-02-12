@@ -35,18 +35,20 @@ object InterfaceUtils {
 
         val objs = arrayOfNulls<Any>(values.size)
 
-        objs[0] = try {
-            values[0].toInt()
-        } catch (ex: NumberFormatException) {
-            return null
-        }
+        objs[0] =
+            try {
+                values[0].toInt()
+            } catch (ex: NumberFormatException) {
+                return null
+            }
 
         for (i in 1 until values.size) {
-            objs[i] = try {
-                values[i].toInt()
-            } catch (ex: NumberFormatException) {
-                values[i]
-            }
+            objs[i] =
+                try {
+                    values[i].toInt()
+                } catch (ex: NumberFormatException) {
+                    values[i]
+                }
         }
 
         return objs

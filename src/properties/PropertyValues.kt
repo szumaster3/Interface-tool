@@ -3,19 +3,14 @@ package properties
 import java.io.*
 import java.util.*
 
-
 object PropertyValues {
-
-    
     var cache_path: String? = "data/cache/"
     var dump_path: String = "dump/"
     var sprite_path: String? = null
     var scripts_table_path: String? = "data/scriptsnotes/scripts_notes.csv"
 
-    
     var input: InputStream? = null
 
-    
     @JvmStatic
     fun loadValues() {
         val prop = Properties()
@@ -41,15 +36,12 @@ object PropertyValues {
                 }
             }
 
-
             cache_path = prop.getProperty("cache_path") ?: cache_path
             dump_path = prop.getProperty("dump_path") ?: dump_path
             sprite_path = prop.getProperty("sprite_path") ?: sprite_path
             scripts_table_path = prop.getProperty("scripts_table_path") ?: scripts_table_path
 
-
             ensureScriptsTableExists()
-
         } catch (e: Exception) {
             println("Exception while loading or creating config: $e")
         } finally {
@@ -70,7 +62,6 @@ object PropertyValues {
         ensureScriptsTableExists()
     }
 
-    
     @JvmStatic
     private fun ensureScriptsTableExists() {
         try {

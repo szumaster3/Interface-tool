@@ -5,16 +5,16 @@ import java.awt.*
 class WrapLayout(
     align: Int = FlowLayout.LEFT,
     hgap: Int = 5,
-    vgap: Int = 5
+    vgap: Int = 5,
 ) : FlowLayout(align, hgap, vgap) {
+    override fun preferredLayoutSize(target: Container) = layoutSize(target, true)
 
-    override fun preferredLayoutSize(target: Container) =
-        layoutSize(target, true)
+    override fun minimumLayoutSize(target: Container) = layoutSize(target, false)
 
-    override fun minimumLayoutSize(target: Container) =
-        layoutSize(target, false)
-
-    private fun layoutSize(target: Container, preferred: Boolean): Dimension {
+    private fun layoutSize(
+        target: Container,
+        preferred: Boolean,
+    ): Dimension {
         synchronized(target.treeLock) {
             val insets = target.insets
             val maxWidth = target.width.takeIf { it > 0 } ?: Int.MAX_VALUE

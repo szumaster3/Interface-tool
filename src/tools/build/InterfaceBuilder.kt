@@ -7,7 +7,12 @@ object InterfaceBuilder {
     @JvmStatic
     fun build() {
         val c = newInterface()
-        Copy.to(c.targetInterface).from(672).startAt(0).copyRange(0, 24).save()
+        Copy
+            .to(c.targetInterface)
+            .from(672)
+            .startAt(0)
+            .copyRange(0, 24)
+            .save()
 
         printInterface(c.targetInterface)
 
@@ -114,6 +119,6 @@ object InterfaceBuilder {
 
            }
 
-        */
+         */
     }
 }

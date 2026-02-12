@@ -5,13 +5,23 @@ import javax.swing.*
 import javax.swing.border.BevelBorder
 
 object SwingUtils {
-    fun labeledField(label: String, field: JComponent): JPanel {
+    fun labeledField(
+        label: String,
+        field: JComponent,
+    ): JPanel {
         val panel = JPanel(BorderLayout(5, 0))
         panel.isOpaque = false
         val lblWrapper = JPanel(BorderLayout())
         lblWrapper.border =
             object : javax.swing.border.Border {
-                override fun paintBorder(c: Component?, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+                override fun paintBorder(
+                    c: Component?,
+                    g: Graphics,
+                    x: Int,
+                    y: Int,
+                    width: Int,
+                    height: Int,
+                ) {
                     g.color = Color(110, 110, 110)
                     g.drawLine(x, y + height - 1, x + width - 1, y + height - 1)
                     g.drawLine(x + width - 1, y, x + width - 1, y + height - 1)
@@ -38,14 +48,24 @@ object SwingUtils {
         return panel
     }
 
-    fun labeledButton(label: String, buttonText: String): JPanel {
+    fun labeledButton(
+        label: String,
+        buttonText: String,
+    ): JPanel {
         val panel = JPanel(BorderLayout(5, 0))
         panel.isOpaque = false
 
         val lblWrapper = JPanel(BorderLayout())
         lblWrapper.border =
             object : javax.swing.border.Border {
-                override fun paintBorder(c: Component?, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+                override fun paintBorder(
+                    c: Component?,
+                    g: Graphics,
+                    x: Int,
+                    y: Int,
+                    width: Int,
+                    height: Int,
+                ) {
                     g.color = Color(110, 110, 110)
                     g.drawLine(x, y + height - 1, x + width - 1, y + height - 1)
                     g.drawLine(x + width - 1, y, x + width - 1, y + height - 1)
@@ -74,14 +94,20 @@ object SwingUtils {
         return panel
     }
 
-    fun labeledTwoButtons(buttonText1: String, buttonText2: String): JPanel {
+    fun labeledTwoButtons(
+        buttonText1: String,
+        buttonText2: String,
+    ): JPanel {
         val panel = JPanel(BorderLayout(5, 0))
         panel.isOpaque = false
 
         val buttonPanel = JPanel(GridLayout(1, 2, 2, 0))
         buttonPanel.isOpaque = false
 
-        fun createStyledButton(text: String, borderColor: Color): JButton {
+        fun createStyledButton(
+            text: String,
+            borderColor: Color,
+        ): JButton {
             val btn = JButton(text)
             btn.isOpaque = false
             btn.background = Color.WHITE

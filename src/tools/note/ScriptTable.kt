@@ -1,5 +1,6 @@
 package tools.note
 
+import properties.PropertyValues
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -8,7 +9,6 @@ import java.util.*
 import javax.swing.*
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.DefaultTableModel
-import properties.PropertyValues
 
 class ScriptTable : JFrame("Script Table") {
     private val file: File
@@ -51,13 +51,12 @@ class ScriptTable : JFrame("Script Table") {
                     if (SwingUtilities.isRightMouseButton(e)) {
                         val row = table.rowAtPoint(e.point)
                         if (row != -1) {
-
                             val confirm =
                                 JOptionPane.showConfirmDialog(
                                     this@ScriptTable,
                                     "Delete this row?",
                                     "Confirm Delete",
-                                    JOptionPane.YES_NO_OPTION
+                                    JOptionPane.YES_NO_OPTION,
                                 )
 
                             if (confirm == JOptionPane.YES_OPTION) {
@@ -66,7 +65,7 @@ class ScriptTable : JFrame("Script Table") {
                         }
                     }
                 }
-            }
+            },
         )
 
         table.setDefaultRenderer(
@@ -78,17 +77,23 @@ class ScriptTable : JFrame("Script Table") {
                     isSelected: Boolean,
                     hasFocus: Boolean,
                     row: Int,
-                    column: Int
+                    column: Int,
                 ): Component {
                     val comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column)
                     val isEmptyRow = (0 until tableModel.columnCount).all { tableModel.getValueAt(row, it).toString().isBlank() }
                     if (table != null) {
                         comp.background =
-                            if (isEmptyRow) Color(140, 140, 140) else if (isSelected) table.selectionBackground else table.background
+                            if (isEmptyRow) {
+                                Color(140, 140, 140)
+                            } else if (isSelected) {
+                                table.selectionBackground
+                            } else {
+                                table.background
+                            }
                     }
                     return comp
                 }
-            }
+            },
         )
 
         addWindowListener(
@@ -96,7 +101,7 @@ class ScriptTable : JFrame("Script Table") {
                 override fun windowClosing(e: java.awt.event.WindowEvent?) {
                     if (saveBtn.isEnabled) save()
                 }
-            }
+            },
         )
 
         isVisible = true
@@ -157,14 +162,19 @@ class ScriptTable : JFrame("Script Table") {
                         inQuotes = !inQuotes
                     }
                 }
+
                 '|' -> {
-                    if (inQuotes) current.append(char)
-                    else {
+                    if (inQuotes) {
+                        current.append(char)
+                    } else {
                         result.add(current.toString())
                         current = StringBuilder()
                     }
                 }
-                else -> current.append(char)
+
+                else -> {
+                    current.append(char)
+                }
             }
             i++
         }

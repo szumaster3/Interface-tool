@@ -5,7 +5,10 @@ import java.io.OutputStream
 import javax.swing.JTextArea
 import javax.swing.SwingUtilities
 
-class TextAreaOutputStream(private val textArea: JTextArea, private val title: String) : OutputStream() {
+class TextAreaOutputStream(
+    private val textArea: JTextArea,
+    private val title: String,
+) : OutputStream() {
     private val sb = StringBuilder()
 
     init {

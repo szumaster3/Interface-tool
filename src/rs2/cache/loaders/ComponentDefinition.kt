@@ -5,7 +5,7 @@ import com.alex.io.OutputStream
 import rs2.cache.Cache
 import rs2.interfaces.ComponentConstants
 import rs2.interfaces.InterfaceUtils.getParent
-import rs2.interfaces.draw.OldschoolDrawPosition.setValues
+import rs2.interfaces.draw.InterfaceDraw.setValues
 import rs2.logging.LogFactory.createLogger
 import java.util.*
 import kotlin.math.max
@@ -55,8 +55,11 @@ class ComponentDefinition {
     var dragRenderBehavior: Boolean = false
     var spriteTiling: Boolean = false
 
-    @JvmField public var vFlip: Boolean = false
-    @JvmField public var hFlip: Boolean = false
+    @JvmField
+    public var vFlip: Boolean = false
+
+    @JvmField
+    public var hFlip: Boolean = false
 
     var text: String? = ""
     var textVerticalAli: Int = 0
@@ -172,9 +175,7 @@ class ComponentDefinition {
     var repeatCount: ByteArray? = null
     var modifier: ByteArray? = null
 
-    fun encode(hasScripts: Boolean): ByteArray {
-        return encodeIf3()
-    }
+    fun encode(hasScripts: Boolean): ByteArray = encodeIf3()
 
     fun encodeIf3(): ByteArray {
         val out = OutputStream()
@@ -328,19 +329,19 @@ class ComponentDefinition {
         encodeTriggers(varcTriggers, out)
         encodeTriggers(varcstrTriggers, out)
 
-
         val bytes = ByteArray(out.offset)
         out.offset = 0
         out.getBytes(bytes, 0, bytes.size)
         return bytes
     }
 
-    private fun encodeIf1(): ByteArray? {
+    private fun encodeIf1(): ByteArray? = null
 
-        return null
-    }
-
-    fun decode(stream: InputStream, componentId: Int, interfaceId: Int) {
+    fun decode(
+        stream: InputStream,
+        componentId: Int,
+        interfaceId: Int,
+    ) {
         stream.readUnsignedByte()
         version = 3
 
@@ -512,8 +513,10 @@ class ComponentDefinition {
         varcstrTriggers = decodeTriggers(stream)
     }
 
-
-    private fun encodeScript(script: Array<Any?>?, out: OutputStream) {
+    private fun encodeScript(
+        script: Array<Any?>?,
+        out: OutputStream,
+    ) {
         if (script.isNullOrEmpty()) {
             out.writeByte(0)
             return
@@ -527,15 +530,20 @@ class ComponentDefinition {
                     out.writeByte(0)
                     out.writeInt(obj)
                 }
+
                 is String -> {
                     out.writeByte(1)
                     out.writeString(obj)
                 }
+
                 null -> {
                     out.writeByte(0)
                     out.writeInt(0)
                 }
-                else -> throw IllegalArgumentException("Unsupported script argument type: ${obj::class}")
+
+                else -> {
+                    throw IllegalArgumentException("Unsupported script argument type: ${obj::class}")
+                }
             }
         }
     }
@@ -548,11 +556,12 @@ class ComponentDefinition {
 
         for (i in 0 until length) {
             val type = buffer.readUnsignedByte()
-            objects[i] = when (type) {
-                0 -> buffer.readInt()
-                1 -> buffer.readString()
-                else -> null
-            }
+            objects[i] =
+                when (type) {
+                    0 -> buffer.readInt()
+                    1 -> buffer.readString()
+                    else -> null
+                }
         }
 
         hasScripts = true
@@ -571,14 +580,16 @@ class ComponentDefinition {
         return `is`
     }
 
-    private fun encodeTriggers(arr: IntArray?, out: OutputStream) {
+    private fun encodeTriggers(
+        arr: IntArray?,
+        out: OutputStream,
+    ) {
         val length = arr?.size ?: 0
         out.writeByte(length)
         for (index in 0 until length) {
             out.writeInt(arr!![index])
         }
     }
-
 
     init {
         componentHash = -1
@@ -599,7 +610,7 @@ class ComponentDefinition {
         aspectHeightType = 0.toByte()
 
         color = 0
-        // transparency = 255
+
         borderThickness = 0
         spriteId = -1
         spriteTiling = false
@@ -673,11 +684,15 @@ class ComponentDefinition {
 
     companion object {
         private val logger = createLogger(ComponentDefinition::class.java.name)
-        var componentDefinition: Array<Array<ComponentDefinition?>?>? = arrayOfNulls<Array<ComponentDefinition?>?>(interfaceDefinitionsSize)
+        var componentDefinition: Array<Array<ComponentDefinition?>?>? =
+            arrayOfNulls<Array<ComponentDefinition?>?>(interfaceDefinitionsSize)
         private val storeIndex = Cache.store!!.indexes[3]
 
         @JvmStatic
-        fun getInterface(id: Int, reload: Boolean): Array<ComponentDefinition?>? {
+        fun getInterface(
+            id: Int,
+            reload: Boolean,
+        ): Array<ComponentDefinition?>? {
             if (componentDefinition == null) {
                 componentDefinition = arrayOfNulls<Array<ComponentDefinition?>?>(storeIndex.lastArchiveId + 1)
             }
@@ -734,7 +749,10 @@ class ComponentDefinition {
             }
 
         @JvmStatic
-        fun getInterfaceComponent(interfaceId: Int, componentId: Int): ComponentDefinition? {
+        fun getInterfaceComponent(
+            interfaceId: Int,
+            componentId: Int,
+        ): ComponentDefinition? {
             val components = getInterface(interfaceId, false)
             if (components == null || componentId < 0 || componentId >= components.size) {
                 return null
@@ -742,23 +760,29 @@ class ComponentDefinition {
             return components[componentId]
         }
 
-        fun method925(optionMask: Int): Int {
-            return (optionMask and 0x3FDA8) shr 11
-        }
+        fun method925(optionMask: Int): Int = (optionMask and 0x3FDA8) shr 11
 
         @JvmStatic
-        fun getChildsByParent(interfaceId: Int, hash: Int): ArrayList<ComponentDefinition> {
+        fun getChildsByParent(
+            interfaceId: Int,
+            hash: Int,
+        ): ArrayList<ComponentDefinition> {
             val allComponents = getInterface(interfaceId, false)
             val foundChilderen = ArrayList<ComponentDefinition>()
-            for (component in allComponents!!) {
-                if (component == null) continue
-                if (hash == component.parentId) foundChilderen.add(component)
+            if (allComponents != null) {
+                for (component in allComponents) {
+                    if (component == null) continue
+                    if (hash == component.parentId) foundChilderen.add(component)
+                }
             }
             return foundChilderen
         }
 
         @JvmStatic
-        fun hasChilds(interfaceId: Int, parentHash: Int): Boolean {
+        fun hasChilds(
+            interfaceId: Int,
+            parentHash: Int,
+        ): Boolean {
             val list = getInterface(interfaceId, false)
             for (c in list!!) {
                 if (c == null) continue
@@ -783,24 +807,33 @@ class ComponentDefinition {
         }
 
         @JvmStatic
-        fun getX(c: ComponentDefinition, inter: Int): Int {
+        fun getX(
+            c: ComponentDefinition,
+            inter: Int,
+        ): Int {
             if (c.parentId == -1) return c.positionX
-            setValues(c)
+
             var parent = getParent(c.parentId)
             var positionX = c.positionX
+
             while (parent != null) {
                 positionX += parent.positionX
                 parent = getParent(parent.parentId)
             }
+
             return positionX
         }
 
         @JvmStatic
-        fun getY(c: ComponentDefinition, inter: Int): Int {
+        fun getY(
+            c: ComponentDefinition,
+            inter: Int,
+        ): Int {
             if (c.parentId == -1) return c.positionY
-            setValues(c)
+
             var parent = getParent(c.parentId)
             var positionY = c.positionY
+
             while (parent != null) {
                 positionY += parent.positionY
                 parent = getParent(parent.parentId)

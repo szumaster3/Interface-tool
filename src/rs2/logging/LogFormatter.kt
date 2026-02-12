@@ -6,9 +6,7 @@ import java.util.logging.Formatter
 import java.util.logging.LogRecord
 
 class LogFormatter : Formatter() {
-
     override fun format(record: LogRecord): String {
-
         val builder = StringBuilder()
         builder.append(ANSI_YELLOW)
 
@@ -60,7 +58,6 @@ class LogFormatter : Formatter() {
     }
 
     companion object {
-
         const val ANSI_RESET: String = "\u001B[0m"
         const val ANSI_BLACK: String = "\u001B[30m"
         const val ANSI_RED: String = "\u001B[31m"

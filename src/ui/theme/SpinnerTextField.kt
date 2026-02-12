@@ -3,8 +3,9 @@ package ui.theme
 import java.awt.*
 import javax.swing.*
 
-class SpinnerTextField(columns: Int) : JPanel() {
-
+class SpinnerTextField(
+    columns: Int,
+) : JPanel() {
     private val textField = JTextField(columns)
     private val upButton = JButton()
     private val downButton = JButton()

@@ -6,23 +6,24 @@ import javax.swing.border.LineBorder
 
 class SpriteTile(
     val spriteId: Int,
-    image: Image
+    image: Image,
 ) : JPanel(BorderLayout()) {
-
     val spriteWidth: Int = image.getWidth(null)
     val spriteHeight: Int = image.getHeight(null)
     private val imgLabel = JLabel(ImageIcon(image))
     private val idLabel = JLabel(spriteId.toString(), JLabel.CENTER)
-    private val sizeLabel = JLabel("${spriteWidth}×${spriteHeight}", JLabel.CENTER)
+    private val sizeLabel = JLabel("$spriteWidth×$spriteHeight", JLabel.CENTER)
     private var frameLabel: JLabel? = null
 
     var selected = false
         set(value) {
             field = value
-            border = if (value)
-                LineBorder(Color.WHITE, 2)
-            else
-                LineBorder(Color.DARK_GRAY, 1)
+            border =
+                if (value) {
+                    LineBorder(Color.WHITE, 2)
+                } else {
+                    LineBorder(Color.DARK_GRAY, 1)
+                }
         }
 
     init {

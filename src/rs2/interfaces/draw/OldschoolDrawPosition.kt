@@ -3,64 +3,88 @@ package rs2.interfaces.draw
 import properties.Constants
 import rs2.cache.loaders.ComponentDefinition
 import rs2.interfaces.InterfaceUtils.getParent
+import kotlin.math.max
 
 object OldschoolDrawPosition {
 
-    private fun realPosition(component: ComponentDefinition, parentWidth: Int, parentHeight: Int) {
+    private const val FIXED_SHIFT = 14
 
-        if (component.xMode.toInt() == 0) component.positionX = component.baseX
-        else if (component.xMode.toInt() == 1) component.positionX = ((component.baseX + (parentWidth - component.width) / 2))
-        else if (2.toByte() == component.xMode) component.positionX = (parentWidth - component.width - component.baseX)
-        else if (component.xMode.toInt() == 3) component.positionX = (parentWidth * (component.baseX) shr 14)
-        else if (component.xMode.toInt() == 4)
-            component.positionX = ((parentWidth - component.width) / 2 + (parentWidth * (component.baseX) shr 14))
-        else component.positionX = (parentWidth - component.width - (component.baseX * parentWidth shr 14))
+    private fun applySize(
+        c: ComponentDefinition,
+        parentWidth: Int,
+        parentHeight: Int
+    ) {
+        c.width = when (c.aspectWidthType.toInt()) {
+            0 -> c.baseWidth
+            1 -> parentWidth - c.baseWidth
+            2 -> parentWidth * c.baseWidth shr FIXED_SHIFT
+            3 -> c.dynamicWidth
+            else -> c.baseWidth
+        }
 
-        if (component.yMode.toInt() == 0) component.positionY = component.baseY
-        else if (component.yMode.toInt() == 1) component.positionY = ((component.baseY + (parentHeight - component.height) / 2))
-        else if (component.yMode.toInt() == 2) component.positionY = (parentHeight - component.height - component.baseY)
-        else if (3.toByte() == component.yMode) component.positionY = (component.baseY * parentHeight shr 14)
-        else if (component.yMode.toInt() == 4)
-            component.positionY = (((component.baseY * parentHeight shr 14) + (parentHeight - component.height) / 2))
-        else component.positionY = (parentHeight - component.height - (component.baseY * parentHeight shr 14))
+        c.height = when (c.aspectHeightType.toInt()) {
+            0 -> c.baseHeight
+            1 -> parentHeight - c.baseHeight
+            2 -> parentHeight * c.baseHeight shr FIXED_SHIFT
+            3 -> c.dynamicHeight
+            else -> c.baseHeight
+        }
+
+        c.width = max(1, c.width)
+        c.height = max(1, c.height)
     }
 
-    private fun realAfmeting(component: ComponentDefinition, width: Int, height: Int) {
+    private fun applyPosition(
+        c: ComponentDefinition,
+        parentWidth: Int,
+        parentHeight: Int
+    ) {
+        c.positionX = when (c.xMode.toInt()) {
+            0 -> c.baseX
+            1 -> (parentWidth - c.width) / 2 + c.baseX
+            2 -> parentWidth - c.width - c.baseX
+            3 -> parentWidth * c.baseX shr FIXED_SHIFT
+            4 -> (parentWidth - c.width) / 2 +
+                    (parentWidth * c.baseX shr FIXED_SHIFT)
+            5 -> parentWidth - c.width -
+                    (parentWidth * c.baseX shr FIXED_SHIFT)
+            else -> c.baseX
+        }
 
-        if (component.aspectWidthType.toInt() == 0) component.width = component.baseWidth
-        else if (1 == component.aspectWidthType.toInt()) component.width = (width - component.baseWidth)
-        else if (2 == component.aspectWidthType.toInt()) component.width = (width * (component.baseWidth) shr 14)
-
-        if (0 == component.aspectHeightType.toInt()) component.height = component.baseHeight
-        else if (1 == component.aspectHeightType.toInt()) component.height = (height - component.baseHeight)
-        else if (component.aspectHeightType.toInt() == 2) component.height = (height * (component.baseHeight) shr 14)
-
-        if (component.type == 0) {
-            if (component.height < 5 && component.width < 5) {
-                component.height = 5
-                component.width = 5
-            } else {
-                if (component.height <= 0) component.height = 5
-                if (component.width <= 0) component.width = 5
-            }
+        c.positionY = when (c.yMode.toInt()) {
+            0 -> c.baseY
+            1 -> (parentHeight - c.height) / 2 + c.baseY
+            2 -> parentHeight - c.height - c.baseY
+            3 -> parentHeight * c.baseY shr FIXED_SHIFT
+            4 -> (parentHeight - c.height) / 2 +
+                    (parentHeight * c.baseY shr FIXED_SHIFT)
+            5 -> parentHeight - c.height -
+                    (parentHeight * c.baseY shr FIXED_SHIFT)
+            else -> c.baseY
         }
     }
 
     @JvmStatic
     fun setValues(component: ComponentDefinition?) {
         if (component == null) return
+
         val parent = getParent(component.parentId)
-        val width: Int
-        val height: Int
-        if (null == parent) {
-            width = Constants.VIEWPORT_WIDTH
-            height = Constants.VIEWPORT_HEIGHT
+
+        val parentWidth: Int
+        val parentHeight: Int
+
+        if (parent == null) {
+            parentWidth = Constants.VIEWPORT_WIDTH
+            parentHeight = Constants.VIEWPORT_HEIGHT
         } else {
-            setValues(parent)
-            width = parent.width
-            height = parent.height
+            if (parent.width <= 0 || parent.height <= 0) {
+                setValues(parent)
+            }
+            parentWidth = parent.width
+            parentHeight = parent.height
         }
-        realAfmeting(component, width, height)
-        realPosition(component, width, height)
+
+        applySize(component, parentWidth, parentHeight)
+        applyPosition(component, parentWidth, parentHeight)
     }
 }

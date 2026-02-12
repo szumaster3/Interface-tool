@@ -218,7 +218,7 @@ class CopyTask internal constructor(private val parent: Copy, val sourceId: Int,
     }
 
     fun animationId(`val`: Int): CopyTask {
-        return modify { cd: ComponentDefinition -> cd.modelSeqId = `val` }
+        return modify { cd: ComponentDefinition -> cd.modelAnimId = `val` }
     }
 
     fun basePositionX(`val`: Int): CopyTask {

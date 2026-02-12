@@ -28,33 +28,37 @@ object InterfaceUtils {
     }
 
     fun getScriptArray(input: String?): Array<Any?>? {
-        if (input == null || input === "" || input === " ") return null
-        val values = input.split(";".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        if (input.isNullOrBlank()) return null
+
+        val values = input.split(";").map { it.trim() }.filter { it.isNotEmpty() }
+        if (values.isEmpty()) return null
+
         val objs = arrayOfNulls<Any>(values.size)
-        try {
+
+        objs[0] = try {
             values[0].toInt()
-        } catch (exp: Exception) {
+        } catch (ex: NumberFormatException) {
             return null
         }
-        for (i in values.indices) {
-            try {
-                val x = values[i].toInt()
-                objs[i] = x
-            } catch (ex: Exception) {
-                objs[i] = values[i]
+
+        for (i in 1 until values.size) {
+            objs[i] = try {
+                values[i].toInt()
+            } catch (ex: NumberFormatException) {
+                values[i]
             }
         }
+
         return objs
     }
 
     fun getConfigArray(input: String?): IntArray? {
-        if (input == null || input.isEmpty() || input.equals(" ", ignoreCase = true)) return null
-        val values = input.split(";".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        val intArray = IntArray(values.size)
-        for (i in values.indices) {
-            intArray[i] = values[i].toInt()
-        }
-        return intArray
+        if (input.isNullOrBlank()) return null
+
+        val values = input.split(";").map { it.trim() }.filter { it.isNotEmpty() }
+        if (values.isEmpty()) return null
+
+        return IntArray(values.size) { i -> values[i].toIntOrNull() ?: 0 }
     }
 
     fun getComponentType(type: Int): String =

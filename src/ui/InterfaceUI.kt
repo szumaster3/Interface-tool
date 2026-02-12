@@ -45,7 +45,6 @@ import ui.theme.IconLibrary
 import ui.theme.SpinnerTextField
 import javax.swing.JList
 
-
 class InterfaceUI : JFrame() {
     var progressMonitor: ProgressMonitor? = null
     private var interface_list: JList<*>? = null
@@ -67,18 +66,22 @@ class InterfaceUI : JFrame() {
     private var chckbxHasAlpha = DepthComboBox(arrayOf(true, false))
     private var chckbxShadow = DepthComboBox(arrayOf(true, false))
     private var chckbxFilled = DepthComboBox(arrayOf(true, false))
-    private var chckbxAnimated = DepthComboBox(arrayOf(true, false))
-    private var chckbxCentre = DepthComboBox(arrayOf(true, false))
-    private var chckbxIgnoreZ = DepthComboBox(arrayOf(true, false))
-    private var chckbxMultiline = DepthComboBox(arrayOf(true, false))
     private val chckbxHidden = DepthComboBox(arrayOf(true, false))
+    private val chckbx_modelOrtho = DepthComboBox(arrayOf(true, false))
+    private val chckbx_unknownModelProp5 = DepthComboBox(arrayOf(true, false))
+
+    private val txt_modelId = SpinnerTextField(10)
+    private val txt_modelAnimId = SpinnerTextField(10)
+    private val txt_modelXAngle = SpinnerTextField(10)
+    private val txt_modelYAngle = SpinnerTextField(10)
+    private val txt_modelYOffset = SpinnerTextField(10)
+    private val txt_modelZoom = SpinnerTextField(10)
+    private val txt_unknownModelProp1 = SpinnerTextField(10)
+    private val txt_unknownModelProp2 = SpinnerTextField(10)
+    private val txt_unknownModelProp3 = SpinnerTextField(10)
+    private val txt_unknownModelProp4 = SpinnerTextField(10)
+
     private var currentRenderer: InterfaceRenderer = InterfaceRenderer.CLASSIC
-    private val txt_viewportX = SpinnerTextField(10)
-    private val txt_viewportY = SpinnerTextField(10)
-    private val txt_viewportZ = SpinnerTextField(10)
-    private val txt_pitch = SpinnerTextField(10)
-    private val txt_roll = SpinnerTextField(10)
-    private val txt_yaw = SpinnerTextField(10)
     private val txt_vpadding = SpinnerTextField(10)
 
     private val txt_type = DepthComboBox(arrayOf("Layer", "Text", "Sprite", "Figure", "Model"))
@@ -104,17 +107,19 @@ class InterfaceUI : JFrame() {
     private val txt_sprite = SpinnerTextField(10)
     private val txt_modeHeight = SpinnerTextField(10)
     private val txt_widthMode = SpinnerTextField(10)
-    private val txt_model = SpinnerTextField(10)
+
+    private val txt_lineWidth = SpinnerTextField(10)
+    private val chckbx_unknownProp8 = DepthComboBox(arrayOf(true, false))
+
+    private val txt_optionCircumfix = SpinnerTextField(10)
+    private val txt_optionBase = SpinnerTextField(10)
 
     private val txt_font = SpinnerTextField(10)
-    private val txt_animationId = SpinnerTextField(10)
-    val txt_color = SpinnerTextField(10)
+    private val txt_color = SpinnerTextField(10)
     private val txt_trans = SpinnerTextField(10)
-    private val txt_multi = SpinnerTextField(10)
     private val txt_scrollX = SpinnerTextField(10)
     private val txt_scrollY = SpinnerTextField(10)
     private val txt_xali = SpinnerTextField(10)
-    private val txt_modelZoom = SpinnerTextField(10)
     private val txt_yali = SpinnerTextField(10)
     private var txt_interId = SpinnerTextField(10)
     private var txt_dynamicWidth = SpinnerTextField(10)
@@ -152,6 +157,7 @@ class InterfaceUI : JFrame() {
     private val txt_onScroll = JTextField()
     private val txt_onVarcTransmit = JTextField()
     private val txt_onVarcStrTransmit = JTextField()
+
 
     private var updating = false
 
@@ -632,54 +638,44 @@ class InterfaceUI : JFrame() {
                 border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
                 add(buttonPanel, BorderLayout.CENTER)
             }
+        val textTabData = listOf(
+            "Left Click" to txt_leftclick,	"Option 1" to txt_option1,
+            "V Padding" to txt_vpadding,	"Option 2" to txt_option2,
+            "Has Shadow" to chckbxShadow,	"Option 3" to txt_option3,
+            "X Align" to txt_xali,	"Option 4" to txt_option4,
+            "Y Align" to txt_yali,	"Option 5" to txt_option5,
+            "Option Mask" to txt_optionMask
 
-        val textTabData =
-            listOf(
-                "Left Click" to txt_leftclick,
-                "Text" to txt_text,
-                "op1" to txt_option1,
-                "Font ID" to txt_font,
-                "op2" to txt_option2,
-                "Multi" to txt_multi,
-                "op3" to txt_option3,
-                "X Align" to txt_xali,
-                "op4" to txt_option4,
-                "Y Align" to txt_yali,
-                "op5" to txt_option5,
-                "Has shadow" to chckbxShadow,
-                "Op mask" to txt_optionMask
-            )
+        )
 
-        val textPanel =
-            JPanel().apply {
-                layout = BoxLayout(this, BoxLayout.Y_AXIS)
+        txt_text.getTextField().horizontalAlignment = JTextField.LEFT
 
-                add(SwingUtils.labeledField("Text", txt_text))
-                add(Box.createRigidArea(Dimension(0, 1)))
+        val textPanel = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
 
-                val twoColumn = JPanel(GridLayout(0, 2, 0, 0))
-                textTabData.filter { it.first != "Text" }.forEach { (label, field) -> twoColumn.add(SwingUtils.labeledField(label, field)) }
-                add(twoColumn)
+            add(SwingUtils.labeledField("Text", txt_text))
+            add(Box.createRigidArea(Dimension(0, 5)))
+
+            val twoColumn = JPanel(GridLayout(0, 2, 5, 5))
+            textTabData.filter { it.first != "Text" }.forEach { (label, field) ->
+                if (field is JTextField) field.horizontalAlignment = JTextField.LEFT
+                twoColumn.add(SwingUtils.labeledField(label, field))
             }
-        val textFrame = createTitledPanel("Text", textPanel)
+            add(twoColumn)
+        }
 
-        val modelTabData =
-            listOf(
-                "Model ID" to txt_model,
-                "Animation ID" to txt_animationId,
-                "Model Zoom" to txt_modelZoom,
-                "Viewport X" to txt_viewportX,
-                "Viewport Y" to txt_viewportY,
-                "Viewport Z" to txt_viewportZ,
-                "Sprite Pitch" to txt_pitch,
-                "Center" to chckbxCentre,
-                "Sprite Yaw" to txt_yaw,
-                "Animated" to chckbxAnimated,
-                "Sprite Roll" to txt_roll,
-                "Ignore Z Buffer" to chckbxIgnoreZ,
-                "Dynamic Width" to txt_dynamicWidth,
-                "Dynamic Height" to txt_dynamicHeight,
-            )
+        val textFrame = createTitledPanel("Text", textPanel)
+        val modelTabData = listOf(
+            "Model ID" to txt_modelId,	"Animation ID" to txt_modelAnimId,
+            "X Angle" to txt_modelXAngle,	"Prop 1" to txt_unknownModelProp1,
+            "Y Angle" to txt_modelYAngle,	"Prop 2" to txt_unknownModelProp2,
+            "Y Offset" to txt_modelYOffset,	"Prop 3" to txt_unknownModelProp3,
+            "Model Zoom" to txt_modelZoom,	"Prop 4" to txt_unknownModelProp4,
+            "Ortho" to chckbx_modelOrtho,	"DynWidth" to txt_dynamicWidth,
+            "Prop 5" to chckbx_unknownModelProp5,	"Dyneight" to txt_dynamicHeight
+
+        )
+
         val modelPanel = JPanel(GridLayout(0, 2, 0, 0))
         modelTabData.forEach { (label, field) -> modelPanel.add(SwingUtils.labeledField(label, field)) }
         val modelFrame = createTitledPanel("Model", modelPanel)
@@ -967,30 +963,16 @@ class InterfaceUI : JFrame() {
         topPanel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
 
         listOf(
-            "Overlayer" to txt_overlayer,
-            "Hide" to chckbxHidden,
-            "Type" to txt_type,
-            "Hash" to txt_hash,
-            "X Mode" to txt_modex,
-            "HasAlpha" to chckbxHasAlpha,
-            "X" to txt_x,
-            "Y Mode" to txt_positionmodeY,
-            "Alpha" to txt_trans,
-            "Y" to txt_y,
-            "Color" to txt_color,
-            "Sprite ID" to txt_sprite,
-            "Width" to txt_width,
-            "Tiling" to chckbxRepeat,
-            "hFlip" to chckbxHorizontalFlip,
-            "Height" to txt_height,
-            "vFlip" to chckbxVerticalFlip,
-            "BorderThic" to txt_border,
-            "Height Mode" to txt_modeHeight,
-            "Width Mode" to txt_widthMode,
-            "Scroll X" to txt_scrollX,
-            "Scroll Y" to txt_scrollY,
-            "Hover" to chckbxHover
-        )
+            "Hash" to txt_hash,	"Type" to txt_type,	"Hide" to chckbxHidden,
+            "Overlayer" to txt_overlayer,	"Hover" to chckbxHover,	"Sprite ID" to txt_sprite,
+            "X" to txt_x, 	"X Mode" to txt_modex, 	"Tiling" to chckbxRepeat,
+            "Y" to txt_y,	"Y Mode" to txt_positionmodeY,	"H Flip" to chckbxHorizontalFlip,
+            "Width" to txt_width,	"Width Mode" to txt_widthMode,	"V Flip" to chckbxVerticalFlip,
+            "Height" to txt_height,	"Height Mode" to txt_modeHeight,	"Color" to txt_color,
+            "Scroll X" to txt_scrollX,	"Font ID" to txt_font,	"Alpha" to txt_trans,
+            "Scroll Y" to txt_scrollY,	"B Thickness" to txt_border,
+
+            )
             .forEach { (label, field) -> topPanel.add(SwingUtils.labeledField(label, field)) }
 
         val scriptsContent = JPanel()
@@ -1218,19 +1200,18 @@ setLocationRelativeTo(null)
         cleanValues()
 
         val comp = ComponentDefinition.getInterfaceComponent(inter, componentId) ?: return
-
         selectedComponent = comp
 
         txt_hash.getTextField().text = comp.componentHash.toString()
-        txt_type.selectedItem =
-            when (comp.type) {
-                ComponentConstants.LAYER -> "Layer"
-                ComponentConstants.TEXT -> "Text"
-                ComponentConstants.SPRITE -> "Sprite"
-                ComponentConstants.FIGURE -> "Figure"
-                ComponentConstants.MODEL -> "Model"
-                else -> comp.type.toString()
-            }
+
+        txt_type.selectedItem = when (comp.type) {
+            ComponentConstants.LAYER -> "Layer"
+            ComponentConstants.TEXT -> "Text"
+            ComponentConstants.SPRITE -> "Sprite"
+            ComponentConstants.FIGURE -> "Figure"
+            ComponentConstants.MODEL -> "Model"
+            else -> comp.type.toString()
+        }
 
         txt_x.getTextField().text = comp.baseX.toString()
         txt_y.getTextField().text = comp.baseY.toString()
@@ -1238,71 +1219,68 @@ setLocationRelativeTo(null)
         txt_height.getTextField().text = comp.baseHeight.toString()
         txt_widthMode.getTextField().text = comp.aspectWidthType.toString()
         txt_modeHeight.getTextField().text = comp.aspectHeightType.toString()
-        txt_modex.getTextField().text = comp.xMode.toString()
+
         txt_positionmodeY.getTextField().text = comp.yMode.toString()
+        txt_modex.getTextField().text = comp.xMode.toString()
+
         txt_overlayer.getTextField().text = comp.parentId.toString()
-
-        txt_sprite.getTextField().text = comp.spriteId.toString()
-        txt_border.getTextField().text = comp.borderThickness.toString()
-        txt_color.getTextField().text = comp.color.toString()
-        txt_trans.getTextField().text = comp.transparency.toString()
-        txt_optionMask.getTextField().text = comp.optionMask.toString()
-        txt_dynamicWidth.getTextField().text = comp.dynamicWidth.toString()
-        txt_dynamicHeight.getTextField().text = comp.dynamicHeight.toString()
-
-        chckbxHorizontalFlip.selectedItem = comp.hFlip
-        chckbxVerticalFlip.selectedItem = comp.vFlip
-        chckbxFilled.selectedItem = comp.filled
-        chckbxRepeat.selectedItem = comp.spriteTiling
-        chckbxHasAlpha.selectedItem = comp.hasAlpha
-        chckbxHover.selectedItem = comp.noClickThrough
         chckbxHidden.selectedItem = comp.hidden
-        chckbxShadow.selectedItem = comp.shadow
-        chckbxAnimated.selectedItem = comp.animated
-        chckbxCentre.selectedItem = comp.centreType
-        chckbxIgnoreZ.selectedItem = comp.ignoreZBuffer
 
-        txt_text.getTextField().text = comp.text
-        txt_font.getTextField().text = comp.fontId.toString()
-        txt_multi.getTextField().text = comp.multiline.toString()
-        txt_xali.getTextField().text = comp.textHorizontalAli.toString()
-        txt_yali.getTextField().text = comp.textVerticalAli.toString()
+        chckbxHover.selectedItem = comp.type == ComponentConstants.LAYER && comp.noClickThrough
 
-        txt_scrollX.getTextField().text = comp.scrollMaxH.toString()
-        txt_scrollY.getTextField().text = comp.scrollMaxV.toString()
 
-        txt_model.getTextField().text = comp.modelId.toString()
-        txt_animationId.getTextField().text = comp.modelAnimId.toString()
-        txt_modelZoom.getTextField().text = comp.spriteScale.toString()
-        txt_viewportX.getTextField().text = comp.viewportX.toString()
-        txt_viewportY.getTextField().text = comp.viewportY.toString()
-        txt_viewportZ.getTextField().text = comp.viewportZ.toString()
-        txt_pitch.getTextField().text = comp.spritePitch.toString()
-        txt_roll.getTextField().text = comp.spriteRoll.toString()
-        txt_yaw.getTextField().text = comp.spriteYaw.toString()
+            txt_sprite.getTextField().text = comp.spriteId.toString()
+            txt_border.getTextField().text = comp.borderThickness.toString()
+            txt_trans.getTextField().text = comp.transparency.toString()
+            chckbxHorizontalFlip.selectedItem = comp.hFlip
+            chckbxVerticalFlip.selectedItem = comp.vFlip
+            chckbxRepeat.selectedItem = comp.spriteTiling
+            chckbxHasAlpha.selectedItem = comp.hasAlpha
 
-        txt_leftclick.getTextField().text = ""
-        txt_option1.getTextField().text = ""
-        txt_option2.getTextField().text = ""
-        txt_option3.getTextField().text = ""
-        txt_option4.getTextField().text = ""
-        txt_option5.getTextField().text = ""
-        if (comp.rightclickOptions != null) {
-            var i = 0
-            while (i < comp.rightclickOptions!!.size && i < 6) {
-                val text = comp.rightclickOptions!![i]
-                if (text != null) {
-                    when (i) {
-                        0 -> txt_leftclick.getTextField().text = text
-                        1 -> txt_option1.getTextField().text = text
-                        2 -> txt_option2.getTextField().text = text
-                        3 -> txt_option3.getTextField().text = text
-                        4 -> txt_option4.getTextField().text = text
-                        5 -> txt_option5.getTextField().text = text
-                    }
-                }
-                i++
-            }
+
+
+            txt_text.getTextField().text = comp.text
+            txt_font.getTextField().text = comp.fontId.toString()
+            txt_xali.getTextField().text = comp.textHorizontalAli.toString()
+            txt_yali.getTextField().text = comp.textVerticalAli.toString()
+            txt_vpadding.getTextField().text = comp.vPadding.toString()
+            chckbxShadow.selectedItem = comp.shadow
+
+
+
+            txt_color.getTextField().text = comp.color.toString()
+            chckbxFilled.selectedItem = comp.filled
+            txt_trans.getTextField().text = comp.transparency.toString()
+
+
+
+            txt_scrollX.getTextField().text = comp.scrollMaxH.toString()
+            txt_scrollY.getTextField().text = comp.scrollMaxV.toString()
+
+
+
+            txt_modelId.getTextField().text = comp.modelId.toString()
+            txt_modelAnimId.getTextField().text = comp.modelAnimId.toString()
+            txt_modelXAngle.getTextField().text = comp.modelXAngle.toString()
+            txt_modelYAngle.getTextField().text = comp.modelYAngle.toString()
+            txt_modelYOffset.getTextField().text = comp.modelYOffset.toString()
+            txt_modelZoom.getTextField().text = comp.modelZoom.toString()
+            txt_unknownModelProp1.getTextField().text = comp.unknownModelProp1.toString()
+            txt_unknownModelProp2.getTextField().text = comp.unknownModelProp2.toString()
+            txt_unknownModelProp3.getTextField().text = comp.unknownModelProp3.toString()
+            txt_unknownModelProp4.getTextField().text = comp.unknownModelProp4.toString()
+            chckbx_modelOrtho.selectedItem = comp.modelOrtho
+            chckbx_unknownModelProp5.selectedItem = comp.unknownModelProp5
+            txt_dynamicWidth.getTextField().text = comp.dynamicWidth.toString()
+            txt_dynamicHeight.getTextField().text = comp.dynamicHeight.toString()
+
+
+        txt_optionMask.getTextField().text = comp.optionMask.toString()
+
+        val options = listOf(txt_leftclick, txt_option1, txt_option2, txt_option3, txt_option4, txt_option5)
+        options.forEach { it.getTextField().text = "" }
+        comp.rightclickOptions?.forEachIndexed { index, text ->
+            if (index in 0..5) options[index].getTextField().text = text ?: ""
         }
 
         var values: String? = ""
@@ -1505,15 +1483,14 @@ setLocationRelativeTo(null)
         }
     }
 
-    fun saveInterface(inter: Int, comp: Int) {
-        var c = ComponentDefinition.getInterfaceComponent(inter, comp)
+    fun saveInterface(inter: Int, compId: Int) {
+        var c = ComponentDefinition.getInterfaceComponent(inter, compId)
 
         if (c == null) {
             c = ComponentDefinition().apply {
-                componentId = comp
-                type = ComponentConstants.SPRITE
-                optionBase = ""
+                componentId = compId
                 contentType = 0
+                optionBase = ""
             }
 
             if (ComponentDefinition.componentDefinition!![inter] == null) {
@@ -1521,7 +1498,16 @@ setLocationRelativeTo(null)
                     arrayOfNulls(ComponentDefinition.getInterfaceDefinitionsComponentsSize(inter))
             }
 
-            ComponentDefinition.componentDefinition!![inter]!![comp] = c
+            ComponentDefinition.componentDefinition!![inter]!![compId] = c
+        }
+
+        c.type = when (txt_type.selectedItem?.toString()) {
+            "Layer" -> ComponentConstants.LAYER
+            "Text" -> ComponentConstants.TEXT
+            "Sprite" -> ComponentConstants.SPRITE
+            "Figure" -> ComponentConstants.FIGURE
+            "Model" -> ComponentConstants.MODEL
+            else -> ComponentConstants.SPRITE
         }
 
         c.parentId = parseIntSafe(txt_overlayer.getTextField().text, -1)
@@ -1529,78 +1515,103 @@ setLocationRelativeTo(null)
         c.baseY = parseIntSafe(txt_y.getTextField().text, 0)
         c.baseWidth = parseIntSafe(txt_width.getTextField().text, 0)
         c.baseHeight = parseIntSafe(txt_height.getTextField().text, 0)
+
         c.aspectWidthType = parseIntSafe(txt_widthMode.getTextField().text, 0).toByte()
         c.aspectHeightType = parseIntSafe(txt_modeHeight.getTextField().text, 0).toByte()
         c.xMode = parseIntSafe(txt_modex.getTextField().text, 0).toByte()
         c.yMode = parseIntSafe(txt_positionmodeY.getTextField().text, 0).toByte()
-        c.hidden = (chckbxHidden.selectedItem as? String)?.toBoolean() ?: false
+
+        c.hidden = (chckbxHidden.selectedItem as? Boolean) ?: false
+
+        c.scrollMaxH = 0
+        c.scrollMaxV = 0
+        c.spriteId = -1
+        c.modelId = -1
+        c.text = ""
+        c.rightclickOptions = null
 
         when (c.type) {
+
             ComponentConstants.LAYER -> {
                 c.scrollMaxH = parseIntSafe(txt_scrollX.getTextField().text, 0)
                 c.scrollMaxV = parseIntSafe(txt_scrollY.getTextField().text, 0)
-                c.noClickThrough = (chckbxHover.selectedItem as? String)?.toBoolean() ?: false
+                c.noClickThrough = (chckbxHover.selectedItem as? Boolean) ?: false
             }
+
             ComponentConstants.SPRITE -> {
-                c.spriteId = parseIntSafe(txt_sprite.getTextField().text, 0)
-                c.angle2d = 0
+                c.spriteId = parseIntSafe(txt_sprite.getTextField().text, -1)
                 c.transparency = parseIntSafe(txt_trans.getTextField().text, 255)
                 c.borderThickness = parseIntSafe(txt_border.getTextField().text, 0)
-                c.shadowColor = 0
-                c.spriteTiling = (chckbxRepeat.selectedItem as? String)?.toBoolean() ?: false
-                c.hasAlpha = (chckbxHasAlpha.selectedItem as? String)?.toBoolean() ?: false
-                c.vFlip = (chckbxVerticalFlip.selectedItem as? String)?.toBoolean() ?: false
-                c.hFlip = (chckbxHorizontalFlip.selectedItem as? String)?.toBoolean() ?: false
+                c.color = parseIntSafe(txt_color.getTextField().text, 0)
+
+                c.spriteTiling = (chckbxRepeat.selectedItem as? Boolean) ?: false
+                c.hasAlpha = (chckbxHasAlpha.selectedItem as? Boolean) ?: false
+                c.hFlip = (chckbxHorizontalFlip.selectedItem as? Boolean) ?: false
+                c.vFlip = (chckbxVerticalFlip.selectedItem as? Boolean) ?: false
             }
-            ComponentConstants.MODEL -> {
-                c.modelId = parseIntSafe(txt_model.getTextField().text, -1)
-                c.modelAnimId = parseIntSafe(txt_animationId.getTextField().text, -1)
-                c.spriteScale = parseIntSafe(txt_modelZoom.getTextField().text, 100)
-                c.animated = (chckbxAnimated.selectedItem as? String)?.toBoolean() ?: false
-                c.centreType = (chckbxCentre.selectedItem as? String)?.toBoolean() ?: false
-                c.ignoreZBuffer = (chckbxIgnoreZ.selectedItem as? String)?.toBoolean() ?: false
-                c.viewportX = parseIntSafe(txt_viewportX.getTextField().text, 0)
-                c.viewportY = parseIntSafe(txt_viewportY.getTextField().text, 0)
-                c.viewportZ = parseIntSafe(txt_viewportZ.getTextField().text, 0)
-                c.spritePitch = parseIntSafe(txt_pitch.getTextField().text, 0)
-                c.spriteRoll = parseIntSafe(txt_roll.getTextField().text, 0)
-                c.spriteYaw = parseIntSafe(txt_yaw.getTextField().text, 0)
-                if (c.aspectWidthType.toInt() != 0) c.dynamicWidth = parseIntSafe(txt_dynamicWidth.getTextField().text, 0)
-                if (c.aspectHeightType.toInt() != 0) c.dynamicHeight = parseIntSafe(txt_dynamicHeight.getTextField().text, 0)
-            }
+
             ComponentConstants.TEXT -> {
                 c.text = txt_text.getTextField().text
-                c.textHorizontalAli = parseIntSafe(txt_xali.getTextField().text, 0)
-                c.textVerticalAli = parseIntSafe(txt_yali.getTextField().text, 0)
-                c.vPadding = parseIntSafe(txt_vpadding.getTextField().text, 0)
-                c.shadow = (chckbxShadow.selectedItem as? String)?.toBoolean() ?: false
                 c.fontId = parseIntSafe(txt_font.getTextField().text, -1)
                 c.color = parseIntSafe(txt_color.getTextField().text, 0)
                 c.transparency = parseIntSafe(txt_trans.getTextField().text, 255)
-                c.multiline = (chckbxMultiline.selectedItem as? String)?.toBoolean() ?: false
+                c.textHorizontalAli = parseIntSafe(txt_xali.getTextField().text, 0)
+                c.textVerticalAli = parseIntSafe(txt_yali.getTextField().text, 0)
+                c.vPadding = parseIntSafe(txt_vpadding.getTextField().text, 0)
+                c.shadow = (chckbxShadow.selectedItem as? Boolean) ?: false
             }
+
+            ComponentConstants.MODEL -> {
+                c.modelId = parseIntSafe(txt_modelId.getTextField().text, -1)
+                c.modelAnimId = parseIntSafe(txt_modelAnimId.getTextField().text, -1)
+                c.modelXAngle = parseIntSafe(txt_modelXAngle.getTextField().text, 0)
+                c.modelYAngle = parseIntSafe(txt_modelYAngle.getTextField().text, 0)
+                c.modelYOffset = parseIntSafe(txt_modelYOffset.getTextField().text, 0)
+                c.modelZoom = parseIntSafe(txt_modelZoom.getTextField().text, 100)
+
+                c.modelOrtho = (chckbx_modelOrtho.selectedItem as? Boolean) ?: false
+                c.unknownModelProp5 = (chckbx_unknownModelProp5.selectedItem as? Boolean) ?: false
+
+                if (c.aspectWidthType.toInt() != 0)
+                    c.dynamicWidth = parseIntSafe(txt_dynamicWidth.getTextField().text, 0)
+
+                if (c.aspectHeightType.toInt() != 0)
+                    c.dynamicHeight = parseIntSafe(txt_dynamicHeight.getTextField().text, 0)
+            }
+
             ComponentConstants.FIGURE -> {
                 c.color = parseIntSafe(txt_color.getTextField().text, 0)
-                c.filled = (chckbxFilled.selectedItem as? String)?.toBoolean() ?: false
                 c.transparency = parseIntSafe(txt_trans.getTextField().text, 255)
+                c.filled = (chckbxFilled.selectedItem as? Boolean) ?: false
             }
         }
 
-        if (!txt_leftclick.getTextField().text.isNullOrEmpty()) {
-            c.rightclickOptions = arrayOf(txt_leftclick.getTextField().text)
+        val opts = arrayOfNulls<String>(6)
+        listOf(
+            txt_leftclick,
+            txt_option1,
+            txt_option2,
+            txt_option3,
+            txt_option4,
+            txt_option5
+        ).forEachIndexed { i, field ->
+            val t = field.getTextField().text
+            if (!t.isNullOrBlank()) opts[i] = t
         }
+        c.rightclickOptions = if (opts.any { it != null }) opts else null
+
         c.optionMask = parseIntSafe(txt_optionMask.getTextField().text, 0)
 
         c.onLoadScript = InterfaceUtils.getScriptArray(txt_onload.text)
         c.onMouseHoverScript = InterfaceUtils.getScriptArray(txt_fullonhover.text)
         c.onMouseLeaveScript = InterfaceUtils.getScriptArray(txt_mouseLeave.text)
+        c.onOptionClick = InterfaceUtils.getScriptArray(txt_onOptionClick.text)
         c.onUseWith = InterfaceUtils.getScriptArray(txt_onUseWith.text)
         c.onUse = InterfaceUtils.getScriptArray(txt_onUse.text)
         c.onVarpTransmit = InterfaceUtils.getScriptArray(txt_onVarpTransmit.text)
         c.onInvTransmit = InterfaceUtils.getScriptArray(txt_onInvTransmit.text)
         c.onStatTransmit = InterfaceUtils.getScriptArray(txt_onStatTransmit.text)
         c.onTimer = InterfaceUtils.getScriptArray(txt_onTimer.text)
-        c.onOptionClick = InterfaceUtils.getScriptArray(txt_onOptionClick.text)
         c.onMouseRepeat = InterfaceUtils.getScriptArray(txt_onMouseRepeat.text)
         c.onClickRepeat = InterfaceUtils.getScriptArray(txt_onClickRepeat.text)
         c.onDrag = InterfaceUtils.getScriptArray(txt_onDrag.text)
@@ -1619,12 +1630,11 @@ setLocationRelativeTo(null)
         c.varcstrTriggers = InterfaceUtils.getConfigArray(txt_varcStrTriggers.text)
 
         val data = c.encodeIf3()
-        Cache.store!!.indexes[3].putFile(inter, comp, data)
+        Cache.store!!.indexes[3].putFile(inter, compId, data)
 
         drawTree(inter)
-        logger.info("Saved IF3 [$inter:$comp]")
+        logger.info("Saved [$inter:$compId]")
     }
-
 
     private fun parseIntSafe(value: String, defaultValue: Int): Int {
         return try {

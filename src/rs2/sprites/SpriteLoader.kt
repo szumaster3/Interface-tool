@@ -8,40 +8,67 @@ import rs2.cache.Cache
 import rs2.sprites.SpriteArchive.Companion.decode
 
 object SpriteLoader {
-    var spriteCache: HashMap<Int, SpriteArchive> = HashMap()
+
+    private val spriteCache: HashMap<Int, SpriteArchive> = HashMap()
 
     val numSprites: Int
-        get() {
-            val spriteIndex = spriteIndex
-            return spriteIndex.lastArchiveId + 1
-        }
+        get() = spriteIndex.lastArchiveId + 1
 
-    fun getArchive(archive: Int): SpriteArchive? {
-        if (spriteCache.containsKey(archive)) {
-            return spriteCache[archive]
-        }
+    fun getArchive(archiveId: Int): SpriteArchive? {
+        spriteCache[archiveId]?.let { return it }
 
-        val idx = spriteIndex
-        val spriteData = idx.getFile(archive) ?: return null
+        val data = spriteIndex.getFile(archiveId, 0) ?: return null
+        val archive = decode(ByteBuffer.wrap(data)) ?: return null
 
-        val spriteBuff = ByteBuffer.wrap(spriteData)
-        val s = decode(spriteBuff) ?: return null
-
-        spriteCache[archive] = s
-        return s
+        spriteCache[archiveId] = archive
+        return archive
     }
 
     @JvmStatic
-    fun getSprite(archive: Int): BufferedImage? {
-        return getSprite(archive, 0)
+    fun getSprite(archiveId: Int): BufferedImage? =
+        getSprite(archiveId, 0)
+
+    fun getSprite(archiveId: Int, frame: Int): BufferedImage? =
+        getArchive(archiveId)?.getSprite(frame)
+
+    /**
+     * Returns raw sprite data (file 0).
+     * Used for export / re-decoding.
+     */
+    fun getRaw(archiveId: Int): ByteBuffer? {
+        val data = spriteIndex.getFile(archiveId, 0) ?: return null
+        return ByteBuffer.wrap(data)
     }
 
-    fun getSprite(archive: Int, fileIndex: Int): BufferedImage? {
-        val arch = getArchive(archive) ?: return null
+    /**
+     * Writes sprite to cache.
+     * Sprites use a single file per archive (fileId = 0).
+     */
+    fun put(archiveId: Int, data: ByteArray): Boolean {
+        val success = spriteIndex.putFile(
+            archiveId,
+            0,
+            data
+        )
 
-        return arch.getSprite(fileIndex)
+        if (success) {
+            spriteCache.remove(archiveId)
+            println("[SpriteLoader] Sprite $archiveId written to cache (${data.size} bytes)")
+        } else {
+            println("[SpriteLoader] Failed to write sprite $archiveId")
+        }
+
+        return success
     }
 
-    val spriteIndex: Index
+    /**
+     * Clears cached sprite archive.
+     */
+    fun invalidate(archiveId: Int) {
+        spriteCache.remove(archiveId)
+        println("[SpriteLoader] Sprite $archiveId cache invalidated")
+    }
+
+    private val spriteIndex: Index
         get() = Cache.store!!.indexes[Constants.SPRITES_INDEX]
 }

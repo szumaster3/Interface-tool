@@ -108,7 +108,7 @@ class InterfaceUI : JFrame() {
 
     private val txt_font = SpinnerTextField(10)
     private val txt_animationId = SpinnerTextField(10)
-    private val txt_color = SpinnerTextField(10)
+    val txt_color = SpinnerTextField(10)
     private val txt_trans = SpinnerTextField(10)
     private val txt_multi = SpinnerTextField(10)
     private val txt_scrollX = SpinnerTextField(10)
@@ -1028,7 +1028,17 @@ class InterfaceUI : JFrame() {
         val btn1 = innerPanel?.getComponent(0) as? JButton
         val btn2 = innerPanel?.getComponent(1) as? JButton
 
-        btn1?.addActionListener { ColorPicker().isVisible = true }
+        btn1?.addActionListener {
+            val comp = selectedComponent ?: return@addActionListener
+            val picker = ColorPicker(comp, txt_color) {
+                setValues(currentInterface, selectedComponent!!.componentId)
+                repaint()
+            }
+            picker.pack()
+            picker.setLocationRelativeTo(null)
+            picker.isVisible = true
+        }
+
 
         btn2?.addActionListener {
             SpriteBrowser(this) { spriteId, w, h ->

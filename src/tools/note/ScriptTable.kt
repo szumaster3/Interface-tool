@@ -24,8 +24,8 @@ class ScriptTable : JFrame("Script Table") {
         size = Dimension(850, 500)
         setLocationRelativeTo(null)
         load()
-        table.columnModel.getColumn(0).preferredWidth = 60
-        table.columnModel.getColumn(0).minWidth = 50
+        table.columnModel.getColumn(0).preferredWidth = 80
+        table.columnModel.getColumn(0).minWidth = 80
         table.columnModel.getColumn(0).maxWidth = 80
 
         val scrollPane = JScrollPane(table).apply { preferredSize = Dimension(830, 380) }
@@ -119,9 +119,9 @@ class ScriptTable : JFrame("Script Table") {
     }
 
     private fun save() {
-        if (tableModel.rowCount == 0 || tableModel.dataVector.all { row -> (row as Vector<*>).all { it.toString().isBlank() } }) return
-
         try {
+            if (table.isEditing) table.cellEditor.stopCellEditing()
+            if (tableModel.rowCount == 0 || tableModel.dataVector.all { row -> (row as Vector<*>).all { it.toString().isBlank() } }) return
             file.parentFile?.mkdirs()
             file.printWriter().use { out ->
                 out.println("\"Script ID\"|\"Args\"|\"Description\"")
@@ -145,19 +145,30 @@ class ScriptTable : JFrame("Script Table") {
         val result = mutableListOf<String>()
         var current = StringBuilder()
         var inQuotes = false
-        line.forEach { char ->
+        var i = 0
+        while (i < line.length) {
+            val char = line[i]
             when (char) {
-                '"' -> inQuotes = !inQuotes
-                '|' ->
+                '"' -> {
+                    if (inQuotes && i + 1 < line.length && line[i + 1] == '"') {
+                        current.append('"')
+                        i++
+                    } else {
+                        inQuotes = !inQuotes
+                    }
+                }
+                '|' -> {
                     if (inQuotes) current.append(char)
                     else {
-                        result.add(current.toString().trim())
+                        result.add(current.toString())
                         current = StringBuilder()
                     }
+                }
                 else -> current.append(char)
             }
+            i++
         }
-        result.add(current.toString().trim())
+        result.add(current.toString())
         return result
     }
 

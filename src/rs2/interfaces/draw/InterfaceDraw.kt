@@ -18,7 +18,7 @@ import kotlin.math.min
 
 object InterfaceDraw {
     var editMode = true
-    private const val SELECTED_ALPHA = 80
+    const val SELECTED_ALPHA = 80
     private const val FIXED_SHIFT = 14
     private val childrenCache = mutableMapOf<Pair<Int, Int>, List<ComponentDefinition>>()
     enum class ViewMode { NONE, BY_TYPE, BY_LAYER }
@@ -230,7 +230,7 @@ object InterfaceDraw {
                 }
 
                 val selected = InterfaceUI.selectedComponent == comp
-                if (editMode || selected) drawSelectionOutline(g2, comp, x, y, width, height, selected)
+                if (editMode && !selected) drawSelectionOutline(g2, comp, x, y, width, height, false)
             }
 
             for (comp in texts) {
@@ -241,7 +241,7 @@ object InterfaceDraw {
                 val height = max(1, comp.height)
                 drawText(g2, comp, x, y, width, height)
                 val selected = InterfaceUI.selectedComponent == comp
-                if (editMode || selected) drawSelectionOutline(g2, comp, x, y, width, height, selected)
+                if (editMode && !selected) drawSelectionOutline(g2, comp, x, y, width, height, false)
             }
         } finally {
             g2.dispose()
@@ -432,24 +432,7 @@ object InterfaceDraw {
         height: Int,
         selected: Boolean,
     ) {
-        var outlineColor: Color = Color(255, 255, 255, 200)
-        var fillColor: Color? = null
-        if (selected && editMode) {
-            fillColor =
-                when (comp.type) {
-                    ComponentConstants.SPRITE -> Color(238, 0, 255, SELECTED_ALPHA)
-                    ComponentConstants.FIGURE -> Color(112, 112, 112, SELECTED_ALPHA)
-                    ComponentConstants.TEXT -> Color(255, 251, 0, 50)
-                    ComponentConstants.MODEL -> Color(0, 215, 255, 50)
-                    ComponentConstants.LAYER -> Color(0, 240, 0, 50)
-                    else -> null
-                }
-        }
-        fillColor?.let {
-            g2.color = it
-            g2.fillRect(x, y, width, height)
-        }
-        g2.color = outlineColor
+        g2.color = Color(255, 255, 255, 200)
         g2.stroke = BasicStroke(1.5f)
         g2.drawRect(x, y, width, height)
     }

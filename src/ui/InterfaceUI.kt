@@ -9,6 +9,7 @@ import rs2.interfaces.ComponentConstants
 import rs2.interfaces.draw.InterfaceRenderMode
 import rs2.interfaces.InterfaceUtils
 import rs2.interfaces.draw.InterfaceDraw
+import rs2.interfaces.draw.InterfaceDraw.SELECTED_ALPHA
 import rs2.interfaces.render.InterfaceMouseController
 import rs2.logging.LogFactory
 import rs2.sprites.ColorPicker
@@ -1014,21 +1015,43 @@ class InterfaceUI : JFrame() {
                 )
 
                 selectedComponent?.let { comp ->
-                    if ((comp.componentHash shr 16) == currentInterface) {
-                        g.color = Color.WHITE
-                        g.drawRect(
-                            ComponentDefinition.getX(comp, currentInterface),
-                            ComponentDefinition.getY(comp, currentInterface),
-                            comp.width,
-                            comp.height
-                        )
+                    if (InterfaceDraw.editMode && (comp.componentHash shr 16) == currentInterface) {
+                        val x = ComponentDefinition.getX(comp, currentInterface)
+                        val y = ComponentDefinition.getY(comp, currentInterface)
+                        val width = comp.width
+                        val height = comp.height
+
+                        val fillColor = when (comp.type)
+                        {
+                            ComponentConstants.SPRITE   -> Color(127, 80, 190,  SELECTED_ALPHA)
+                            ComponentConstants.FIGURE   -> Color(110, 110, 110, SELECTED_ALPHA)
+                            ComponentConstants.TEXT     -> Color(255, 251, 0,   SELECTED_ALPHA)
+                            ComponentConstants.MODEL    -> Color(87, 87, 210,   SELECTED_ALPHA)
+                            ComponentConstants.LAYER    -> Color(0, 174, 0,     SELECTED_ALPHA)
+                            else -> null
+                        }
+
+                        val outlineColor = when (comp.type)
+                        {
+                            ComponentConstants.SPRITE   -> Color(127, 80, 190)
+                            ComponentConstants.FIGURE   -> Color(110, 110, 110)
+                            ComponentConstants.TEXT     -> Color(255, 251, 0)
+                            ComponentConstants.MODEL    -> Color(87, 87, 210)
+                            ComponentConstants.LAYER    -> Color(0, 174, 0)
+                            else -> Color.yellow
+                        }
+
+                        fillColor?.let { g.color = it;g.fillRect(x, y, width, height) }
+                        g.color = outlineColor; val g2 = g as Graphics2D;g2.stroke = BasicStroke(2f)
+                        g2.drawRect(x, y, width, height)
                     }
                 }
             }
         }
+
         (viewportPanel as JPanel).preferredSize = Dimension(Constants.VIEWPORT_WIDTH, Constants.VIEWPORT_HEIGHT)
-        (viewportPanel as JPanel).minimumSize = Dimension(Constants.VIEWPORT_WIDTH, Constants.VIEWPORT_HEIGHT)
-        (viewportPanel as JPanel).maximumSize = Dimension(Constants.VIEWPORT_WIDTH, Constants.VIEWPORT_HEIGHT)
+        (viewportPanel as JPanel).minimumSize   = Dimension(Constants.VIEWPORT_WIDTH, Constants.VIEWPORT_HEIGHT)
+        (viewportPanel as JPanel).maximumSize   = Dimension(Constants.VIEWPORT_WIDTH, Constants.VIEWPORT_HEIGHT)
 
         panel.add(viewportPanel!!, BorderLayout.CENTER)
 
@@ -1061,7 +1084,7 @@ class InterfaceUI : JFrame() {
             "Hash" to txt_hash,
             "Type" to txt_type,
             "Hide" to chckbxHidden,
-            "Overlayer" to txt_overlayer,
+            "Parent ID" to txt_overlayer,
             "Hover" to chckbxHover,
             "Sprite ID" to txt_sprite,
             "X" to txt_x,

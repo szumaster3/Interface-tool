@@ -34,7 +34,7 @@ class ColorPicker(
         add(mainPanel, BorderLayout.CENTER)
         val buttonPanel = JPanel()
         buttonPanel.layout =BoxLayout(buttonPanel, BoxLayout.Y_AXIS)
-        val changeColorBtn = createButton("Change"){openColorChooser()}
+        val changeColorBtn = createButton("Palette"){openColorChooser()}
         val copyRS2Btn =
             createButton("Copy RS2HSB"){ event ->
                 val value = rs2hsb.toString()
@@ -50,7 +50,7 @@ class ColorPicker(
                 showCopiedButton(event.source as JButton, hex)
             }
         val moveToEditorBtn =
-            createButton("Pick"){
+            createButton("Transfer to editor"){
                 val rgb = (selectedColor.red shl 16) or (selectedColor.green shl 8) or (selectedColor.blue)
                 comp.color = rgb
                 colorField.getTextField().text = rgb.toString()
@@ -92,7 +92,7 @@ class ColorPicker(
         previewPanel.add(Box.createRigidArea(Dimension(0, 6)))
 
         val infoPanel = JPanel(GridLayout(2, 1, 4, 4))
-        val smallFont = Font("JetBrains Mono", Font.PLAIN, 11)
+        val smallFont = Font("JetBrains Mono", Font.PLAIN, 12)
         rs2Label.font = smallFont
         rs2Label.horizontalAlignment = SwingConstants.CENTER
         rgbLabel.font = smallFont

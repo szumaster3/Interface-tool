@@ -77,54 +77,51 @@ object InterfaceDraw {
 
     private fun realSize(
         component: ComponentDefinition,
-        width: Int,
-        height: Int,
+        parentWidth: Int,
+        parentHeight: Int
     ) {
-        component.width =
-            when (component.aspectWidthType.toInt()) {
-                0 -> component.baseWidth
-                1 -> width - component.baseWidth
-                2 -> width * component.baseWidth shr FIXED_SHIFT
-                else -> component.width
-            }
-        component.height =
-            when (component.aspectHeightType.toInt()) {
-                0 -> component.baseHeight
-                1 -> height - component.baseHeight
-                2 -> height * component.baseHeight shr FIXED_SHIFT
-                else -> component.height
-            }
+        component.width = when (component.aspectWidthType.toInt()) {
+            0 -> component.baseWidth // "abs"
+            1 -> parentWidth - component.baseWidth // "minus"
+            2, 4 -> parentWidth * component.baseWidth shr FIXED_SHIFT
+            3 -> component.width // "mode_3"
+            else -> component.width
+        }
+
+        component.height = when (component.aspectHeightType.toInt()) {
+            0 -> component.baseHeight
+            1 -> parentHeight - component.baseHeight
+            2, 4 -> parentHeight * component.baseHeight shr FIXED_SHIFT
+            3 -> component.height
+            else -> component.height
+        }
+
         if (component.type == 0) {
             if (component.width <= 0) component.width = 5
             if (component.height <= 0) component.height = 5
         }
     }
 
-    private fun realPosition(
-        component: ComponentDefinition,
-        parentWidth: Int,
-        parentHeight: Int,
-    ) {
-        component.positionX =
-            when (component.yMode.toInt()) {
-                0 -> component.baseX
-                1 -> (parentWidth - component.width) / 2 + component.baseX
-                2 -> parentWidth - component.width - component.baseX
-                3 -> component.baseX * parentWidth shr FIXED_SHIFT
-                4 -> (parentWidth - component.width) / 2 + (component.baseX * parentWidth shr FIXED_SHIFT)
-                5 -> parentWidth - component.width - (component.baseX * parentWidth shr FIXED_SHIFT)
-                else -> parentWidth - component.width - (component.baseX * parentWidth shr FIXED_SHIFT)
-            }
-        component.positionY =
-            when (component.xMode.toInt()) {
-                0 -> component.baseY
-                1 -> (parentHeight - component.height) / 2 + component.baseY
-                2 -> parentHeight - component.height - component.baseY
-                3 -> component.baseY * parentHeight shr FIXED_SHIFT
-                4 -> (parentHeight - component.height) / 2 + (component.baseY * parentHeight shr FIXED_SHIFT)
-                5 -> parentHeight - component.height - (component.baseY * parentHeight shr FIXED_SHIFT)
-                else -> parentHeight - component.height - (component.baseY * parentHeight shr FIXED_SHIFT)
-            }
+    private fun realPosition(component: ComponentDefinition, parentWidth: Int, parentHeight: Int) {
+        component.positionX = when (component.yMode.toInt()) {
+            0 -> component.baseX // "abs_left"
+            1 -> (parentWidth - component.width) / 2 + component.baseX
+            2 -> parentWidth - component.width - component.baseX
+            3 -> component.baseX * parentWidth shr FIXED_SHIFT
+            4 -> (parentWidth - component.width) / 2 + (component.baseX * parentWidth shr FIXED_SHIFT)
+            5 -> parentWidth - component.width - (component.baseX * parentWidth shr FIXED_SHIFT)
+            else -> component.baseX
+        }
+
+        component.positionY = when (component.xMode.toInt()) {
+            0 -> component.baseY
+            1 -> (parentHeight - component.height) / 2 + component.baseY
+            2 -> parentHeight - component.height - component.baseY
+            3 -> component.baseY * parentHeight shr FIXED_SHIFT
+            4 -> (parentHeight - component.height) / 2 + (component.baseY * parentHeight shr FIXED_SHIFT)
+            5 -> parentHeight - component.height - (component.baseY * parentHeight shr FIXED_SHIFT)
+            else -> component.baseY
+        }
     }
 
     val sizeCache = mutableMapOf<ComponentDefinition, Dimension>()

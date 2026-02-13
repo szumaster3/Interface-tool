@@ -10,6 +10,7 @@ import rs2.interfaces.draw.InterfaceRenderMode
 import rs2.interfaces.InterfaceUtils
 import rs2.interfaces.draw.InterfaceDraw
 import rs2.interfaces.render.InterfaceMouseController
+import rs2.interfaces.render.ResizeHandle
 import rs2.logging.LogFactory
 import rs2.sprites.ColorPicker
 import rs2.sprites.SpriteDumper
@@ -189,8 +190,11 @@ class InterfaceUI : JFrame() {
         txt_interId.setBounds(Constants.CONTENT_PADDING, Constants.CONTENT_PADDING, Constants.SEARCHBOX_WIDTH, Constants.SEARCHBOX_HEIGHT)
         searchPanel.add(txt_interId)
 
-        val btnFind = JButton("Find").apply {
+        val findIcon = ImageIcon(IconLibrary.SEARCH_ICON)
+
+        val btnFind = JButton(findIcon).apply {
             maximumSize = Dimension(Int.MAX_VALUE, Constants.BUTTON_HEIGHT)
+            toolTipText = "Search interface by ID"
             addActionListener {
                 val id = txt_interId.getTextField().text.toIntOrNull() ?: return@addActionListener
                 currentInterface = id
@@ -1033,6 +1037,14 @@ class InterfaceUI : JFrame() {
                         InterfaceUtils.drawSelectedComponent(g, comp, fill = true)
                     }
                 }
+
+                InterfaceMouseController.instance?.let { controller ->
+                    if (controller.enabled) {
+                        selectedComponent?.let { comp ->
+                            ResizeHandle.N.drawResizeHandles(g, comp)
+                        }
+                    }
+                }
             }
         }
 
@@ -1184,7 +1196,7 @@ class InterfaceUI : JFrame() {
         val mouseEnabled = InterfaceMouseController.instance?.enabled ?: false
         gridSlider.isEnabled = mouseEnabled
         if (!mouseEnabled) {
-            gridLabel.text = "Grid locked"
+            gridLabel.text = "Grid Locked"
         }
 
         return root
@@ -1343,44 +1355,63 @@ class InterfaceUI : JFrame() {
 
         val menuBar = JMenuBar()
         jMenuBar = menuBar
-        val mnCredits = JMenu("Credits")
-        mnCredits.addMouseListener(
-            object : MouseAdapter() {
-                override fun mouseClicked(e: MouseEvent) {
-                    val dialog = JDialog(this@InterfaceUI, "Credits", true)
-                    dialog.layout = BorderLayout()
-                    val message =
-                        JLabel(
-                            "<html><center>" +
-                                "<h2>Interface Editor</h2>" +
-                                "<p>Made by: Shnek<br>Discord: Cara Shnek#6969</p>" +
-                                "<p>Major code refactoring & improvements by: Ceikry</p>" +
-                                "<p>Recent changes - szumaster 05.02.2026</p></center></html>",
-                        )
-                    message.border = BorderFactory.createEmptyBorder(10, 10, 10, 10)
-                    dialog.add(message, BorderLayout.CENTER)
 
-                    val okButton = JButton("OK")
-                    okButton.addActionListener { dialog.dispose() }
+        val buttonSize = Dimension(80, 24)
 
-                    val panel = JPanel()
-                    panel.add(okButton)
-                    dialog.add(panel, BorderLayout.SOUTH)
+        val topButtonPanel = JPanel()
+        topButtonPanel.layout = BoxLayout(topButtonPanel, BoxLayout.X_AXIS)
+        topButtonPanel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+        topButtonPanel.alignmentX = Component.LEFT_ALIGNMENT
 
-                    dialog.pack()
-                    dialog.setLocationRelativeTo(this@InterfaceUI)
-                    dialog.isVisible = true
-                }
-            },
-        )
-        menuBar.add(mnCredits)
+        val creditsButton = JButton("About")
+        creditsButton.toolTipText = "Show information about creators."
+        creditsButton.isFocusable = false
+        creditsButton.isContentAreaFilled = false
+        creditsButton.isBorderPainted = true
+        creditsButton.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+        creditsButton.isOpaque = false
+        creditsButton.preferredSize = buttonSize
+        creditsButton.maximumSize = buttonSize
+        creditsButton.minimumSize = buttonSize
+        creditsButton.addActionListener {
+            val dialog = JDialog(this@InterfaceUI, "Credits", true)
+            dialog.layout = BorderLayout()
+            val message = JLabel(
+                "<html><center>" +
+                        "<h2>Interface Editor</h2>" +
+                        "<p>Made by: Shnek<br>Discord: Cara Shnek#6969</p>" +
+                        "<p>Major code refactoring & improvements by: Ceikry</p>" +
+                        "<p>Recent changes: szumaster 05.02.2026</p></center></html>"
+            )
+            message.border = BorderFactory.createEmptyBorder(10, 10, 10, 10)
+            dialog.add(message, BorderLayout.CENTER)
 
-        val mnAbout = JMenu("Extra")
-        menuBar.add(mnAbout)
+            val okButton = JButton("OK")
+            okButton.addActionListener { dialog.dispose() }
 
-        val mntmDumpSprites = JMenuItem("Export sprites")
-        mntmDumpSprites.addActionListener { _: ActionEvent? ->
+            val panel = JPanel()
+            panel.add(okButton)
+            dialog.add(panel, BorderLayout.SOUTH)
 
+            dialog.pack()
+            dialog.setLocationRelativeTo(this@InterfaceUI)
+            dialog.isVisible = true
+        }
+
+        val extraButton = JButton("Extra")
+        extraButton.toolTipText = "Files / Utils"
+        extraButton.isFocusable = false
+        extraButton.isContentAreaFilled = false
+        extraButton.isBorderPainted = true
+        extraButton.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+        extraButton.isOpaque = false
+        extraButton.preferredSize = buttonSize
+        extraButton.maximumSize = buttonSize
+        extraButton.minimumSize = buttonSize
+
+        val extraMenu = JPopupMenu()
+        val exportSpritesItem = JMenuItem("Export sprites")
+        exportSpritesItem.addActionListener {
             val spriteIndex = Cache.store!!.indexes[Constants.SPRITES_INDEX]
             val max = spriteIndex.lastArchiveId + 1
             val progressMonitor = ProgressMonitor(menuBar, "Export sprites", "", 0, max)
@@ -1388,31 +1419,22 @@ class InterfaceUI : JFrame() {
             Thread {
                 for (i in 0 until max) {
                     if (progressMonitor.isCanceled) break
-
                     SpriteDumper.dump(i)
-
                     SwingUtilities.invokeLater {
                         progressMonitor.setProgress(i + 1)
                         progressMonitor.note = "Export sprite ${i + 1} of ${max - 1}"
                     }
-
-                    try {
-                        Thread.sleep(5)
-                    } catch (ignored: InterruptedException) {
-                    }
+                    try { Thread.sleep(5) } catch (ignored: InterruptedException) {}
                 }
-
                 SwingUtilities.invokeLater { progressMonitor.close() }
             }.start()
         }
-        mnAbout.add(mntmDumpSprites)
-        val mntmExportInterface = JMenuItem("Export interface")
-        mntmExportInterface.addActionListener { _: ActionEvent? ->
+        val exportInterfaceItem = JMenuItem("Export interface")
+        exportInterfaceItem.addActionListener {
             val interfaceId = currentInterface
             if (interfaceId != -1) {
-                try {
-                    exportInterface(interfaceId)
-                } catch (ex: Exception) {
+                try { exportInterface(interfaceId) }
+                catch (ex: Exception) {
                     JOptionPane.showMessageDialog(
                         interfaceViewportScrollPane,
                         "Error exporting interface $interfaceId:\n${ex.message}",
@@ -1429,35 +1451,53 @@ class InterfaceUI : JFrame() {
                 )
             }
         }
+        val packInterfaceItem = JMenuItem("Pack interface")
+        packInterfaceItem.isEnabled = false
 
-        mnAbout.add(mntmExportInterface)
-        val mntmPackInterface = JMenuItem("Pack interface")
-        mntmPackInterface.isEnabled = false
-        mntmPackInterface.addActionListener { _: ActionEvent? -> }
+        extraMenu.add(exportSpritesItem)
+        extraMenu.add(exportInterfaceItem)
+        extraMenu.add(packInterfaceItem)
 
-        val lockedIcon = ImageIcon(IconLibrary.MOUSE_LOCKED_BUTTON)
-        val activeIcon = ImageIcon(IconLibrary.MOUSE_ACTIVE_BUTTON)
-
-        val lockButton = JToggleButton(lockedIcon)
-        lockButton.isFocusable = false
-        lockButton.toolTipText = "Lock/Unlock Mouse"
-        lockButton.isContentAreaFilled = false
-        lockButton.isBorderPainted = false
-        lockButton.isOpaque = false
-        lockButton.preferredSize = Dimension(16, 20)
-        lockButton.preferredSize = Dimension(16, 20)
-        lockButton.preferredSize = Dimension(16, 20)
-        lockButton.addActionListener {
-            val status = lockButton.isSelected
-            lockButton.icon = if (status) activeIcon else lockedIcon
-            InterfaceMouseController(viewportPanel!!, enabled = status)
-            gridSlider.isEnabled = status
-            gridLabel.text = if (status) "Grid: ${gridSlider.value}" else "Grid: Locked"
+        extraButton.addActionListener { e ->
+            extraMenu.show(extraButton, 0, extraButton.height)
         }
 
-        mnAbout.add(mntmPackInterface)
-        menuBar.add(mnCredits)
-        menuBar.add(lockButton)
+        val lockButton = JToggleButton("Mouse Locked")
+        val lockButtonSize = Dimension(120, 24)
+        lockButton.isFocusable = false
+        lockButton.toolTipText = "Toggle mouse movement"
+        lockButton.isContentAreaFilled = false
+        lockButton.isBorderPainted = true
+        lockButton.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+        lockButton.isOpaque = false
+        lockButton.background = Color.red
+        lockButton.preferredSize = lockButtonSize
+        lockButton.maximumSize = lockButtonSize
+        lockButton.minimumSize = lockButtonSize
+        lockButton.addActionListener {
+            val status = lockButton.isSelected
+
+            if (status){
+            lockButton.text = "Mouse Active"
+            lockButton.background = Color.green
+            }else{
+                lockButton.text = "Mouse Locked"
+                lockButton.background = Color.red
+            }
+            InterfaceMouseController(viewportPanel!!, enabled = status)
+            gridSlider.isEnabled = status
+            gridLabel.text = if (status) "Grid: ${gridSlider.value}" else "Grid Locked"
+        }
+        topButtonPanel.add(Box.createRigidArea(Dimension(5, 0)))
+        topButtonPanel.add(extraButton)
+        topButtonPanel.add(Box.createRigidArea(Dimension(5, 0)))
+        topButtonPanel.add(lockButton)
+        topButtonPanel.add(Box.createRigidArea(Dimension(5, 0)))
+        topButtonPanel.add(creditsButton)
+        topButtonPanel.add(Box.createRigidArea(Dimension(5, 0)))
+
+        menuBar.add(topButtonPanel)
+
         pack()
         revalidate()
     }

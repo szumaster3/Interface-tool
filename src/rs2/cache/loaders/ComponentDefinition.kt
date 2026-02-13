@@ -5,7 +5,6 @@ import com.alex.io.OutputStream
 import rs2.cache.Cache
 import rs2.interfaces.ComponentConstants
 import rs2.interfaces.InterfaceUtils.getParent
-import rs2.interfaces.draw.InterfaceDraw.setValues
 import rs2.logging.LogFactory.createLogger
 import java.util.*
 import kotlin.math.max
@@ -234,7 +233,7 @@ class ComponentDefinition {
                 out.writeByte(transparency)
             }
 
-            ComponentConstants.UNKNOWN -> {
+            ComponentConstants.LINE -> {
                 out.writeByte(lineWidth.toInt())
                 out.writeInt(color)
                 out.writeByte(if (unknownProp_8) 1 else 0)
@@ -402,7 +401,7 @@ class ComponentDefinition {
                 transparency = stream.readUnsignedByte()
             }
 
-            ComponentConstants.UNKNOWN -> {
+            ComponentConstants.LINE -> {
                 lineWidth = stream.readUnsignedByte().toByte()
                 color = stream.readInt()
                 unknownProp_8 = stream.readUnsignedByte() == 1

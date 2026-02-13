@@ -10,7 +10,7 @@ object ComponentConstants {
     const val MODEL: Int = 6
     const val INVENTORY_TEXT: Int = 7
     const val TOOLTIP: Int = 8
-    const val UNKNOWN: Int = 9
+    const val LINE: Int = 9
 
     const val CLICK_MASK: Int = 30
 

@@ -20,8 +20,8 @@ object InterfaceDraw {
     var editMode = true
     private const val SELECTED_ALPHA = 80
     private const val FIXED_SHIFT = 14
-
     private val childrenCache = mutableMapOf<Pair<Int, Int>, List<ComponentDefinition>>()
+    enum class ViewMode { NONE, BY_TYPE, BY_LAYER }
 
     fun getOrderedComps(
         interfaceId: Int,
@@ -170,12 +170,13 @@ object InterfaceDraw {
         showContainers: Boolean = true,
         showHidden: Boolean = false,
         showModels: Boolean = false,
+        viewMode: ViewMode = ViewMode.BY_TYPE
     ): BufferedImage {
         sizeCache.clear()
         val result = BufferedImage(Constants.VIEWPORT_WIDTH, Constants.VIEWPORT_HEIGHT, BufferedImage.TYPE_INT_ARGB)
         val g = result.createGraphics()
         try {
-            drawInterfaceToGraphics(g, interfaceId, showContainers, showHidden, showModels)
+            drawInterfaceToGraphics(g, interfaceId, showContainers, showHidden, showModels, viewMode)
         } finally {
             g.dispose()
         }
@@ -188,17 +189,25 @@ object InterfaceDraw {
         showContainers: Boolean,
         showHidden: Boolean,
         showModels: Boolean,
-    ) {
+        viewMode: ViewMode,
+        selectedType: Int? = null
+    ){
         val g2 = g.create() as Graphics2D
         try {
             drawBackground(g2)
-
             val comps = getOrderedComps(interfaceId, showHidden)
-            val texts = mutableListOf<ComponentDefinition>()
 
-            for (comp in comps) {
+            val filteredComps: List<ComponentDefinition> = when (viewMode) {
+                ViewMode.NONE -> comps
+                ViewMode.BY_TYPE -> selectedType?.let { comps.filter { comp -> comp.type == it } } ?: emptyList()
+                ViewMode.BY_LAYER -> comps.filter { it.type == ComponentConstants.LAYER }
+            }
+
+            val texts = mutableListOf<ComponentDefinition>()
+            for (comp in filteredComps) {
                 if (comp == null) continue
                 if (!showHidden && InterfaceUtils.isHidden(comp)) continue
+
                 if (comp.type == ComponentConstants.TEXT) {
                     texts.add(comp)
                     continue
@@ -217,7 +226,7 @@ object InterfaceDraw {
                     ComponentConstants.FIGURE -> drawFigure(g2, comp, x, y, width, height)
                     ComponentConstants.MODEL -> if (showModels) drawModel(g2, comp, x, y, width, height)
                     ComponentConstants.LAYER -> drawLayer(g2, comp, x, y, width, height, showContainers)
-                    ComponentConstants.UNKNOWN -> drawUnknown(g2, comp, x, y, width, height)
+                    ComponentConstants.LINE -> drawUnknown(g2, comp, x, y, width, height)
                 }
 
                 val selected = InterfaceUI.selectedComponent == comp

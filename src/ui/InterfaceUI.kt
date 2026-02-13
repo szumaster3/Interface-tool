@@ -1037,7 +1037,7 @@ class InterfaceUI : JFrame() {
                         InterfaceUtils.drawSelectedComponent(g, comp, fill = true)
                     }
                 }
-
+/*
                 InterfaceMouseController.instance?.let { controller ->
                     if (controller.enabled) {
                         selectedComponent?.let { comp ->
@@ -1045,7 +1045,11 @@ class InterfaceUI : JFrame() {
                         }
                     }
                 }
+
+*/
             }
+
+
         }
 
         (viewportPanel as JPanel).preferredSize = Dimension(Constants.VIEWPORT_WIDTH, Constants.VIEWPORT_HEIGHT)

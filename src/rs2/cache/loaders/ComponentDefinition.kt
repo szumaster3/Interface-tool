@@ -55,11 +55,8 @@ class ComponentDefinition {
     var dragRenderBehavior: Boolean = false
     var spriteTiling: Boolean = false
 
-    @JvmField
-    public var vFlip: Boolean = false
-
-    @JvmField
-    public var hFlip: Boolean = false
+    var vFlip: Boolean = false
+    var hFlip: Boolean = false
 
     var text: String? = ""
     var textVerticalAli: Int = 0
@@ -137,8 +134,6 @@ class ComponentDefinition {
     var varcTriggers: IntArray? = null
     var varcstrTriggers: IntArray? = null
 
-    var aHashTable4823: Hashtable<*, *>? = null
-    var aWidget4836: ComponentDefinition? = null
     var opCursors: IntArray = intArrayOf()
 
     var flag: Int = 0
@@ -146,27 +141,10 @@ class ComponentDefinition {
     var anInt4683: Int = 0
     var anInt4687: Int = 0
     var anInt4703: Int = 0
-    var anInt4709: Int = 0
     var anInt4718: Int = 0
     var anInt4719: Int = 0
-    var anInt4734: Int = 0
     var anInt4747: Int = 0
     var anInt4748: Int = 0
-    var anInt4780: Int = 0
-    var anInt4783: Int = 0
-    var anInt4797: Int = 0
-    var anInt4801: Int = 0
-    var anInt4810: Int = 0
-    var anInt4811: Int = 0
-    var anInt4813: Int = 0
-    var anInt4824: Int = 0
-    var anInt4842: Int = 0
-    var anInt4848: Int = 0
-
-    private val hashInt1: ArrayList<Int?> = ArrayList()
-    private val hashString2: ArrayList<String?> = ArrayList()
-    private val hashLong1: ArrayList<Long> = ArrayList()
-    private val hashLong2: ArrayList<Long?> = ArrayList()
 
     var lineWidth: Byte = 0
     var unknownProp_8: Boolean = false

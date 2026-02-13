@@ -17,6 +17,8 @@ import rs2.sprites.utils.SpriteBrowser
 import tools.note.ScriptTable
 import tools.print.GenericPrinter
 import tools.print.GenericPrinter.printInterface
+import ui.SwingUtils.getSlider
+import ui.SwingUtils.getSliderLabel
 import ui.theme.ComponentTreeRenderer
 import ui.theme.DepthComboBox
 import ui.theme.IconLibrary
@@ -89,6 +91,7 @@ class InterfaceUI : JFrame() {
     private var txt_height = SpinnerTextField(10)
     private var txt_width = SpinnerTextField(10)
     private var txt_text = SpinnerTextField(10)
+    private var txt_shadowColor = SpinnerTextField(10)
     private var txt_leftclick = SpinnerTextField(10)
     private var txt_overlayer = SpinnerTextField(10)
     private var txt_option1 = SpinnerTextField(10)
@@ -153,6 +156,10 @@ class InterfaceUI : JFrame() {
     private var txt_onScroll = JTextField()
     private var txt_onVarcTransmit = JTextField()
     private var txt_onVarcStrTransmit = JTextField()
+
+    val gridPanel = SwingUtils.labeledSliderButton("Grid", 1, 32, 8)
+    val gridSlider = gridPanel.getSlider()!!
+    val gridLabel = gridPanel.getSliderLabel()!!
 
     private var updating = false
 
@@ -944,7 +951,6 @@ class InterfaceUI : JFrame() {
                     selectedComponent?.let { comp ->
                         if ((comp.componentHash shr 16) == currentInterface) {
                             g.color = Color.WHITE
-                            InterfaceDraw.setValues(comp)
                             g.drawRect(
                                 ComponentDefinition.getX(comp, currentInterface),
                                 ComponentDefinition.getY(comp, currentInterface),
@@ -975,13 +981,16 @@ class InterfaceUI : JFrame() {
     }
 
     private fun constructGeneralTab(): JPanel {
-        val root = JPanel()
-        root.layout = BoxLayout(root, BoxLayout.Y_AXIS)
-        root.border = BorderFactory.createEmptyBorder(5, 5, 5, 5)
-        root.isOpaque = false
-        root.background = Color.WHITE
-        val topPanel = JPanel(GridLayout(0, 3, 1, 1))
-        topPanel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+        val root = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            border = BorderFactory.createEmptyBorder(5, 5, 5, 5)
+            isOpaque = false
+            background = Color.WHITE
+        }
+
+        val topPanel = JPanel(GridLayout(0, 3, 1, 1)).apply {
+            border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+        }
 
         listOf(
             "Hash" to txt_hash,
@@ -1004,13 +1013,54 @@ class InterfaceUI : JFrame() {
             "Color" to txt_color,
             "Scroll X" to txt_scrollX,
             "Font ID" to txt_font,
-            "Alpha" to txt_trans,
+            "Shadow color" to txt_shadowColor,
             "Scroll Y" to txt_scrollY,
             "B Thickness" to txt_border,
-        ).forEach { (label, field) -> topPanel.add(SwingUtils.labeledField(label, field)) }
+            "Alpha" to txt_trans,
+            "Line Width" to txt_lineWidth,
 
-        val scriptsContent = JPanel()
-        scriptsContent.layout = BoxLayout(scriptsContent, BoxLayout.Y_AXIS)
+        ).forEach { (label, field) ->
+            topPanel.add(SwingUtils.labeledField(label, field))
+        }
+
+        gridSlider.addChangeListener {
+            val value = gridSlider.value
+            InterfaceMouseController.instance?.grid = value
+            if (InterfaceMouseController.instance?.enabled == true) {
+                gridLabel.text = "Grid: $value"
+            }
+        }
+        topPanel.add(gridPanel)
+
+        val pickerAddBtn = SwingUtils.labeledTwoButtons("Picker", "Sprites")
+        val innerPanel = pickerAddBtn.getComponent(0) as? JPanel
+        val btn1 = innerPanel?.getComponent(0) as? JButton
+        val btn2 = innerPanel?.getComponent(1) as? JButton
+
+        btn1?.addActionListener {
+            val comp = selectedComponent ?: return@addActionListener
+            val picker = ColorPicker(comp, txt_color) {
+                setValues(currentInterface, selectedComponent!!.componentId)
+                repaint()
+            }
+            picker.pack()
+            picker.setLocationRelativeTo(null)
+            picker.isVisible = true
+        }
+
+        btn2?.addActionListener {
+            SpriteBrowser(this) { spriteId, w, h ->
+                if (currentInterface <= 0) return@SpriteBrowser
+                selectedComponent?.spriteId = spriteId
+                selectedComponent?.baseWidth = w
+                selectedComponent?.baseHeight = h
+                setValues(currentInterface, selectedComponent!!.componentId)
+                repaint()
+            }
+        }
+
+        topPanel.add(pickerAddBtn)
+        val scriptsContent = JPanel().apply { layout = BoxLayout(this, BoxLayout.Y_AXIS) }
 
         listOf(
             "onLoad" to txt_onload,
@@ -1038,43 +1088,22 @@ class InterfaceUI : JFrame() {
             scriptsContent.add(Box.createRigidArea(Dimension(0, 1)))
         }
 
-        val pickerAddBtn = SwingUtils.labeledTwoButtons("Picker", "Sprites")
-        val innerPanel = pickerAddBtn.getComponent(0) as? JPanel
-        val btn1 = innerPanel?.getComponent(0) as? JButton
-        val btn2 = innerPanel?.getComponent(1) as? JButton
-
-        btn1?.addActionListener {
-            val comp = selectedComponent ?: return@addActionListener
-            val picker =
-                ColorPicker(comp, txt_color) {
-                    setValues(currentInterface, selectedComponent!!.componentId)
-                    repaint()
-                }
-            picker.pack()
-            picker.setLocationRelativeTo(null)
-            picker.isVisible = true
+        val scriptsScroll = JScrollPane(scriptsContent).apply {
+            verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_ALWAYS
+            horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+            border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+            verticalScrollBar.unitIncrement = 6
         }
 
-        btn2?.addActionListener {
-            SpriteBrowser(this) { spriteId, w, h ->
-                if (currentInterface <= 0) return@SpriteBrowser
-                selectedComponent?.spriteId = spriteId
-                selectedComponent?.baseWidth = w
-                selectedComponent?.baseHeight = h
-                setValues(currentInterface, selectedComponent!!.componentId)
-                repaint()
-            }
-        }
-
-        topPanel.add(pickerAddBtn)
-        val scriptsScroll = JScrollPane(scriptsContent)
-        scriptsScroll.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_ALWAYS
-        scriptsScroll.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
-        scriptsScroll.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
-        scriptsScroll.verticalScrollBar.unitIncrement = 6
         root.add(topPanel)
         root.add(Box.createRigidArea(Dimension(0, 6)))
         root.add(scriptsScroll)
+
+        val mouseEnabled = InterfaceMouseController.instance?.enabled ?: false
+        gridSlider.isEnabled = mouseEnabled
+        if (!mouseEnabled) {
+            gridLabel.text = "Grid locked"
+        }
 
         return root
     }
@@ -1220,6 +1249,13 @@ class InterfaceUI : JFrame() {
             val status = lockButton.isSelected
             InterfaceMouseController(viewportPanel!!, enabled = status)
             lockButton.text = if (status) "Mouse Active" else "Mouse Locked"
+
+            gridSlider.isEnabled = status
+            if (!status) {
+                gridLabel.text = "Grid: Locked"
+            } else {
+                gridLabel.text = "Grid: ${gridSlider.value}"
+            }
         }
 
         mnAbout.add(mntmPackInterface)
@@ -1283,6 +1319,8 @@ class InterfaceUI : JFrame() {
         chckbxShadow.selectedItem = comp.shadow
 
         txt_color.getTextField().text = comp.color.toString()
+        txt_shadowColor.getTextField().text = comp.shadowColor.toString()
+
         chckbxFilled.selectedItem = comp.filled
         txt_trans.getTextField().text = comp.transparency.toString()
 
@@ -1566,6 +1604,7 @@ class InterfaceUI : JFrame() {
                 c.transparency = parseIntSafe(txt_trans.getTextField().text, 255)
                 c.borderThickness = parseIntSafe(txt_border.getTextField().text, 0)
                 c.color = parseIntSafe(txt_color.getTextField().text, 0)
+                c.shadowColor= parseIntSafe(txt_shadowColor.getTextField().text, 0)
 
                 c.spriteTiling = (chckbxRepeat.selectedItem as? Boolean) ?: false
                 c.hasAlpha = (chckbxHasAlpha.selectedItem as? Boolean) ?: false
@@ -1611,7 +1650,7 @@ class InterfaceUI : JFrame() {
             }
 
             ComponentConstants.UNKNOWN -> {
-                c.color = parseIntSafe(txt_lineWidth.getTextField().text, 0)
+                c.lineWidth = parseIntSafe(txt_lineWidth.getTextField().text, 0).toByte()
                 c.color = parseIntSafe(txt_color.getTextField().text, 0)
                 c.unknownProp_8 = (chckbx_unknownProp8.selectedItem as? Boolean) ?: false
             }
@@ -2059,4 +2098,16 @@ class InterfaceUI : JFrame() {
         txt_width.getTextField().text = comp.baseWidth.toString()
         txt_height.getTextField().text = comp.baseHeight.toString()
     }
+
+    private var _selectedComponent: ComponentDefinition? = null
+    var selectedComponent: ComponentDefinition?
+        get() = _selectedComponent
+        set(value) {
+            _selectedComponent = value
+            value?.let { compDef ->
+                InterfaceDraw.sizeCache.remove(compDef)
+                InterfaceDraw.setValues(compDef)
+                viewportPanel?.repaint()
+            }
+        }
 }

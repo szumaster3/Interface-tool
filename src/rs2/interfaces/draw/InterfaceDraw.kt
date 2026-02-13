@@ -127,7 +127,7 @@ object InterfaceDraw {
             }
     }
 
-    private val sizeCache = mutableMapOf<ComponentDefinition, Dimension>()
+    val sizeCache = mutableMapOf<ComponentDefinition, Dimension>()
 
     fun setValues(component: ComponentDefinition?) {
         if (component == null) return

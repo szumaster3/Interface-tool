@@ -306,48 +306,44 @@ object InterfaceDraw {
         }
     }
 
-    private fun drawText(
-        g2: Graphics2D,
-        comp: ComponentDefinition,
-        x: Int,
-        y: Int,
-        width: Int,
-        height: Int,
-    ) {
-        val text = comp.text ?: return
+    private fun drawText(g2: Graphics2D, comp: ComponentDefinition, x: Int, y: Int, width: Int, height: Int, ) {
+        val rawText = comp.text ?: return
+        val lines = mutableListOf<String>()
+        for (part in rawText.split("<br>")) {
+            val words = part.split(" ")
+            var current = ""
+            for (word in words) {
+                val test = if (current.isEmpty()) word else "$current $word"
+                val fm = g2.fontMetrics
+                if (fm.stringWidth(test) > width) {
+                    if (current.isNotEmpty()) lines.add(current)
+                    current = word
+                } else {
+                    current = test
+                }
+            }
+            if (current.isNotEmpty()) lines.add(current)
+        }
+
         g2.font = Font("Helvetica", Font.PLAIN, 11)
         val fm = g2.fontMetrics
+        val totalTextHeight = lines.size * fm.height
 
-        val words = text.split(" ")
-        val lines = mutableListOf<String>()
-        var current = ""
-        for (word in words) {
-            val test = if (current.isEmpty()) word else "$current $word"
-            if (fm.stringWidth(test) > width) {
-                if (current.isNotEmpty()) lines.add(current)
-                current = word
-            } else {
-                current = test
-            }
+        var drawY = y + comp.vPadding
+        val offset = when (comp.textVerticalAli) {
+            1 -> (height - totalTextHeight) / 2
+            2 -> height - totalTextHeight
+            else -> 0
         }
-        if (current.isNotEmpty()) lines.add(current)
 
-        var drawY = y + comp.vPadding + fm.ascent
         for (line in lines) {
-            if (drawY > y + height) break
-            val drawX =
-                when (comp.textHorizontalAli) {
-                    1 -> x + (width - fm.stringWidth(line)) / 2
-                    2 -> x + width - fm.stringWidth(line)
-                    else -> x
-                }
-            val drawYFinal =
-                drawY +
-                    when (comp.textVerticalAli) {
-                        1 -> (height - lines.size * fm.height) / 2
-                        2 -> height - lines.size * fm.height
-                        else -> 0
-                    }
+            val drawX = when (comp.textHorizontalAli) {
+                1 -> x + (width - fm.stringWidth(line)) / 2
+                2 -> x + width - fm.stringWidth(line)
+                else -> x
+            }
+
+            val drawYFinal = drawY + fm.ascent + offset
             if (comp.shadow) {
                 val shadowColor = comp.shadowColor?.let { Color(it) } ?: Color(0, 0, 0, 150)
                 g2.color = shadowColor
@@ -355,6 +351,7 @@ object InterfaceDraw {
             }
             g2.color = Color(comp.color)
             g2.drawString(line, drawX, drawYFinal)
+
             drawY += fm.height
         }
     }

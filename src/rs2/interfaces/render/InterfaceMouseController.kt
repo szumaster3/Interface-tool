@@ -81,7 +81,7 @@ class InterfaceMouseController(
                 InterfaceUI.currentInterface,
             ) ?: return
 
-        InterfaceUI.selectedComponent = comp
+        InterfaceUI.instance.selectedComponent = comp
         InterfaceUI.instance.updateComponentFields(comp)
 
         InterfaceDraw.setValues(comp)
@@ -111,7 +111,6 @@ class InterfaceMouseController(
         draggingComp?.let { comp ->
             comp.baseX = snap(startBaseX + dx, e)
             comp.baseY = snap(startBaseY + dy, e)
-
             InterfaceDraw.sizeCache.remove(comp)
             InterfaceDraw.setValues(comp)
             InterfaceUI.instance.updateComponentFields(comp)
@@ -165,7 +164,6 @@ class InterfaceMouseController(
 
                 else -> {}
             }
-
             InterfaceDraw.sizeCache.remove(comp)
             InterfaceDraw.setValues(comp)
             InterfaceUI.instance.updateComponentFields(comp)

@@ -229,8 +229,8 @@ object InterfaceDraw {
                     ComponentConstants.LINE -> drawUnknown(g2, comp, x, y, width, height)
                 }
 
-                val selected = InterfaceUI.selectedComponent == comp
-                if (editMode && !selected) drawSelectionOutline(g2, comp, x, y, width, height, false)
+                val selected = InterfaceUI.instance.selectedComponent == comp
+                if (editMode) drawSelectionOutline(g2, comp, x, y, width, height, selected)
             }
 
             for (comp in texts) {
@@ -240,8 +240,8 @@ object InterfaceDraw {
                 val width = max(1, comp.width)
                 val height = max(1, comp.height)
                 drawText(g2, comp, x, y, width, height)
-                val selected = InterfaceUI.selectedComponent == comp
-                if (editMode && !selected) drawSelectionOutline(g2, comp, x, y, width, height, false)
+                val selected = InterfaceUI.instance.selectedComponent == comp
+                if (editMode) drawSelectionOutline(g2, comp, x, y, width, height, selected)
             }
         } finally {
             g2.dispose()
@@ -370,8 +370,10 @@ object InterfaceDraw {
         width: Int,
         height: Int,
     ) {
+        if(!editMode){
         g2.color = Color.BLUE
         g2.drawRect(x, y, width, height)
+            }
     }
 
     private fun drawLayer(
@@ -389,7 +391,9 @@ object InterfaceDraw {
         } else if (ContainerHelper.isButton(comp)) {
             sprite = loadSprite("data/theme/icons/scripts/button.png", width, height, comp)
         } else if (showContainers) {
-            g2.color = if (comp.parentId > 0) Color.RED else Color.GREEN
+           if(!editMode) {
+               g2.color = if (comp.parentId > 0) Color.RED else Color.GREEN
+           }
             g2.drawRect(x, y, width, height)
         }
         sprite?.let { g2.drawImage(it, x, y, null) }
@@ -432,8 +436,13 @@ object InterfaceDraw {
         height: Int,
         selected: Boolean,
     ) {
-        g2.color = Color(255, 255, 255, 200)
-        g2.stroke = BasicStroke(1.5f)
-        g2.drawRect(x, y, width, height)
+        if (selected) {
+            InterfaceUtils.drawSelectedComponent(g2, comp, fill = true)
+        } else {
+            g2.color = Color(255, 255, 255)
+            g2.stroke = BasicStroke(1.5f)
+            g2.drawRect(x, y, width, height)
+        }
     }
+
 }

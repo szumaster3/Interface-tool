@@ -1,6 +1,12 @@
 package rs2.interfaces
 
 import rs2.cache.loaders.ComponentDefinition
+import rs2.interfaces.draw.InterfaceDraw
+import java.awt.BasicStroke
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Graphics2D
+import kotlin.math.max
 
 object InterfaceUtils {
     @JvmStatic
@@ -75,4 +81,47 @@ object InterfaceUtils {
             ComponentConstants.INVENTORY -> "Inventory"
             else -> type.toString()
         }
+
+    fun drawSelectedComponent(
+        g: Graphics,
+        comp: ComponentDefinition,
+        fill: Boolean = true
+    ) {
+        if (!InterfaceDraw.editMode) return
+
+        val abs = InterfaceDraw.computeAbsolutePosition(comp)
+        val x = abs.x
+        val y = abs.y
+        val width = max(1, comp.width)
+        val height = max(1, comp.height)
+
+        val fillColor = when (comp.type) {
+            ComponentConstants.SPRITE -> Color(127, 80, 190, InterfaceDraw.SELECTED_ALPHA)
+            ComponentConstants.FIGURE -> Color(110, 110, 110, InterfaceDraw.SELECTED_ALPHA)
+            ComponentConstants.TEXT   -> Color(255, 251, 0, InterfaceDraw.SELECTED_ALPHA)
+            ComponentConstants.MODEL  -> Color(87, 87, 210, InterfaceDraw.SELECTED_ALPHA)
+            ComponentConstants.LAYER  -> Color(0, 174, 0, InterfaceDraw.SELECTED_ALPHA)
+            else -> null
+        }
+
+        val outlineColor = when (comp.type) {
+            ComponentConstants.SPRITE -> Color(80, 21, 190)
+            ComponentConstants.FIGURE -> Color(110, 110, 110)
+            ComponentConstants.TEXT   -> Color(255, 251, 0)
+            ComponentConstants.MODEL  -> Color(87, 87, 210)
+            ComponentConstants.LAYER  -> Color(0, 174, 0)
+            else -> Color.yellow
+        }
+
+        val g2 = g as Graphics2D
+        if (fill) {
+            fillColor?.let { g2.color = it; g2.fillRect(x, y, width, height) }
+        }
+        g2.color = outlineColor
+        g2.stroke = BasicStroke(1.5f)
+        g2.drawRect(x, y, width, height)
+
+    }
+
+
 }

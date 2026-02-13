@@ -1033,35 +1033,8 @@ class InterfaceUI : JFrame() {
                 )
 
                 selectedComponent?.let { comp ->
-                    if (InterfaceDraw.editMode && (comp.componentHash shr 16) == currentInterface) {
-                        val x = ComponentDefinition.getX(comp, currentInterface)
-                        val y = ComponentDefinition.getY(comp, currentInterface)
-                        val width = comp.width
-                        val height = comp.height
-
-                        val fillColor = when (comp.type)
-                        {
-                            ComponentConstants.SPRITE   -> Color(127, 80, 190,  SELECTED_ALPHA)
-                            ComponentConstants.FIGURE   -> Color(110, 110, 110, SELECTED_ALPHA)
-                            ComponentConstants.TEXT     -> Color(255, 251, 0,   SELECTED_ALPHA)
-                            ComponentConstants.MODEL    -> Color(87, 87, 210,   SELECTED_ALPHA)
-                            ComponentConstants.LAYER    -> Color(0, 174, 0,     SELECTED_ALPHA)
-                            else -> null
-                        }
-
-                        val outlineColor = when (comp.type)
-                        {
-                            ComponentConstants.SPRITE   -> Color(127, 80, 190)
-                            ComponentConstants.FIGURE   -> Color(110, 110, 110)
-                            ComponentConstants.TEXT     -> Color(255, 251, 0)
-                            ComponentConstants.MODEL    -> Color(87, 87, 210)
-                            ComponentConstants.LAYER    -> Color(0, 174, 0)
-                            else -> Color.yellow
-                        }
-
-                        fillColor?.let { g.color = it;g.fillRect(x, y, width, height) }
-                        g.color = outlineColor; val g2 = g as Graphics2D;g2.stroke = BasicStroke(2f)
-                        g2.drawRect(x, y, width, height)
+                    if ((comp.componentHash shr 16) == currentInterface) {
+                        InterfaceUtils.drawSelectedComponent(g, comp, fill = true)
                     }
                 }
             }
@@ -2316,8 +2289,6 @@ class InterfaceUI : JFrame() {
         private val logger: Logger = LogFactory.createLogger(InterfaceUI::class.java.name)
         var currentInterface = -1
         var currentViewMode: InterfaceDraw.ViewMode = InterfaceDraw.ViewMode.NONE
-
-        @JvmField var selectedComponent: ComponentDefinition? = null
 
         @JvmStatic
         fun main(args: Array<String>) {

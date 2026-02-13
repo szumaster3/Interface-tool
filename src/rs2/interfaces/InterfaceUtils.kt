@@ -105,12 +105,12 @@ object InterfaceUtils {
         }
 
         val outlineColor = when (comp.type) {
-            ComponentConstants.SPRITE -> Color(80, 21, 190)
+            ComponentConstants.SPRITE -> Color(141, 86, 211)
             ComponentConstants.FIGURE -> Color(110, 110, 110)
             ComponentConstants.TEXT   -> Color(255, 251, 0)
             ComponentConstants.MODEL  -> Color(87, 87, 210)
             ComponentConstants.LAYER  -> Color(0, 174, 0)
-            else -> Color.yellow
+            else -> Color.YELLOW
         }
 
         val g2 = g as Graphics2D

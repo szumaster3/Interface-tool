@@ -6,10 +6,10 @@ import properties.PropertyValues.setCachePath
 import rs2.cache.Cache
 import rs2.cache.loaders.ComponentDefinition
 import rs2.interfaces.ComponentConstants
-import rs2.interfaces.draw.InterfaceDrawMode
 import rs2.interfaces.InterfaceUtils
-import rs2.interfaces.draw.InterfaceDraw
 import rs2.interfaces.controller.InterfaceMouseController
+import rs2.interfaces.draw.InterfaceDraw
+import rs2.interfaces.draw.InterfaceDrawMode
 import rs2.logging.LogFactory
 import rs2.sprites.ColorPicker
 import rs2.sprites.SpriteDumper
@@ -17,13 +17,13 @@ import rs2.sprites.utils.SpriteBrowser
 import tools.note.ScriptTable
 import tools.print.GenericPrinter
 import tools.print.GenericPrinter.printInterface
-import ui.theme.util.SwingUtils.getSlider
-import ui.theme.util.SwingUtils.getSliderLabel
 import ui.theme.assets.IconLibrary
 import ui.theme.component.DepthComboBox
 import ui.theme.component.SpinnerTextField
 import ui.theme.util.ComponentTreeRenderer
 import ui.theme.util.SwingUtils
+import ui.theme.util.SwingUtils.getSlider
+import ui.theme.util.SwingUtils.getSliderLabel
 import ui.theme.util.ThemeUtils
 import java.awt.*
 import java.awt.event.ActionEvent
@@ -1024,8 +1024,7 @@ class InterfaceUI : JFrame() {
                     }
                 } else null
 
-                InterfaceDraw.drawInterfaceToGraphics(
-                    g,
+                InterfaceDraw.drawInterfaceToGraphics(g,
                     currentInterface,
                     chckbxShowContainers.selectedItem as Boolean,
                     chckbxShowHiddenComps.selectedItem as Boolean,
@@ -1046,8 +1045,7 @@ class InterfaceUI : JFrame() {
                                 comp.width,
                                 comp.height,
                             )
-                        }else{
-                            InterfaceUtils.drawSelectedComponent(g, comp, fill = true)}
+                        } else {InterfaceUtils.drawSelectedComponent(g, comp, fill = true)}
                     }
                 }
 /*
@@ -2088,23 +2086,36 @@ class InterfaceUI : JFrame() {
         return DefaultTreeModel(root)
     }
 
-    fun createInterfaceTree(interfaceId: Int, viewMode: InterfaceDraw.ViewMode, selectedType: Int?): DefaultTreeModel {
-        val comps = InterfaceDraw.getOrderedComps(interfaceId)
+    private fun createInterfaceTree(
+        interfaceId: Int,
+        viewMode: InterfaceDraw.ViewMode,
+        selectedType: Int?
+    ): DefaultTreeModel {
 
-        val filtered = when (viewMode) {
-            InterfaceDraw.ViewMode.NONE -> comps
-            InterfaceDraw.ViewMode.BY_TYPE -> selectedType?.let { comps.filter { comp -> comp.type == it } } ?: emptyList()
-            InterfaceDraw.ViewMode.BY_LAYER -> comps.filter { it.type == ComponentConstants.LAYER }
-        }
+        val comps = InterfaceDraw.buildTree(interfaceId)
 
         val root = DefaultMutableTreeNode("Interface $interfaceId")
         val nodesByParent = mutableMapOf<Int, DefaultMutableTreeNode>()
+
         nodesByParent[-1] = root
 
-        for (comp in filtered) {
-            val node = DefaultMutableTreeNode(ComponentNode(comp.componentId, InterfaceUtils.getComponentType(comp.type)))
-            nodesByParent[comp.parentId]?.add(node)
+        for (comp in comps) {
+
+            val parentNode = nodesByParent[comp.parentId] ?: continue
+
+            val shouldShow = when (viewMode) {
+                InterfaceDraw.ViewMode.NONE -> true
+                InterfaceDraw.ViewMode.BY_TYPE -> selectedType?.let { comp.type == it } ?: false
+                InterfaceDraw.ViewMode.BY_LAYER -> comp.type == ComponentConstants.LAYER
+            }
+
+            val node = DefaultMutableTreeNode(
+                ComponentNode(comp.componentId, InterfaceUtils.getComponentType(comp.type))
+            )
             nodesByParent[comp.componentHash] = node
+            if (shouldShow) {
+                parentNode.add(node)
+            }
         }
 
         return DefaultTreeModel(root)

@@ -192,4 +192,13 @@ object SwingUtils {
     }
     fun JPanel.getSlider(): JSlider? = this.getClientProperty("slider") as? JSlider
     fun JPanel.getSliderLabel(): JLabel? = this.getClientProperty("label") as? JLabel
+
+    fun createBevelPanel(content: JPanel): JPanel {
+        return JPanel(BorderLayout()).apply {
+            border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+            add(content, BorderLayout.CENTER)
+            isOpaque = false
+            background = Color.WHITE
+        }
+    }
 }

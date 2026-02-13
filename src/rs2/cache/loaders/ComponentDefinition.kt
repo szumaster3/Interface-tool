@@ -3,9 +3,11 @@ package rs2.cache.loaders
 import com.alex.io.InputStream
 import com.alex.io.OutputStream
 import rs2.cache.Cache
+import rs2.cache.util.InputStreamUtils
 import rs2.interfaces.ComponentConstants
 import rs2.interfaces.InterfaceUtils.getParent
 import rs2.logging.LogFactory.createLogger
+import java.io.PushbackInputStream
 import java.util.*
 import kotlin.math.max
 
@@ -151,6 +153,35 @@ class ComponentDefinition {
     var opId: IntArray? = null
     var repeatCount: ByteArray? = null
     var modifier: ByteArray? = null
+
+    var buttonType = 0
+    var cs1ComparisonOpcodes: IntArray? = null
+    var cs1ComparisonOperands: IntArray? = null
+    var cs1Scripts: Array<IntArray>? = null
+
+    var activeText: String? = null
+    var activeColor = 0
+    var overColor = 0
+    var unknownColor = 0
+
+    var unknownProp_11 = 0
+    var objCounts: IntArray? = null
+    var objTypes: IntArray? = null
+
+    var invMarginX = 0
+    var invMarginY = 0
+    var invOffsetX: IntArray? = null
+    var invOffsetY: IntArray? = null
+    var invSprite: IntArray? = null
+    var invOptions: Array<String?>? = null
+
+    var activeSpriteId = -1
+    var activeModelType = 0
+    var activeModelId = -1
+    var activeModelAnimId = -1
+
+    var option: String = ""
+    var optionSuffix: String = ""
 
     fun encode(hasScripts: Boolean): ByteArray = encodeIf3()
 
@@ -314,7 +345,181 @@ class ComponentDefinition {
 
     private fun encodeIf1(): ByteArray? = null
 
-    fun decode(
+    fun decode(stream: com.alex.io.InputStream, componentId: Int, interfaceId: Int) {
+        val firstByte = stream.readByte()
+
+        if (firstByte.toInt() == -1) {
+            stream.setOffset(stream.getOffset() - 1)
+            decodeIf3(stream, componentId, interfaceId)
+        } else {
+            stream.setOffset(stream.getOffset() - 1)
+            decodeIf1(stream, componentId, interfaceId)
+        }
+    }
+
+    fun decodeIf1(
+        stream: InputStream,
+        componentId: Int,
+        interfaceId: Int
+    ) {
+        stream.readUnsignedByte()
+        version = 1
+
+        this.componentId = componentId
+        this.interfaceId = interfaceId
+
+        type = stream.readUnsignedByte()
+        buttonType = stream.readUnsignedByte()
+        contentType = stream.readUnsignedShort()
+
+        baseX = stream.readShort()
+        baseY = stream.readShort()
+        baseWidth = stream.readUnsignedShort()
+        baseHeight = stream.readUnsignedShort()
+
+        dynamicWidth = 0
+        dynamicHeight = 0
+        xMode = 0
+        yMode = 0
+
+        transparency = stream.readUnsignedByte()
+
+        var over = stream.readUnsignedShort()
+        parentId = if (over == 65535) {
+            -1
+        } else {
+            (interfaceId shl 16) or over
+        }
+
+        unknownProp_11 = stream.readUnsignedShort()
+
+        val cs1Count = stream.readUnsignedByte()
+        if (cs1Count > 0) {
+            cs1ComparisonOpcodes = IntArray(cs1Count)
+            cs1ComparisonOperands = IntArray(cs1Count)
+
+            for (i in 0 until cs1Count) {
+                cs1ComparisonOpcodes!![i] = stream.readUnsignedByte()
+                cs1ComparisonOperands!![i] = stream.readUnsignedShort()
+            }
+        }
+
+        val scriptCount = stream.readUnsignedByte()
+        if (scriptCount > 0) {
+            cs1Scripts = Array(scriptCount) {
+                val len = stream.readUnsignedShort()
+                IntArray(len)
+            }
+
+            for (i in 0 until scriptCount) {
+                for (j in cs1Scripts!![i].indices) {
+                    var value = stream.readUnsignedShort()
+                    if (value == 65535) value = -1
+                    cs1Scripts!![i][j] = value
+                }
+            }
+        }
+
+        var flags = 0
+        when (type) {
+            ComponentConstants.LAYER -> {
+                scrollMaxV = stream.readUnsignedShort()
+                hidden = stream.readUnsignedByte() == 1
+            }
+            ComponentConstants.INVENTORY -> {
+                dynamicWidth = 3
+                dynamicHeight = 3
+
+                objCounts = IntArray(baseWidth * baseHeight)
+                objTypes = IntArray(baseWidth * baseHeight)
+
+                val flag1 = stream.readUnsignedByte()
+                val flag2 = stream.readUnsignedByte()
+                val flag3 = stream.readUnsignedByte()
+                val flag4 = stream.readUnsignedByte()
+
+                if (flag1 == 1) flags = flags or 0x10000000
+                if (flag2 == 1) flags = flags or 0x40000000.toInt()
+                if (flag3 == 1) flags = flags or Int.MAX_VALUE
+                if (flag4 == 1) flags = flags or 0x20000000
+
+                invMarginX = stream.readUnsignedByte()
+                invMarginY = stream.readUnsignedByte()
+
+                invOffsetX = IntArray(20)
+                invOffsetY = IntArray(20)
+                invSprite = IntArray(20)
+
+                for (i in 0 until 20) {
+                    if (stream.readUnsignedByte() == 1) {
+                        invOffsetX!![i] = stream.readShort()
+                        invOffsetY!![i] = stream.readShort()
+                        invSprite!![i] = stream.readInt()
+                    } else {
+                        invSprite!![i] = -1
+                    }
+                }
+                invOptions = arrayOfNulls(5)
+                for (i in 0 until 5) {
+                    val option = InputStreamUtils.getJagString(stream)
+                    if (option.isNotEmpty()) {
+                        invOptions!![i] = option
+                        flags = flags or (1 shl (i + 23))
+                    }
+                }
+            }
+            ComponentConstants.TEXT -> {
+                textHorizontalAli = stream.readUnsignedByte()
+                textVerticalAli = stream.readUnsignedByte()
+                vPadding = stream.readUnsignedByte()
+                fontId = stream.readUnsignedShort().let { if (it == 65535) -1 else it }
+                shadow = stream.readUnsignedByte() == 1
+                text = InputStreamUtils.getJagString(stream)
+                activeText = InputStreamUtils.getJagString(stream)
+                color = stream.readInt()
+                activeColor = stream.readInt()
+                overColor = stream.readInt()
+                unknownColor = stream.readInt()
+            }
+            ComponentConstants.SPRITE -> {
+                spriteId = stream.readInt()
+                activeSpriteId = stream.readInt()
+            }
+            ComponentConstants.MODEL -> {
+                modelType = 1
+                modelId = stream.readUnsignedShort().let { if (it == 65535) -1 else it }
+                activeModelType = 1
+                activeModelId = stream.readUnsignedShort().let { if (it == 65535) -1 else it }
+                modelAnimId = stream.readUnsignedShort().let { if (it == 65535) -1 else it }
+                activeModelAnimId = stream.readUnsignedShort().let { if (it == 65535) -1 else it }
+                modelZoom = stream.readUnsignedShort()
+                modelXAngle = stream.readUnsignedShort()
+                modelYAngle = stream.readUnsignedShort()
+            }
+        }
+        if (buttonType == 2 || type == ComponentConstants.INVENTORY) {
+            optionCircumfix = InputStreamUtils.getJagString(stream)
+            optionSuffix = InputStreamUtils.getJagString(stream)
+            val maskBits = stream.readUnsignedShort() and 0x3F
+            flags = flags or (maskBits shl 11)
+        }
+        if (buttonType == 1 || buttonType == 4 || buttonType == 5 || buttonType == 6) {
+            option = InputStreamUtils.getJagString(stream)
+            if (option.isEmpty()) {
+                option = when (buttonType) {
+                    1 -> "Ok"
+                    4, 5 -> "Select"
+                    6 -> "Continue"
+                    else -> option
+                }
+            }
+        }
+        if (buttonType == 1 || buttonType == 4 || buttonType == 5) flags = flags or 0x400000
+        if (buttonType == 6) flags = flags or 0x1
+        optionMask = flags
+    }
+
+    fun decodeIf3(
         stream: InputStream,
         componentId: Int,
         interfaceId: Int,
@@ -328,7 +533,7 @@ class ComponentDefinition {
         var rawType = stream.readUnsignedByte()
         if ((rawType and 0x80) != 0) {
             rawType = rawType and 0x7F
-            name = stream.readString()
+            name = InputStreamUtils.getJagString(stream)
         }
         type = rawType
 
@@ -387,7 +592,7 @@ class ComponentDefinition {
 
             ComponentConstants.TEXT -> {
                 fontId = stream.readUnsignedShort().let { if (it == 65535) -1 else it }
-                text = stream.readString()
+                text = InputStreamUtils.getJagString(stream)
                 vPadding = stream.readUnsignedByte()
                 textHorizontalAli = stream.readUnsignedByte()
                 textVerticalAli = stream.readUnsignedByte()
@@ -427,7 +632,7 @@ class ComponentDefinition {
             }
         }
 
-        optionBase = stream.readString()
+        optionBase = InputStreamUtils.getJagString(stream)
         val flags = stream.readUnsignedByte()
         val optionCount = flags and 0xF
         val cursorFlag = flags shr 4
@@ -435,7 +640,7 @@ class ComponentDefinition {
         if (optionCount > 0) {
             rightclickOptions = arrayOfNulls(optionCount)
             repeat(optionCount) {
-                rightclickOptions!![it] = stream.readString()
+                rightclickOptions!![it] = InputStreamUtils.getJagString(stream)
             }
         }
 
@@ -452,7 +657,7 @@ class ComponentDefinition {
         dragDeadzone = stream.readUnsignedByte()
         dragDeadtime = stream.readUnsignedByte()
         dragRenderBehavior = stream.readUnsignedByte() == 1
-        optionCircumfix = stream.readString()
+        optionCircumfix = InputStreamUtils.getJagString(stream)
 
         if ((optionMask shr 11 and 0x7F) != 0) {
             mask = stream.readUnsignedShort().let { if (it == 65535) -1 else it }
@@ -536,7 +741,7 @@ class ComponentDefinition {
             objects[i] =
                 when (type) {
                     0 -> buffer.readInt()
-                    1 -> buffer.readString()
+                    1 -> InputStreamUtils.getJagString(buffer)
                     else -> null
                 }
         }
@@ -566,6 +771,23 @@ class ComponentDefinition {
         for (index in 0 until length) {
             out.writeInt(arr!![index])
         }
+    }
+
+    fun buildOpcodeComponentMap(components: List<ComponentDefinition>): Map<Int, Array<ComponentDefinition?>> {
+        val grouped = components.groupBy { it.interfaceId }
+
+        val map = mutableMapOf<Int, Array<ComponentDefinition?>>()
+        for ((ifaceId, compList) in grouped) {
+
+            val maxId = compList.maxOfOrNull { it.componentId } ?: 0
+            val arr = arrayOfNulls<ComponentDefinition>(maxId + 1)
+            for (comp in compList) {
+                arr[comp.componentId] = comp
+            }
+            map[ifaceId] = arr
+        }
+
+        return map
     }
 
     init {
@@ -686,26 +908,31 @@ class ComponentDefinition {
             val filesCount = storeIndex!!.getValidFilesCount(id)
             if (filesCount <= 0) return null
 
-            val if3Components = mutableListOf<ComponentDefinition?>()
+            val components = mutableListOf<ComponentDefinition?>()
 
             for (i in 0 until filesCount) {
                 val data = storeIndex.getFile(id, i) ?: continue
+
+                //-------------------------------
                 val version = data[0].toInt() and 0xFF
                 if (version != 255) continue
+                //-------------------------------
 
                 val defs = ComponentDefinition()
                 defs.componentHash = (id shl 16) or i
+
                 try {
-                    defs.decode(InputStream(data), i, id)
-                    if3Components.add(defs)
-                } catch (_: Exception) {
+                    defs.decodeIf3(InputStream(data), i, id)
+                    components.add(defs)
+                } catch (ex: Exception) {
+                    logger.warning("Failed to decode interface=$id component=$i: ${ex.message}")
                     continue
                 }
             }
 
-            if (if3Components.isEmpty()) return null
+            if (components.isEmpty()) return null
 
-            componentDefinition!![id] = if3Components.toTypedArray()
+            componentDefinition!![id] = components.toTypedArray()
             return componentDefinition!![id]
         }
 

@@ -6,6 +6,12 @@ import java.io.DataOutputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 
+/**
+ * Represents a Sprite Archive.
+ *
+ * @author Graham
+ * @author `Discardedx2
+ */
 class SpriteArchive
     @JvmOverloads
     constructor(

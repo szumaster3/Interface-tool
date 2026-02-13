@@ -156,6 +156,24 @@ class InterfaceUI : JFrame() {
     private var txt_onVarcTransmit = JTextField()
     private var txt_onVarcStrTransmit = JTextField()
 
+    private var txt_buttonType = SpinnerTextField(10)
+    private var txt_cs1Comparisons = SpinnerTextField(10)
+    private var txt_unknownProp11 = SpinnerTextField(10)
+    private var txt_objCounts = SpinnerTextField(10)
+    private var txt_objTypes = SpinnerTextField(10)
+    private var txt_invMarginX = SpinnerTextField(10)
+    private var txt_invMarginY = SpinnerTextField(10)
+    private var txt_activeText = SpinnerTextField(10)
+    private var txt_activeColor  = SpinnerTextField(10)
+    private var txt_overColor  = SpinnerTextField(10)
+    private var txt_unknownColor = SpinnerTextField(10)
+
+    var invOffsetXFields = Array(20) { JTextField() }
+    var invOffsetYFields = Array(20) { JTextField() }
+    var invSpriteFields = Array(20) { JTextField() }
+    var invOptionsFields = Array(5) { JTextField() }
+    var cs1ScriptsFields = Array(10) { JTextArea(3, 20) }
+
     val gridPanel = SwingUtils.labeledSliderButton("Grid", 1, 32, 8)
     val gridSlider = gridPanel.getSlider()!!
     val gridLabel = gridPanel.getSliderLabel()!!
@@ -768,7 +786,7 @@ class InterfaceUI : JFrame() {
                 "Ortho" to chckbx_modelOrtho,
                 "DynWidth" to txt_dynamicWidth,
                 "Prop 5" to chckbx_unknownModelProp5,
-                "Dyneight" to txt_dynamicHeight,
+                "DynHeight" to txt_dynamicHeight,
             )
 
         val modelPanel = JPanel(GridLayout(0, 2, 0, 0))
@@ -1063,8 +1081,10 @@ class InterfaceUI : JFrame() {
             )
         tabbedPane!!.addTab("Standard", null, constructGeneralTab())
         tabbedPane!!.addTab("Configs", null, constructTriggersTab())
-        panel.add(tabbedPane, BorderLayout.SOUTH)
+        tabbedPane!!.addTab("Legacy", null, constructLegacyTab())
+        tabbedPane!!.setEnabledAt(tabbedPane!!.indexOfTab("Legacy"), false)
 
+        panel.add(tabbedPane, BorderLayout.SOUTH)
         contentPane.add(panel, BorderLayout.CENTER)
     }
 
@@ -1198,6 +1218,110 @@ class InterfaceUI : JFrame() {
             gridLabel.text = "Grid locked"
         }
 
+        return root
+    }
+
+    private fun constructLegacyTab(): JPanel {
+        val root = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            border = BorderFactory.createEmptyBorder(5, 5, 5, 5)
+            isOpaque = false
+            background = Color.WHITE
+        }
+
+        val mainFieldsPanel = JPanel(GridLayout(0, 2, 5, 5)).apply {
+            listOf(
+                "Button Type" to txt_buttonType,
+                "CS1 Comparisons" to txt_cs1Comparisons,
+                "Unknown Prop 11" to txt_unknownProp11,
+                "Obj Counts" to txt_objCounts,
+                "Obj Types" to txt_objTypes,
+                "Inv Margin X" to txt_invMarginX,
+                "Inv Margin Y" to txt_invMarginY,
+                "Active Text" to txt_activeText,
+                "Active Color" to txt_activeColor,
+                "Over Color" to txt_overColor,
+                "Unknown Color" to txt_unknownColor
+            ).forEach { (label, field) ->
+                add(SwingUtils.labeledField(label, field))
+            }
+        }
+
+        val optionsPanel = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            for (i in 0 until 5) {
+                add(SwingUtils.labeledField("Inv Option $i", invOptionsFields[i]))
+                add(Box.createRigidArea(Dimension(0, 1)))
+            }
+        }
+
+        val scriptsPanel = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            cs1ScriptsFields.forEachIndexed { i, field ->
+                val fieldWrapper = SwingUtils.labeledField("CS1 Script $i", field)
+
+                val height = txt_buttonType.preferredSize.height
+                fieldWrapper.maximumSize = Dimension(Int.MAX_VALUE, height)
+                fieldWrapper.preferredSize = Dimension(fieldWrapper.preferredSize.width, height)
+                fieldWrapper.minimumSize = Dimension(fieldWrapper.minimumSize.width, height)
+
+                add(fieldWrapper)
+                add(Box.createRigidArea(Dimension(0, 1)))
+            }
+        }
+
+        val slotsPanel = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+
+            val offsetXPanel = JPanel().apply {
+                layout = BoxLayout(this, BoxLayout.Y_AXIS)
+                for (i in 0 until 20) {
+                    add(SwingUtils.labeledField("Inv Offset X $i", invOffsetXFields[i]))
+                    add(Box.createRigidArea(Dimension(0, 1)))
+                }
+            }
+            add(SwingUtils.createBevelPanel(offsetXPanel))
+            add(Box.createRigidArea(Dimension(0, 5)))
+
+            val offsetYPanel = JPanel().apply {
+                layout = BoxLayout(this, BoxLayout.Y_AXIS)
+                for (i in 0 until 20) {
+                    add(SwingUtils.labeledField("Inv Offset Y $i", invOffsetYFields[i]))
+                    add(Box.createRigidArea(Dimension(0, 1)))
+                }
+            }
+            add(SwingUtils.createBevelPanel(offsetYPanel))
+            add(Box.createRigidArea(Dimension(0, 5)))
+
+            val spritePanel = JPanel().apply {
+                layout = BoxLayout(this, BoxLayout.Y_AXIS)
+                for (i in 0 until 20) {
+                    add(SwingUtils.labeledField("Inv Sprite $i", invSpriteFields[i]))
+                    add(Box.createRigidArea(Dimension(0, 1)))
+                }
+            }
+            add(SwingUtils.createBevelPanel(spritePanel))
+        }
+
+        val scrollContent = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            add(SwingUtils.createBevelPanel(mainFieldsPanel))
+            add(Box.createRigidArea(Dimension(0, 5)))
+            add(SwingUtils.createBevelPanel(optionsPanel))
+            add(Box.createRigidArea(Dimension(0, 5)))
+            add(SwingUtils.createBevelPanel(scriptsPanel))
+            add(Box.createRigidArea(Dimension(0, 5)))
+            add(SwingUtils.createBevelPanel(slotsPanel))
+        }
+
+        val scrollPane = JScrollPane(scrollContent).apply {
+            verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_ALWAYS
+            horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+            border = null
+            verticalScrollBar.unitIncrement = 12
+        }
+
+        root.add(scrollPane)
         return root
     }
 
@@ -1439,6 +1563,53 @@ class InterfaceUI : JFrame() {
         chckbx_unknownProp8.selectedItem = comp.unknownProp_8
 
         txt_optionMask.getTextField().text = comp.optionMask.toString()
+
+        /*
+        if (comp.version.toInt() == 1) {
+            txt_buttonType.getTextField().text = comp.buttonType.toString()
+            txt_unknownProp11.getTextField().text = comp.unknownProp_11.toString()
+            txt_invMarginX.getTextField().text = comp.invMarginX.toString()
+            txt_invMarginY.getTextField().text = comp.invMarginY.toString()
+            txt_objCounts.getTextField().text = comp.objCounts?.joinToString(";") ?: ""
+            txt_objTypes.getTextField().text = comp.objTypes?.joinToString(";") ?: ""
+            txt_cs1Comparisons.getTextField().text = comp.cs1ComparisonOpcodes?.joinToString(";") ?: ""
+
+            comp.invOffsetX?.let { arr ->
+                val count = minOf(arr.size, invOffsetXFields.size)
+                for (i in 0 until count) {
+                    invOffsetXFields[i].text = arr[i].toString()
+                }
+            }
+
+            comp.invOffsetY?.let { arr ->
+                val count = minOf(arr.size, invOffsetYFields.size)
+                for (i in 0 until count) {
+                    invOffsetYFields[i].text = arr[i].toString()
+                }
+            }
+
+            comp.invSprite?.let { arr ->
+                val count = minOf(arr.size, invSpriteFields.size)
+                for (i in 0 until count) {
+                    invSpriteFields[i].text = arr[i].toString()
+                }
+            }
+
+            comp.invOptions?.let { arr ->
+                val count = minOf(arr.size, invOptionsFields.size)
+                for (i in 0 until count) {
+                    invOptionsFields[i].text = arr[i] ?: ""
+                }
+            }
+
+            comp.cs1Scripts?.let { scripts ->
+                val count = minOf(scripts.size, cs1ScriptsFields.size)
+                for (i in 0 until count) {
+                    cs1ScriptsFields[i].text = scripts[i].joinToString(";")
+                }
+            }
+        }
+        */
 
         val options = listOf(txt_leftclick, txt_option1, txt_option2, txt_option3, txt_option4, txt_option5)
         options.forEach { it.getTextField().text = "" }

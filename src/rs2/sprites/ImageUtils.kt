@@ -9,6 +9,9 @@ import java.awt.image.FilteredImageSource
 import java.awt.image.ImageFilter
 import java.awt.image.RGBImageFilter
 
+/**
+ * Created by Kyle Fricilone on Jun 15, 2017.
+ */
 object ImageUtils {
     @JvmStatic
     fun horizontalFlip(img: BufferedImage): BufferedImage {

@@ -1103,7 +1103,12 @@ class InterfaceUI : JFrame() {
         val btn2 = innerPanel?.getComponent(1) as? JButton
 
         btn1?.addActionListener {
-            val comp = selectedComponent ?: return@addActionListener
+            val comp = selectedComponent
+            if (comp == null) {
+                JOptionPane.showMessageDialog(root, "You must first select a component.", "Unable to launch.", JOptionPane.WARNING_MESSAGE)
+                return@addActionListener
+            }
+
             val picker = ColorPicker(comp, txt_color) {
                 setValues(currentInterface, selectedComponent!!.componentId)
                 repaint()

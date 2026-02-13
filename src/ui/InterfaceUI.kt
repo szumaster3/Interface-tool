@@ -9,7 +9,6 @@ import rs2.interfaces.ComponentConstants
 import rs2.interfaces.draw.InterfaceRenderMode
 import rs2.interfaces.InterfaceUtils
 import rs2.interfaces.draw.InterfaceDraw
-import rs2.interfaces.draw.InterfaceDraw.SELECTED_ALPHA
 import rs2.interfaces.render.InterfaceMouseController
 import rs2.logging.LogFactory
 import rs2.sprites.ColorPicker
@@ -20,10 +19,7 @@ import tools.print.GenericPrinter
 import tools.print.GenericPrinter.printInterface
 import ui.SwingUtils.getSlider
 import ui.SwingUtils.getSliderLabel
-import ui.theme.ComponentTreeRenderer
-import ui.theme.DepthComboBox
-import ui.theme.IconLibrary
-import ui.theme.SpinnerTextField
+import ui.theme.*
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ItemEvent
@@ -1121,7 +1117,7 @@ class InterfaceUI : JFrame() {
         btn1?.addActionListener {
             val comp = selectedComponent
             if (comp == null) {
-                JOptionPane.showMessageDialog(root, "You must first select a component.", "Unable to launch.", JOptionPane.WARNING_MESSAGE)
+                ThemeUtils.showError(root, "You must first select a component.", "Error - Unable to launch")
                 return@addActionListener
             }
 

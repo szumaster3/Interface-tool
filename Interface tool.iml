@@ -10,5 +10,6 @@
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" name="cache" level="project" />
     <orderEntry type="library" name="jgoodies-common-1.8.1" level="project" />
+    <orderEntry type="library" name="vorbisspi-1.0.3.3" level="project" />
   </component>
 </module>

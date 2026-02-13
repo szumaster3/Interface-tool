@@ -1410,42 +1410,53 @@ class InterfaceUI : JFrame() {
             }.start()
         }
         mnAbout.add(mntmDumpSprites)
+        val mntmExportInterface = JMenuItem("Export interface")
+        mntmExportInterface.addActionListener { _: ActionEvent? ->
+            val interfaceId = currentInterface
+            if (interfaceId != -1) {
+                try {
+                    exportInterface(interfaceId)
+                } catch (ex: Exception) {
+                    JOptionPane.showMessageDialog(
+                        interfaceViewportScrollPane,
+                        "Error exporting interface $interfaceId:\n${ex.message}",
+                        "Export Error",
+                        JOptionPane.ERROR_MESSAGE
+                    )
+                }
+            } else {
+                JOptionPane.showMessageDialog(
+                    interfaceViewportScrollPane,
+                    "No interface selected to export.",
+                    "Export Error",
+                    JOptionPane.WARNING_MESSAGE
+                )
+            }
+        }
 
+        mnAbout.add(mntmExportInterface)
         val mntmPackInterface = JMenuItem("Pack interface")
         mntmPackInterface.isEnabled = false
         mntmPackInterface.addActionListener { _: ActionEvent? -> }
 
-        val lockButton = JToggleButton("Mouse Locked")
+        val lockedIcon = ImageIcon(IconLibrary.MOUSE_LOCKED_BUTTON)
+        val activeIcon = ImageIcon(IconLibrary.MOUSE_ACTIVE_BUTTON)
+
+        val lockButton = JToggleButton(lockedIcon)
         lockButton.isFocusable = false
-        lockButton.isContentAreaFilled = false
-        lockButton.isOpaque = false
         lockButton.toolTipText = "Lock/Unlock Mouse"
-
-        val fm = lockButton.getFontMetrics(lockButton.font)
-        val maxTextWidth =
-            maxOf(
-                fm.stringWidth("Mouse Locked"),
-                fm.stringWidth("Mouse Active"),
-            )
-        val buttonWidth = maxTextWidth + 35
-        val buttonHeight = lockButton.preferredSize.height
-        val fixedSize = Dimension(buttonWidth, buttonHeight)
-
-        lockButton.preferredSize = fixedSize
-        lockButton.minimumSize = fixedSize
-        lockButton.maximumSize = fixedSize
-
+        lockButton.isContentAreaFilled = false
+        lockButton.isBorderPainted = false
+        lockButton.isOpaque = false
+        lockButton.preferredSize = Dimension(16, 20)
+        lockButton.preferredSize = Dimension(16, 20)
+        lockButton.preferredSize = Dimension(16, 20)
         lockButton.addActionListener {
             val status = lockButton.isSelected
+            lockButton.icon = if (status) activeIcon else lockedIcon
             InterfaceMouseController(viewportPanel!!, enabled = status)
-            lockButton.text = if (status) "Mouse Active" else "Mouse Locked"
-
             gridSlider.isEnabled = status
-            if (!status) {
-                gridLabel.text = "Grid: Locked"
-            } else {
-                gridLabel.text = "Grid: ${gridSlider.value}"
-            }
+            gridLabel.text = if (status) "Grid: ${gridSlider.value}" else "Grid: Locked"
         }
 
         mnAbout.add(mntmPackInterface)
@@ -2110,6 +2121,10 @@ class InterfaceUI : JFrame() {
 
     @Throws(FileNotFoundException::class, IOException::class)
     fun exportInterface(interfaceId: Int) {
+        val exportDir = File("data/export")
+        if (!exportDir.exists()) {
+            exportDir.mkdirs()
+        }
         val file = File("data/export/$interfaceId.dat")
         val data =
             Cache.store!!

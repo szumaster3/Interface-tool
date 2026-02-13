@@ -25,6 +25,8 @@ object IconLibrary {
     public var INTERFACE_ICON: String = "data/theme/icons/tree/interface.png"
 
     public var DEFAULT_BUTTON: String = "data/theme/icons/buttons/default_button.png"
+    public var MOUSE_ACTIVE_BUTTON: String = "data/theme/icons/buttons/mouse_active.png"
+    public var MOUSE_LOCKED_BUTTON: String = "data/theme/icons/buttons/mouse_locked.png"
 
     public var TREE_OPEN: String = "data/theme/icons/tree/tree_open.png"
     public var TREE_CLOSE: String = "data/theme/icons/tree/tree_close.png"

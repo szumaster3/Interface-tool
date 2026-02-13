@@ -440,7 +440,7 @@ object InterfaceDraw {
             InterfaceUtils.drawSelectedComponent(g2, comp, fill = true)
         } else {
             g2.color = Color(255, 255, 255)
-            g2.stroke = BasicStroke(1.5f)
+            g2.stroke = BasicStroke(2f)
             g2.drawRect(x, y, width, height)
         }
     }

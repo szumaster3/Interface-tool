@@ -1,4 +1,4 @@
-package ui
+package ui.theme.util
 
 import java.awt.*
 import javax.swing.*

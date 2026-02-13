@@ -1,4 +1,4 @@
-package ui.theme
+package ui.theme.assets
 
 object IconLibrary {
     var ARROW_KEY_UP: String = "data/theme/icons/arrows/arrow_up.png"

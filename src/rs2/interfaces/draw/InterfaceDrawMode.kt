@@ -1,10 +1,10 @@
 package rs2.interfaces.draw
 
-enum class InterfaceRenderMode(
+enum class InterfaceDrawMode(
     val label: String,
 ) {
-    CLASSIC("Edit"),
-    NEW("Preview"),
+    EDITING("Edit"),
+    PREVIEW("Preview"),
     ;
 
     override fun toString(): String = label

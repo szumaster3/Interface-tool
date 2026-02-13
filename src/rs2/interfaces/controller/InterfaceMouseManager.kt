@@ -1,8 +1,8 @@
-package rs2.interfaces.render
+package rs2.interfaces.controller
 
 import java.util.ArrayDeque
 
-object InterfaceUndoManager {
+object InterfaceMouseManager {
     private val undoStack = ArrayDeque<() -> Unit>()
     private val redoStack = ArrayDeque<() -> Unit>()
 

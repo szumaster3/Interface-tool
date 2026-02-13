@@ -6,11 +6,10 @@ import properties.PropertyValues.setCachePath
 import rs2.cache.Cache
 import rs2.cache.loaders.ComponentDefinition
 import rs2.interfaces.ComponentConstants
-import rs2.interfaces.draw.InterfaceRenderMode
+import rs2.interfaces.draw.InterfaceDrawMode
 import rs2.interfaces.InterfaceUtils
 import rs2.interfaces.draw.InterfaceDraw
-import rs2.interfaces.render.InterfaceMouseController
-import rs2.interfaces.render.ResizeHandle
+import rs2.interfaces.controller.InterfaceMouseController
 import rs2.logging.LogFactory
 import rs2.sprites.ColorPicker
 import rs2.sprites.SpriteDumper
@@ -18,14 +17,17 @@ import rs2.sprites.utils.SpriteBrowser
 import tools.note.ScriptTable
 import tools.print.GenericPrinter
 import tools.print.GenericPrinter.printInterface
-import ui.SwingUtils.getSlider
-import ui.SwingUtils.getSliderLabel
-import ui.theme.*
+import ui.theme.util.SwingUtils.getSlider
+import ui.theme.util.SwingUtils.getSliderLabel
+import ui.theme.assets.IconLibrary
+import ui.theme.component.DepthComboBox
+import ui.theme.component.SpinnerTextField
+import ui.theme.util.ComponentTreeRenderer
+import ui.theme.util.SwingUtils
+import ui.theme.util.ThemeUtils
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ItemEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
 import java.io.File
 import java.io.FileNotFoundException
@@ -75,7 +77,7 @@ class InterfaceUI : JFrame() {
     private var txt_unknownModelProp3 = SpinnerTextField(10)
     private var txt_unknownModelProp4 = SpinnerTextField(10)
 
-    private var currentRenderer: InterfaceRenderMode = InterfaceRenderMode.CLASSIC
+    private var currentRenderer: InterfaceDrawMode = InterfaceDrawMode.EDITING
     private var txt_vpadding = SpinnerTextField(10)
 
     private var txt_type = DepthComboBox(arrayOf("Layer", "Text", "Sprite", "Figure", "Model"))
@@ -301,7 +303,7 @@ class InterfaceUI : JFrame() {
 
 
         val rendererLabel = JLabel("Mode:")
-        val rendererCombo = JComboBox(arrayOf(*InterfaceRenderMode.values())).apply {
+        val rendererCombo = JComboBox(arrayOf(*InterfaceDrawMode.values())).apply {
             selectedIndex = 0
             addPopupMenuListener(object : javax.swing.event.PopupMenuListener {
                 override fun popupMenuWillBecomeVisible(e: javax.swing.event.PopupMenuEvent?) {}
@@ -310,7 +312,7 @@ class InterfaceUI : JFrame() {
             })
             addActionListener {
                 val selected = selectedItem
-                if (selected is InterfaceRenderMode) {
+                if (selected is InterfaceDrawMode) {
                     currentRenderer = selected
                     viewportPanel?.repaint()
                 }
@@ -1003,7 +1005,7 @@ class InterfaceUI : JFrame() {
 
                 if (currentInterface == -1) return
 
-                InterfaceDraw.editMode = (currentRenderer == InterfaceRenderMode.CLASSIC)
+                InterfaceDraw.editMode = (currentRenderer == InterfaceDrawMode.EDITING)
                 val viewMode = when (viewCombo.selectedItem as String) {
                     "type" -> InterfaceDraw.ViewMode.BY_TYPE
                     "layer" -> InterfaceDraw.ViewMode.BY_LAYER
@@ -1033,8 +1035,19 @@ class InterfaceUI : JFrame() {
                 )
 
                 selectedComponent?.let { comp ->
-                    if ((comp.componentHash shr 16) == currentInterface) {
-                        InterfaceUtils.drawSelectedComponent(g, comp, fill = true)
+                    if ((comp.componentHash shr 16) == currentInterface){
+                        if(currentRenderer==InterfaceDrawMode.PREVIEW){
+                            InterfaceDraw.sizeCache.remove(comp)
+                            InterfaceDraw.setValues(comp)
+                            g.color = Color.WHITE
+                            g.drawRect(
+                                ComponentDefinition.getX(comp, currentInterface),
+                                ComponentDefinition.getY(comp, currentInterface),
+                                comp.width,
+                                comp.height,
+                            )
+                        }else{
+                            InterfaceUtils.drawSelectedComponent(g, comp, fill = true)}
                     }
                 }
 /*

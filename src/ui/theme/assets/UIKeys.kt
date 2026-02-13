@@ -1,4 +1,4 @@
-package ui.theme
+package ui.theme.assets
 
 import java.util.*
 import javax.swing.UIManager

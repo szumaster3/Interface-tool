@@ -10,7 +10,7 @@ import javax.swing.border.EmptyBorder
 import javax.swing.border.LineBorder
 import javax.swing.event.ChangeListener
 import rs2.cache.loaders.ComponentDefinition
-import ui.theme.SpinnerTextField
+import ui.theme.component.SpinnerTextField
 
 class ColorPicker(
     private val comp: ComponentDefinition,

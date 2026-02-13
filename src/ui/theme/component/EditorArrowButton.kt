@@ -1,9 +1,9 @@
-package ui.theme
+package ui.theme.component
 
-import ui.theme.IconLibrary.ARROW_KEY_DOWN
-import ui.theme.IconLibrary.ARROW_KEY_LEFT
-import ui.theme.IconLibrary.ARROW_KEY_RIGHT
-import ui.theme.IconLibrary.ARROW_KEY_UP
+import ui.theme.assets.IconLibrary.ARROW_KEY_DOWN
+import ui.theme.assets.IconLibrary.ARROW_KEY_LEFT
+import ui.theme.assets.IconLibrary.ARROW_KEY_RIGHT
+import ui.theme.assets.IconLibrary.ARROW_KEY_UP
 import java.awt.Graphics
 import javax.swing.*
 import javax.swing.plaf.basic.BasicButtonUI

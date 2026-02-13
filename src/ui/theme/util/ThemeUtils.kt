@@ -1,5 +1,6 @@
-package ui.theme
+package ui.theme.util
 
+import ui.theme.assets.SoundLibrary
 import java.awt.Component
 import javax.swing.JOptionPane
 

@@ -1,10 +1,10 @@
-package rs2.interfaces.render
+package rs2.interfaces.controller
 
 import rs2.cache.loaders.ComponentDefinition
 import rs2.interfaces.draw.InterfaceDraw
 import ui.InterfaceUI
 
-object InterfaceHitTest {
+object MousePick {
     fun findComponentAt(
         x: Int,
         y: Int,

@@ -246,7 +246,7 @@ object InterfaceDraw {
     }
 
     private fun drawBackground(g: Graphics2D) {
-        g.color = if (editMode) Color.BLACK else Color.LIGHT_GRAY
+        g.color = if (editMode) Color.BLACK else Constants.BG_FILL_COLOR
         g.fillRect(0, 0, Constants.VIEWPORT_WIDTH, Constants.VIEWPORT_HEIGHT)
         if (editMode) {
             g.color = Color(80, 80, 80)
@@ -364,10 +364,10 @@ object InterfaceDraw {
         width: Int,
         height: Int,
     ) {
-        if(!editMode){
+
         g2.color = Color.BLUE
         g2.drawRect(x, y, width, height)
-            }
+
     }
 
     private fun drawLayer(
@@ -385,9 +385,9 @@ object InterfaceDraw {
         } else if (ContainerHelper.isButton(comp)) {
             sprite = loadSprite("data/theme/icons/scripts/button.png", width, height, comp)
         } else if (showContainers) {
-           if(!editMode) {
+
                g2.color = if (comp.parentId > 0) Color.RED else Color.GREEN
-           }
+
             g2.drawRect(x, y, width, height)
         }
         sprite?.let { g2.drawImage(it, x, y, null) }

@@ -1,5 +1,6 @@
-package ui.theme
+package ui.theme.component
 
+import ui.theme.assets.IconLibrary
 import java.awt.*
 import javax.swing.*
 import javax.swing.border.EmptyBorder

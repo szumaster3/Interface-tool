@@ -1,6 +1,7 @@
-package ui.theme
+package ui.theme.util
 
 import ui.ComponentNode
+import ui.theme.assets.IconLibrary
 import java.awt.Color
 import java.awt.Component
 import javax.swing.Icon

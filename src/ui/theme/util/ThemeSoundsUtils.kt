@@ -1,8 +1,7 @@
-package ui.theme
+package ui.theme.util
 
 import java.io.File
 import javax.sound.sampled.AudioSystem
-import javax.sound.sampled.Clip
 import javax.sound.sampled.FloatControl
 
 object ThemeSoundsUtils{

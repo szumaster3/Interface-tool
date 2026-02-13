@@ -1,4 +1,4 @@
-package ui.theme
+package ui.theme.assets
 
 object SoundLibrary {
     const val ERROR_OPTION_SFX = "data/theme/sounds/option_error.wav"

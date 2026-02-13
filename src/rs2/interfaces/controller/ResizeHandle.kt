@@ -1,4 +1,4 @@
-package rs2.interfaces.render
+package rs2.interfaces.controller
 
 import rs2.cache.loaders.ComponentDefinition
 import rs2.interfaces.draw.InterfaceDraw

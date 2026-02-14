@@ -482,6 +482,7 @@ class InterfaceUI : JFrame() {
                     saveInterface(currentInterface, selectedComp)
                     drawTree(currentInterface)
                     setValues(currentInterface, selectedComp)
+                    viewportPanel?.repaint()
                 } else {
                     JOptionPane.showMessageDialog(interfaceViewportScrollPane, "Please select a component & interface before saving it.")
                 }
@@ -939,6 +940,7 @@ class InterfaceUI : JFrame() {
                 .putFile(currentInterface, ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface), comp!!.encode(true))
             ComponentDefinition.getInterface(currentInterface, true)
             drawTree(currentInterface)
+            viewportPanel?.repaint()
         }
         buttonPanel.add(btnAddSprite)
 
@@ -956,6 +958,7 @@ class InterfaceUI : JFrame() {
                 .putFile(currentInterface, ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface), comp!!.encode(true))
             ComponentDefinition.getInterface(currentInterface, true)
             drawTree(currentInterface)
+            viewportPanel?.repaint()
         }
         buttonPanel.add(btnAddText)
 
@@ -975,6 +978,7 @@ class InterfaceUI : JFrame() {
                 .putFile(currentInterface, ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface), comp!!.encode(true))
             ComponentDefinition.getInterface(currentInterface, true)
             drawTree(currentInterface)
+            viewportPanel?.repaint()
         }
         buttonPanel.add(btnAddContainer)
 
@@ -990,6 +994,7 @@ class InterfaceUI : JFrame() {
                 .putFile(currentInterface, ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface), comp!!.encode(true))
             ComponentDefinition.getInterface(currentInterface, true)
             drawTree(currentInterface)
+            viewportPanel?.repaint()
         }
         buttonPanel.add(btnAddModel)
 
@@ -1006,6 +1011,7 @@ class InterfaceUI : JFrame() {
                 .putFile(currentInterface, ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface), comp!!.encode(true))
             ComponentDefinition.getInterface(currentInterface, true)
             drawTree(currentInterface)
+            viewportPanel?.repaint()
         }
         buttonPanel.add(btnAddRectangle)
 

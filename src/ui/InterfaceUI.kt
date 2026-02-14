@@ -22,12 +22,12 @@ import ui.theme.assets.IconLibrary
 import ui.theme.component.DepthComboBox
 import ui.theme.component.SpinnerTextField
 import ui.theme.util.ComponentTreeRenderer
+import ui.theme.util.StringUtils
 import ui.theme.util.SwingUtils
 import ui.theme.util.SwingUtils.getSlider
 import ui.theme.util.SwingUtils.getSliderLabel
 import ui.theme.util.ThemeUtils
 import java.awt.*
-import java.awt.event.ActionEvent
 import java.awt.event.ItemEvent
 import java.awt.image.BufferedImage
 import java.io.File
@@ -179,9 +179,7 @@ class InterfaceUI : JFrame() {
     val gridLabel = gridPanel.getSliderLabel()!!
 
     private var viewCombo = JComboBox(arrayOf("All","Type","Layer"))
-    private var drawCombo = JComboBox(arrayOf("Enable","Disable"))
     private var typeCombo = JComboBox(arrayOf("Sprite", "Figure", "Model", "Text", "Line"))
-    private var updating = false
 
     private fun constructWestPanel() {
         val panel = JPanel(BorderLayout())
@@ -391,7 +389,7 @@ class InterfaceUI : JFrame() {
                 else -> null
             }
 
-            val treeModel = createInterfaceTree(currentInterface, InterfaceUI.currentViewMode, selectedType)
+            val treeModel = createInterfaceTree(currentInterface, currentViewMode, selectedType)
             componentTree.model = treeModel
             (componentTree.model as DefaultTreeModel).reload()
             viewportPanel?.repaint()
@@ -930,88 +928,47 @@ class InterfaceUI : JFrame() {
 
         val btnAddSprite = JButton("Sprite")
         btnAddSprite.preferredSize = buttonSize
-        btnAddSprite.addActionListener { _: ActionEvent? ->
-            if (currentInterface <= 0) return@addActionListener
-            val comp = ComponentDefinition.getInterfaceComponent(801, 4)
-            comp?.parentId = -1
-            comp?.componentHash = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface) + (currentInterface shl 16)
-            Cache.store!!
-                .indexes[3]
-                .putFile(currentInterface, ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface), comp!!.encode(true))
-            ComponentDefinition.getInterface(currentInterface, true)
-            drawTree(currentInterface)
-            viewportPanel?.repaint()
+        btnAddSprite.addActionListener {
+            addComponent(801, 4)
         }
         buttonPanel.add(btnAddSprite)
 
         val btnAddText = JButton("Text")
         btnAddText.preferredSize = buttonSize
-        btnAddText.addActionListener { _: ActionEvent? ->
-            if (currentInterface <= 0) return@addActionListener
-            val comp = ComponentDefinition.getInterfaceComponent(752, 5)
-            comp?.baseX = 0
-            comp?.baseY = 0
-            comp?.parentId = -1
-            comp?.componentHash = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface) + (currentInterface shl 16)
-            Cache.store!!
-                .indexes[3]
-                .putFile(currentInterface, ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface), comp!!.encode(true))
-            ComponentDefinition.getInterface(currentInterface, true)
-            drawTree(currentInterface)
-            viewportPanel?.repaint()
+        btnAddText.addActionListener {
+            addComponent(752, 5) {
+                it.baseX = 0
+                it.baseY = 0
+            }
         }
         buttonPanel.add(btnAddText)
 
         val btnAddContainer = JButton("Layer")
         btnAddContainer.preferredSize = buttonSize
-        btnAddContainer.addActionListener { _: ActionEvent? ->
-            if (currentInterface <= 0) return@addActionListener
-            val comp = ComponentDefinition.getInterfaceComponent(778, 0)
-            comp?.baseX = 0
-            comp?.baseY = 0
-            comp?.baseWidth = 50
-            comp?.baseHeight = 50
-            comp?.parentId = -1
-            comp?.componentHash = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface) + (currentInterface shl 16)
-            Cache.store!!
-                .indexes[3]
-                .putFile(currentInterface, ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface), comp!!.encode(true))
-            ComponentDefinition.getInterface(currentInterface, true)
-            drawTree(currentInterface)
-            viewportPanel?.repaint()
+        btnAddContainer.addActionListener {
+            addComponent(778, 0) {
+                it.baseX = 0
+                it.baseY = 0
+                it.baseWidth = 50
+                it.baseHeight = 50
+            }
         }
         buttonPanel.add(btnAddContainer)
 
         val btnAddModel = JButton("Model")
         btnAddModel.preferredSize = buttonSize
-        btnAddModel.addActionListener { _: ActionEvent? ->
-            if (currentInterface <= 0) return@addActionListener
-            val comp = ComponentDefinition.getInterfaceComponent(205, 90)
-            comp?.parentId = -1
-            comp?.componentHash = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface) + (currentInterface shl 16)
-            Cache.store!!
-                .indexes[3]
-                .putFile(currentInterface, ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface), comp!!.encode(true))
-            ComponentDefinition.getInterface(currentInterface, true)
-            drawTree(currentInterface)
-            viewportPanel?.repaint()
+        btnAddModel.addActionListener {
+            addComponent(205, 90)
         }
         buttonPanel.add(btnAddModel)
 
         val btnAddRectangle = JButton("Figure")
         btnAddRectangle.preferredSize = buttonSize
-        btnAddRectangle.addActionListener { _: ActionEvent? ->
-            if (currentInterface <= 0) return@addActionListener
-            val comp = ComponentDefinition.getInterfaceComponent(625, 0)
-            comp?.baseX = 0
-            comp?.baseY = 0
-            comp?.componentHash = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface) + (currentInterface shl 16)
-            Cache.store!!
-                .indexes[3]
-                .putFile(currentInterface, ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface), comp!!.encode(true))
-            ComponentDefinition.getInterface(currentInterface, true)
-            drawTree(currentInterface)
-            viewportPanel?.repaint()
+        btnAddRectangle.addActionListener {
+            addComponent(625, 0) {
+                it.baseX = 0
+                it.baseY = 0
+            }
         }
         buttonPanel.add(btnAddRectangle)
 
@@ -1019,9 +976,7 @@ class InterfaceUI : JFrame() {
         scriptTableBtn.preferredSize = buttonSize
         scriptTableBtn.addActionListener { ScriptTable() }
         buttonPanel.add(scriptTableBtn)
-
         panel.add(buttonPanel, BorderLayout.NORTH)
-
         viewportPanel = object : JPanel() {
             override fun paintComponent(g: Graphics) {
                 super.paintComponent(g)
@@ -1071,19 +1026,7 @@ class InterfaceUI : JFrame() {
                         } else {InterfaceUtils.drawSelectedComponent(g, comp, fill = true)}
                     }
                 }
-/*
-                InterfaceMouseController.instance?.let { controller ->
-                    if (controller.enabled) {
-                        selectedComponent?.let { comp ->
-                            ResizeHandle.N.drawResizeHandles(g, comp)
-                        }
-                    }
-                }
-
-*/
             }
-
-
         }
 
         (viewportPanel as JPanel).preferredSize = Dimension(Constants.VIEWPORT_WIDTH, Constants.VIEWPORT_HEIGHT)
@@ -1093,11 +1036,7 @@ class InterfaceUI : JFrame() {
         panel.add(viewportPanel!!, BorderLayout.CENTER)
 
         tabbedPane = JTabbedPane(JTabbedPane.TOP)
-        tabbedPane!!.preferredSize =
-            Dimension(
-                Constants.DEFAULT_EDITOR_WIDTH - Constants.LEFT_SCROLLPANE_WIDTH - Constants.RIGHT_SCROLLPANE_WIDTH,
-                Constants.DEFAULT_EDITOR_HEIGHT - Constants.VIEWPORT_HEIGHT - Constants.BUTTON_HEIGHT - 4,
-            )
+        tabbedPane!!.preferredSize = Dimension(Constants.DEFAULT_EDITOR_WIDTH - Constants.LEFT_SCROLLPANE_WIDTH - Constants.RIGHT_SCROLLPANE_WIDTH, Constants.DEFAULT_EDITOR_HEIGHT - Constants.VIEWPORT_HEIGHT - Constants.BUTTON_HEIGHT - 4)
         tabbedPane!!.addTab("Standard", null, constructGeneralTab())
         tabbedPane!!.addTab("Configs", null, constructTriggersTab())
         tabbedPane!!.addTab("Legacy", null, constructLegacyTab())
@@ -1105,6 +1044,32 @@ class InterfaceUI : JFrame() {
 
         panel.add(tabbedPane, BorderLayout.SOUTH)
         contentPane.add(panel, BorderLayout.CENTER)
+    }
+
+    private fun addComponent(
+        templateInterface: Int,
+        templateComponentId: Int,
+        setup: (ComponentDefinition) -> Unit = {}
+    ) {
+        if (currentInterface <= 0) return
+
+        val newId = ComponentDefinition.getInterfaceDefinitionsComponentsSize(currentInterface)
+        val comp = ComponentDefinition.getInterfaceComponent(templateInterface, templateComponentId)
+            ?: return
+
+        val parent = selectedComponent
+        comp.parentId = if (parent != null && parent.type == ComponentConstants.LAYER) {
+            parent.componentId
+        } else {
+            -1
+        }
+        setup(comp)
+        comp.componentHash = newId + (currentInterface shl 16)
+        Cache.store!!.indexes[3].putFile(currentInterface, newId, comp.encode(true))
+        ComponentDefinition.getInterface(currentInterface, true)
+        drawTree(currentInterface)
+        selectComponent(newId)
+        viewportPanel?.repaint()
     }
 
     private fun constructGeneralTab(): JPanel {
@@ -1544,10 +1509,7 @@ class InterfaceUI : JFrame() {
         revalidate()
     }
 
-    fun setValues(
-        inter: Int,
-        componentId: Int,
-    ) {
+    fun setValues(inter: Int, componentId: Int) {
         logger.info("Viewing: [$inter]:[$componentId]")
         cleanValues()
 
@@ -1555,315 +1517,99 @@ class InterfaceUI : JFrame() {
         selectedComponent = comp
 
         txt_hash.getTextField().text = comp.componentHash.toString()
+        txt_type.selectedItem = InterfaceUtils.getComponentType(comp.type)
 
-        txt_type.selectedItem =
-            when (comp.type) {
-                ComponentConstants.LAYER -> "Layer"
-                ComponentConstants.TEXT -> "Text"
-                ComponentConstants.SPRITE -> "Sprite"
-                ComponentConstants.FIGURE -> "Figure"
-                ComponentConstants.MODEL -> "Model"
-                ComponentConstants.LINE -> "Line"
-                else -> comp.type.toString()
-            }
+        // Standard
+        StringUtils.setText(txt_x, comp.baseX)
+        StringUtils.setText(txt_y, comp.baseY)
+        StringUtils.setText(txt_width, comp.baseWidth)
+        StringUtils.setText(txt_height, comp.baseHeight)
+        StringUtils.setText(txt_widthMode, comp.aspectWidthType)
+        StringUtils.setText(txt_modeHeight, comp.aspectHeightType)
+        StringUtils.setText(txt_positionmodeY, comp.yMode)
+        StringUtils.setText(txt_modex, comp.xMode)
+        StringUtils.setText(txt_overlayer, comp.parentId)
 
-        txt_x.getTextField().text = comp.baseX.toString()
-        txt_y.getTextField().text = comp.baseY.toString()
-        txt_width.getTextField().text = comp.baseWidth.toString()
-        txt_height.getTextField().text = comp.baseHeight.toString()
-        txt_widthMode.getTextField().text = comp.aspectWidthType.toString()
-        txt_modeHeight.getTextField().text = comp.aspectHeightType.toString()
-
-        txt_positionmodeY.getTextField().text = comp.yMode.toString()
-        txt_modex.getTextField().text = comp.xMode.toString()
-
-        txt_overlayer.getTextField().text = comp.parentId.toString()
         chckbxHidden.selectedItem = comp.hidden
+        chckbxHover.selectedItem =
+            comp.type == ComponentConstants.LAYER && comp.noClickThrough
 
-        chckbxHover.selectedItem = comp.type == ComponentConstants.LAYER && comp.noClickThrough
-
-        txt_sprite.getTextField().text = comp.spriteId.toString()
-        txt_border.getTextField().text = comp.borderThickness.toString()
-        txt_trans.getTextField().text = comp.transparency.toString()
+        // Sprite
+        StringUtils.setText(txt_sprite, comp.spriteId)
+        StringUtils.setText(txt_border, comp.borderThickness)
+        StringUtils.setText(txt_trans, comp.transparency)
         chckbxHorizontalFlip.selectedItem = comp.hFlip
         chckbxVerticalFlip.selectedItem = comp.vFlip
         chckbxRepeat.selectedItem = comp.spriteTiling
         chckbxHasAlpha.selectedItem = comp.hasAlpha
 
-        txt_text.getTextField().text = comp.text
-        txt_font.getTextField().text = comp.fontId.toString()
-        txt_xali.getTextField().text = comp.textHorizontalAli.toString()
-        txt_yali.getTextField().text = comp.textVerticalAli.toString()
-        txt_vpadding.getTextField().text = comp.vPadding.toString()
+        // Text
+        StringUtils.setText(txt_text, comp.text)
+        StringUtils.setText(txt_font, comp.fontId)
+        StringUtils.setText(txt_xali, comp.textHorizontalAli)
+        StringUtils.setText(txt_yali, comp.textVerticalAli)
+        StringUtils.setText(txt_vpadding, comp.vPadding)
         chckbxShadow.selectedItem = comp.shadow
+        StringUtils.setText(txt_color, comp.color)
+        StringUtils.setText(txt_shadowColor, comp.shadowColor)
 
-        txt_color.getTextField().text = comp.color.toString()
-        txt_shadowColor.getTextField().text = comp.shadowColor.toString()
+        // Model
+        StringUtils.setText(txt_modelId, comp.modelId)
+        StringUtils.setText(txt_modelAnimId, comp.modelAnimId)
+        StringUtils.setText(txt_modelXAngle, comp.modelXAngle)
+        StringUtils.setText(txt_modelYAngle, comp.modelYAngle)
+        StringUtils.setText(txt_modelYOffset, comp.modelYOffset)
+        StringUtils.setText(txt_modelZoom, comp.modelZoom)
+        StringUtils.setText(txt_unknownModelProp1, comp.unknownModelProp1)
+        StringUtils.setText(txt_unknownModelProp2, comp.unknownModelProp2)
+        StringUtils.setText(txt_unknownModelProp3, comp.unknownModelProp3)
+        StringUtils.setText(txt_unknownModelProp4, comp.unknownModelProp4)
+        StringUtils.setText(txt_dynamicWidth, comp.dynamicWidth)
+        StringUtils.setText(txt_dynamicHeight, comp.dynamicHeight)
 
-        chckbxFilled.selectedItem = comp.filled
-        txt_trans.getTextField().text = comp.transparency.toString()
-
-        txt_scrollX.getTextField().text = comp.scrollMaxH.toString()
-        txt_scrollY.getTextField().text = comp.scrollMaxV.toString()
-
-        txt_modelId.getTextField().text = comp.modelId.toString()
-        txt_modelAnimId.getTextField().text = comp.modelAnimId.toString()
-        txt_modelXAngle.getTextField().text = comp.modelXAngle.toString()
-        txt_modelYAngle.getTextField().text = comp.modelYAngle.toString()
-        txt_modelYOffset.getTextField().text = comp.modelYOffset.toString()
-        txt_modelZoom.getTextField().text = comp.modelZoom.toString()
-        txt_unknownModelProp1.getTextField().text = comp.unknownModelProp1.toString()
-        txt_unknownModelProp2.getTextField().text = comp.unknownModelProp2.toString()
-        txt_unknownModelProp3.getTextField().text = comp.unknownModelProp3.toString()
-        txt_unknownModelProp4.getTextField().text = comp.unknownModelProp4.toString()
         chckbx_modelOrtho.selectedItem = comp.modelOrtho
         chckbx_unknownModelProp5.selectedItem = comp.unknownModelProp5
-        txt_dynamicWidth.getTextField().text = comp.dynamicWidth.toString()
-        txt_dynamicHeight.getTextField().text = comp.dynamicHeight.toString()
 
-        txt_lineWidth.getTextField().text = comp.lineWidth.toString()
+        // Line
+        StringUtils.setText(txt_lineWidth, comp.lineWidth)
         chckbx_unknownProp8.selectedItem = comp.unknownProp_8
 
-        txt_optionMask.getTextField().text = comp.optionMask.toString()
-
-        /*
-        if (comp.version.toInt() == 1) {
-            txt_buttonType.getTextField().text = comp.buttonType.toString()
-            txt_unknownProp11.getTextField().text = comp.unknownProp_11.toString()
-            txt_invMarginX.getTextField().text = comp.invMarginX.toString()
-            txt_invMarginY.getTextField().text = comp.invMarginY.toString()
-            txt_objCounts.getTextField().text = comp.objCounts?.joinToString(";") ?: ""
-            txt_objTypes.getTextField().text = comp.objTypes?.joinToString(";") ?: ""
-            txt_cs1Comparisons.getTextField().text = comp.cs1ComparisonOpcodes?.joinToString(";") ?: ""
-
-            comp.invOffsetX?.let { arr ->
-                val count = minOf(arr.size, invOffsetXFields.size)
-                for (i in 0 until count) {
-                    invOffsetXFields[i].text = arr[i].toString()
-                }
-            }
-
-            comp.invOffsetY?.let { arr ->
-                val count = minOf(arr.size, invOffsetYFields.size)
-                for (i in 0 until count) {
-                    invOffsetYFields[i].text = arr[i].toString()
-                }
-            }
-
-            comp.invSprite?.let { arr ->
-                val count = minOf(arr.size, invSpriteFields.size)
-                for (i in 0 until count) {
-                    invSpriteFields[i].text = arr[i].toString()
-                }
-            }
-
-            comp.invOptions?.let { arr ->
-                val count = minOf(arr.size, invOptionsFields.size)
-                for (i in 0 until count) {
-                    invOptionsFields[i].text = arr[i] ?: ""
-                }
-            }
-
-            comp.cs1Scripts?.let { scripts ->
-                val count = minOf(scripts.size, cs1ScriptsFields.size)
-                for (i in 0 until count) {
-                    cs1ScriptsFields[i].text = scripts[i].joinToString(";")
-                }
-            }
-        }
-        */
-
+        // Ops
         val options = listOf(txt_leftclick, txt_option1, txt_option2, txt_option3, txt_option4, txt_option5)
         options.forEach { it.getTextField().text = "" }
+
         comp.rightclickOptions?.forEachIndexed { index, text ->
-            if (index in 0..5) options[index].getTextField().text = text ?: ""
+            if (index in options.indices) {
+                options[index].getTextField().text = text ?: ""
+            }
         }
 
-        var values: String? = ""
-        if (comp.onMouseHoverScript != null) {
-            for (o in comp.onMouseHoverScript!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_fullonhover.text = values
-        values = ""
-        if (comp.onMouseLeaveScript != null) {
-            for (o in comp.onMouseLeaveScript!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_mouseLeave.text = values
-        values = ""
-        if (comp.onLoadScript != null) {
-            for (o in comp.onLoadScript!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onload.text = values
+        StringUtils.setScript(txt_fullonhover, comp.onMouseHoverScript)
+        StringUtils.setScript(txt_mouseLeave, comp.onMouseLeaveScript)
+        StringUtils.setScript(txt_onload, comp.onLoadScript)
+        StringUtils.setScript(txt_onOptionClick, comp.onOptionClick)
+        StringUtils.setScript(txt_onUseWith, comp.onUseWith)
+        StringUtils.setScript(txt_onUse, comp.onUse)
+        StringUtils.setScript(txt_onVarpTransmit, comp.onVarpTransmit)
+        StringUtils.setScript(txt_onMouseRepeat, comp.onMouseRepeat)
+        StringUtils.setScript(txt_onInvTransmit, comp.onInvTransmit)
+        StringUtils.setScript(txt_onStatTransmit, comp.onStatTransmit)
+        StringUtils.setScript(txt_onTimer, comp.onTimer)
+        StringUtils.setScript(txt_onClickRepeat, comp.onClickRepeat)
+        StringUtils.setScript(txt_onDrag, comp.onDrag)
+        StringUtils.setScript(txt_onRelease, comp.onRelease)
+        StringUtils.setScript(txt_onHold, comp.onHold)
+        StringUtils.setScript(txt_onDragStart, comp.onDragStart)
+        StringUtils.setScript(txt_onDragRelease, comp.onDragRelease)
+        StringUtils.setScript(txt_onScroll, comp.onScroll)
+        StringUtils.setScript(txt_onVarcTransmit, comp.onVarcTransmit)
+        StringUtils.setScript(txt_onVarcStrTransmit, comp.onVarcStrTransmit)
 
-        values = ""
-        if (comp.onOptionClick != null) {
-            for (o in comp.onOptionClick!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onOptionClick.text = values
-        values = ""
-        if (comp.onUseWith != null) {
-            for (o in comp.onUseWith!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onUseWith.text = values
-        values = ""
-        if (comp.onUse != null) {
-            for (o in comp.onUse!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onUse.text = values
-        values = ""
-        if (comp.onVarpTransmit != null) {
-            for (o in comp.onVarpTransmit!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onVarpTransmit.text = values
-        values = ""
-        if (comp.onMouseRepeat != null) {
-            for (o in comp.onMouseRepeat!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onMouseRepeat.text = values
-        values = ""
-        if (comp.onInvTransmit != null) {
-            for (o in comp.onInvTransmit!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onInvTransmit.text = values
-
-        values = ""
-        if (comp.onStatTransmit != null) {
-            for (o in comp.onStatTransmit!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onStatTransmit.text = values
-
-        values = ""
-        if (comp.onTimer != null) {
-            for (o in comp.onTimer!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onTimer.text = values
-
-        values = ""
-        if (comp.onClickRepeat != null) {
-            for (o in comp.onClickRepeat!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onClickRepeat.text = values
-
-        values = ""
-        if (comp.onDrag != null) {
-            for (o in comp.onDrag!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onDrag.text = values
-        values = ""
-        if (comp.onRelease != null) {
-            for (o in comp.onRelease!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onRelease.text = values
-        values = ""
-        if (comp.onHold != null) {
-            for (o in comp.onHold!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onHold.text = values
-        values = ""
-        if (comp.onDragStart != null) {
-            for (o in comp.onDragStart!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onDragStart.text = values
-        values = ""
-        if (comp.onDragRelease != null) {
-            for (o in comp.onDragRelease!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onDragRelease.text = values
-
-        values = ""
-        if (comp.onScroll != null) {
-            for (o in comp.onScroll!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onScroll.text = values
-        values = ""
-        if (comp.onVarcTransmit != null) {
-            for (o in comp.onVarcTransmit!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onVarcTransmit.text = values
-        values = ""
-        if (comp.onVarcStrTransmit != null) {
-            for (o in comp.onVarcStrTransmit!!) {
-                values += o.toString() + ";"
-            }
-        }
-        txt_onVarcStrTransmit.text = values
-
-        values = ""
-        if (comp.varpTriggers != null) {
-            for (i in comp.varpTriggers!!) {
-                values += i
-            }
-        }
-        txt_varpTriggers.text = values
-
-        values = ""
-        if (comp.inventoryTriggers != null) {
-            for (i in comp.inventoryTriggers!!) {
-                values += i
-            }
-        }
-        txt_inventoryTriggers.text = values
-        values = ""
-        if (comp.statTriggers != null) {
-            for (i in comp.statTriggers!!) {
-                values += i
-            }
-        }
-        txt_statTriggers.text = values
-        values = ""
-        if (comp.varcTriggers != null) {
-            for (i in comp.varcTriggers!!) {
-                values += i
-            }
-        }
-        txt_varcTriggers.text = values
-        values = ""
-        if (comp.varcstrTriggers != null) {
-            for (i in comp.varcstrTriggers!!) {
-                values += i
-            }
-        }
-        txt_varcStrTriggers.text = values
-
-        selectedComponent = comp
+        StringUtils.setTriggers(txt_varpTriggers, comp.varpTriggers)
+        StringUtils.setTriggers(txt_inventoryTriggers, comp.inventoryTriggers)
+        StringUtils.setTriggers(txt_statTriggers, comp.statTriggers)
+        StringUtils.setTriggers(txt_varcTriggers, comp.varcTriggers)
+        StringUtils.setTriggers(txt_varcStrTriggers, comp.varcstrTriggers)
     }
 
     private fun cleanTab(container: Container) {
@@ -1898,16 +1644,16 @@ class InterfaceUI : JFrame() {
                 else -> ComponentConstants.SPRITE
             }
 
-        c.parentId = parseIntSafe(txt_overlayer.getTextField().text, -1)
-        c.baseX = parseIntSafe(txt_x.getTextField().text, 0)
-        c.baseY = parseIntSafe(txt_y.getTextField().text, 0)
-        c.baseWidth = parseIntSafe(txt_width.getTextField().text, 0)
-        c.baseHeight = parseIntSafe(txt_height.getTextField().text, 0)
+        c.parentId = parseInt(txt_overlayer.getTextField().text, -1)
+        c.baseX = parseInt(txt_x.getTextField().text, 0)
+        c.baseY = parseInt(txt_y.getTextField().text, 0)
+        c.baseWidth = parseInt(txt_width.getTextField().text, 0)
+        c.baseHeight = parseInt(txt_height.getTextField().text, 0)
 
-        c.aspectWidthType = parseIntSafe(txt_widthMode.getTextField().text, 0).toByte()
-        c.aspectHeightType = parseIntSafe(txt_modeHeight.getTextField().text, 0).toByte()
-        c.xMode = parseIntSafe(txt_modex.getTextField().text, 0).toByte()
-        c.yMode = parseIntSafe(txt_positionmodeY.getTextField().text, 0).toByte()
+        c.aspectWidthType = parseInt(txt_widthMode.getTextField().text, 0).toByte()
+        c.aspectHeightType = parseInt(txt_modeHeight.getTextField().text, 0).toByte()
+        c.xMode = parseInt(txt_modex.getTextField().text, 0).toByte()
+        c.yMode = parseInt(txt_positionmodeY.getTextField().text, 0).toByte()
 
         c.hidden = (chckbxHidden.selectedItem as? Boolean) ?: false
 
@@ -1920,17 +1666,17 @@ class InterfaceUI : JFrame() {
 
         when (c.type) {
             ComponentConstants.LAYER -> {
-                c.scrollMaxH = parseIntSafe(txt_scrollX.getTextField().text, 0)
-                c.scrollMaxV = parseIntSafe(txt_scrollY.getTextField().text, 0)
+                c.scrollMaxH = parseInt(txt_scrollX.getTextField().text, 0)
+                c.scrollMaxV = parseInt(txt_scrollY.getTextField().text, 0)
                 c.noClickThrough = (chckbxHover.selectedItem as? Boolean) ?: false
             }
 
             ComponentConstants.SPRITE -> {
-                c.spriteId = parseIntSafe(txt_sprite.getTextField().text, -1)
-                c.transparency = parseIntSafe(txt_trans.getTextField().text, 255)
-                c.borderThickness = parseIntSafe(txt_border.getTextField().text, 0)
-                c.color = parseIntSafe(txt_color.getTextField().text, 0)
-                c.shadowColor= parseIntSafe(txt_shadowColor.getTextField().text, 0)
+                c.spriteId = parseInt(txt_sprite.getTextField().text, -1)
+                c.transparency = parseInt(txt_trans.getTextField().text, 255)
+                c.borderThickness = parseInt(txt_border.getTextField().text, 0)
+                c.color = parseInt(txt_color.getTextField().text, 0)
+                c.shadowColor= parseInt(txt_shadowColor.getTextField().text, 0)
 
                 c.spriteTiling = (chckbxRepeat.selectedItem as? Boolean) ?: false
                 c.hasAlpha = (chckbxHasAlpha.selectedItem as? Boolean) ?: false
@@ -1940,44 +1686,44 @@ class InterfaceUI : JFrame() {
 
             ComponentConstants.TEXT -> {
                 c.text = txt_text.getTextField().text
-                c.fontId = parseIntSafe(txt_font.getTextField().text, -1)
-                c.color = parseIntSafe(txt_color.getTextField().text, 0)
-                c.transparency = parseIntSafe(txt_trans.getTextField().text, 255)
-                c.textHorizontalAli = parseIntSafe(txt_xali.getTextField().text, 0)
-                c.textVerticalAli = parseIntSafe(txt_yali.getTextField().text, 0)
-                c.vPadding = parseIntSafe(txt_vpadding.getTextField().text, 0)
+                c.fontId = parseInt(txt_font.getTextField().text, -1)
+                c.color = parseInt(txt_color.getTextField().text, 0)
+                c.transparency = parseInt(txt_trans.getTextField().text, 255)
+                c.textHorizontalAli = parseInt(txt_xali.getTextField().text, 0)
+                c.textVerticalAli = parseInt(txt_yali.getTextField().text, 0)
+                c.vPadding = parseInt(txt_vpadding.getTextField().text, 0)
                 c.shadow = (chckbxShadow.selectedItem as? Boolean) ?: false
             }
 
             ComponentConstants.MODEL -> {
-                c.modelId = parseIntSafe(txt_modelId.getTextField().text, -1)
-                c.modelAnimId = parseIntSafe(txt_modelAnimId.getTextField().text, -1)
-                c.modelXAngle = parseIntSafe(txt_modelXAngle.getTextField().text, 0)
-                c.modelYAngle = parseIntSafe(txt_modelYAngle.getTextField().text, 0)
-                c.modelYOffset = parseIntSafe(txt_modelYOffset.getTextField().text, 0)
-                c.modelZoom = parseIntSafe(txt_modelZoom.getTextField().text, 100)
+                c.modelId = parseInt(txt_modelId.getTextField().text, -1)
+                c.modelAnimId = parseInt(txt_modelAnimId.getTextField().text, -1)
+                c.modelXAngle = parseInt(txt_modelXAngle.getTextField().text, 0)
+                c.modelYAngle = parseInt(txt_modelYAngle.getTextField().text, 0)
+                c.modelYOffset = parseInt(txt_modelYOffset.getTextField().text, 0)
+                c.modelZoom = parseInt(txt_modelZoom.getTextField().text, 100)
 
                 c.modelOrtho = (chckbx_modelOrtho.selectedItem as? Boolean) ?: false
                 c.unknownModelProp5 = (chckbx_unknownModelProp5.selectedItem as? Boolean) ?: false
 
                 if (c.aspectWidthType.toInt() != 0) {
-                    c.dynamicWidth = parseIntSafe(txt_dynamicWidth.getTextField().text, 0)
+                    c.dynamicWidth = parseInt(txt_dynamicWidth.getTextField().text, 0)
                 }
 
                 if (c.aspectHeightType.toInt() != 0) {
-                    c.dynamicHeight = parseIntSafe(txt_dynamicHeight.getTextField().text, 0)
+                    c.dynamicHeight = parseInt(txt_dynamicHeight.getTextField().text, 0)
                 }
             }
 
             ComponentConstants.FIGURE -> {
-                c.color = parseIntSafe(txt_color.getTextField().text, 0)
-                c.transparency = parseIntSafe(txt_trans.getTextField().text, 255)
+                c.color = parseInt(txt_color.getTextField().text, 0)
+                c.transparency = parseInt(txt_trans.getTextField().text, 255)
                 c.filled = (chckbxFilled.selectedItem as? Boolean) ?: false
             }
 
             ComponentConstants.LINE -> {
-                c.lineWidth = parseIntSafe(txt_lineWidth.getTextField().text, 0).toByte()
-                c.color = parseIntSafe(txt_color.getTextField().text, 0)
+                c.lineWidth = parseInt(txt_lineWidth.getTextField().text, 0).toByte()
+                c.color = parseInt(txt_color.getTextField().text, 0)
                 c.unknownProp_8 = (chckbx_unknownProp8.selectedItem as? Boolean) ?: false
             }
         }
@@ -1996,7 +1742,7 @@ class InterfaceUI : JFrame() {
         }
         c.rightclickOptions = if (opts.any { it != null }) opts else null
 
-        c.optionMask = parseIntSafe(txt_optionMask.getTextField().text, 0)
+        c.optionMask = parseInt(txt_optionMask.getTextField().text, 0)
 
         c.onLoadScript = InterfaceUtils.getScriptArray(txt_onload.text)
         c.onMouseHoverScript = InterfaceUtils.getScriptArray(txt_fullonhover.text)
@@ -2032,7 +1778,7 @@ class InterfaceUI : JFrame() {
         logger.info("Saved [$inter:$compId]")
     }
 
-    private fun parseIntSafe(
+    private fun parseInt(
         value: String,
         defaultValue: Int,
     ): Int =
@@ -2244,11 +1990,23 @@ class InterfaceUI : JFrame() {
         }
     }
 
-    private fun addDefaultComponent(
+    private fun saveComponent(
         interfaceId: Int,
-        selectedItem: String,
-    ) {
-        if (selectedItem == "Select component...") {
+        component: ComponentDefinition,
+        index: Int = ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId)
+    ): Int {
+        Cache.store!!.indexes[3]
+            .putFile(interfaceId, index, component.encode(copiedComp?.hasScripts ?: false))
+        return index
+    }
+
+    private fun reloadInterface(interfaceId: Int) {
+        ComponentDefinition.getInterface(interfaceId, true)
+        drawTree(interfaceId)
+    }
+
+    private fun addDefaultComponent(interfaceId: Int, selectedItem: String) {
+        if (selectedItem == "Select component") {
             JOptionPane.showMessageDialog(
                 null,
                 "Please select a component from the list.",
@@ -2257,134 +2015,95 @@ class InterfaceUI : JFrame() {
             )
             return
         }
-
         when (selectedItem) {
+
             "Close button" -> {
-                val defaultCloseButton = ComponentDefinition.getInterfaceComponent(6, 36)
-                if (defaultCloseButton != null) {
-                    defaultCloseButton.parentId = -1
-                    Cache.store!!
-                        .indexes[3]
-                        .putFile(
-                            interfaceId,
-                            ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
-                            defaultCloseButton.encode(copiedComp?.hasScripts ?: false),
-                        )
+                ComponentDefinition.getInterfaceComponent(6, 36)?.let {
+                    it.parentId = -1
+                    saveComponent(interfaceId, it)
                 }
-                ComponentDefinition.getInterface(interfaceId, true)
-                drawTree(interfaceId)
+                reloadInterface(interfaceId)
             }
 
             "Normal button" -> {
                 val container = ComponentDefinition.getInterfaceComponent(506, 1)
                 val text = ComponentDefinition.getInterfaceComponent(506, 2)
-                if (container != null) {
-                    Cache.store!!
-                        .indexes[3]
-                        .putFile(
-                            interfaceId,
-                            ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
-                            container.encode(copiedComp?.hasScripts ?: false),
-                        )
-                }
-                if (text != null) {
-                    Cache.store!!
-                        .indexes[3]
-                        .putFile(
-                            interfaceId,
-                            ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
-                            text.encode(copiedComp?.hasScripts ?: false),
-                        )
+
+                val parentIndex = container?.let { saveComponent(interfaceId, it) }
+                val textIndex = text?.let { saveComponent(interfaceId, it) }
+
+                reloadInterface(interfaceId)
+
+                if (parentIndex != null && textIndex != null) {
+                    val parentComp = ComponentDefinition.getInterfaceComponent(interfaceId, parentIndex)
+                    val textComp = ComponentDefinition.getInterfaceComponent(interfaceId, textIndex)
+
+                    if (parentComp != null && textComp != null) {
+                        textComp.parentId = parentComp.componentHash
+                        saveComponent(interfaceId, textComp, textIndex)
+                    }
                 }
 
-                ComponentDefinition.getInterface(interfaceId, true)
-
-                val lastIndex = ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId) - 1
-                val parentIndex = lastIndex - 1
-                val parentComp = ComponentDefinition.getInterfaceComponent(interfaceId, parentIndex)
-                val textComp = ComponentDefinition.getInterfaceComponent(interfaceId, lastIndex)
-                if (parentComp != null && textComp != null) {
-                    textComp.parentId = parentComp.componentHash
-                    Cache.store!!.indexes[3].putFile(interfaceId, lastIndex, textComp.encode(copiedComp?.hasScripts ?: false))
-                }
-                ComponentDefinition.getInterface(interfaceId, true)
-                drawTree(interfaceId)
+                reloadInterface(interfaceId)
             }
 
             "Start interface" -> {
-                val basic = ComponentDefinition.getInterfaceComponent(6, 0)
-                val place = ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId)
-                if (basic != null) {
-                    Cache.store!!.indexes[3].putFile(interfaceId, place, basic.encode(copiedComp?.hasScripts ?: false))
+                val base = ComponentDefinition.getInterfaceComponent(6, 0)
+                val baseIndex = base?.let { saveComponent(interfaceId, it) }
+
+                val children = ComponentDefinition.getChildsByParent(
+                    6,
+                    base?.componentHash ?: 0
+                )
+
+                children.forEach {
+                    it.text = "Example text"
+                    it.parentId++
+                    saveComponent(interfaceId, it)
                 }
 
-                val children = ComponentDefinition.getChildsByParent(6, ComponentDefinition.getInterfaceComponent(6, 0)?.componentHash ?: 0)
-                for (comp in children) {
-                    comp.text = "Example text"
-                    comp.parentId++
-                    Cache.store!!
-                        .indexes[3]
-                        .putFile(
-                            interfaceId,
-                            ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
-                            comp.encode(copiedComp?.hasScripts ?: false),
-                        )
-                }
-                ComponentDefinition.getInterface(interfaceId, true)
-                drawTree(interfaceId)
+                reloadInterface(interfaceId)
             }
 
             "Basic custom hover" -> {
-                val hover = ComponentDefinition.getInterfaceComponent(6, 36)
-                if (hover != null) {
-                    hover.parentId = -1
-                    hover.onMouseRepeat = null
-                    hover.onOptionClick = null
-                    hover.spriteId = 0
-                    hover.onMouseHoverScript?.set(2, 1)
-                    hover.onMouseLeaveScript?.set(2, 0)
-                    Cache.store!!
-                        .indexes[3]
-                        .putFile(
-                            interfaceId,
-                            ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
-                            hover.encode(copiedComp?.hasScripts ?: false),
-                        )
+                ComponentDefinition.getInterfaceComponent(6, 36)?.let {
+                    it.parentId = -1
+                    it.onMouseRepeat = null
+                    it.onOptionClick = null
+                    it.spriteId = 0
+                    it.onMouseHoverScript?.set(2, 1)
+                    it.onMouseLeaveScript?.set(2, 0)
+
+                    saveComponent(interfaceId, it)
                 }
-                ComponentDefinition.getInterface(interfaceId, true)
-                drawTree(interfaceId)
+
+                reloadInterface(interfaceId)
             }
 
             "Basic button with pop-up" -> {
+                val container = ComponentDefinition.getInterfaceComponent(762, 119)
                 val popupButton = ComponentDefinition.getInterfaceComponent(762, 33)
-                val cont = ComponentDefinition.getInterfaceComponent(762, 119)
 
-                if (cont != null) cont.parentId = -1
-                if (popupButton != null) popupButton.parentId = -1
-
-                val place2 = ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId)
-                if (cont != null) {
-                    Cache.store!!.indexes[3].putFile(interfaceId, place2, cont.encode(copiedComp?.hasScripts ?: false))
+                val containerIndex = container?.apply { parentId = -1 }?.let {
+                    saveComponent(interfaceId, it)
                 }
 
-                if (popupButton != null) {
-                    popupButton.onMouseRepeat?.set(3, "Click here to change your preset settings.")
-                    val contComp = ComponentDefinition.getInterfaceComponent(interfaceId, place2)
-                    if (contComp != null) {
-                        popupButton.onMouseLeaveScript?.set(2, contComp.componentHash)
-                        popupButton.onMouseRepeat?.set(2, contComp.componentHash)
+                popupButton?.apply {
+                    parentId = -1
+                    onMouseRepeat?.set(3, "Click here to change your preset settings.")
+
+                    containerIndex?.let { index ->
+                        val contComp = ComponentDefinition.getInterfaceComponent(interfaceId, index)
+                        contComp?.let {
+                            onMouseLeaveScript?.set(2, it.componentHash)
+                            onMouseRepeat?.set(2, it.componentHash)
+                        }
                     }
-                    Cache.store!!
-                        .indexes[3]
-                        .putFile(
-                            interfaceId,
-                            ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId),
-                            popupButton.encode(copiedComp?.hasScripts ?: false),
-                        )
+
+                    saveComponent(interfaceId, this)
                 }
 
-                ComponentDefinition.getInterface(interfaceId, true)
-                drawTree(interfaceId)
+                reloadInterface(interfaceId)
             }
         }
     }
@@ -2456,11 +2175,28 @@ class InterfaceUI : JFrame() {
         }
     }
 
-    fun updateComponentFields(comp: ComponentDefinition) {
-        txt_x.getTextField().text = comp.baseX.toString()
-        txt_y.getTextField().text = comp.baseY.toString()
-        txt_width.getTextField().text = comp.baseWidth.toString()
-        txt_height.getTextField().text = comp.baseHeight.toString()
+    fun selectComponent(componentId: Int) {
+        selectedComp = componentId
+        setValues(currentInterface, selectedComp)
+        // List
+        for (i in 0 until componentList.model.size) {
+            val item = componentList.model.getElementAt(i)
+            val compId = item.substringBefore(":").trim().toIntOrNull() ?: continue
+            if (compId == componentId) {
+                componentList.selectedIndex = i
+                componentList.ensureIndexIsVisible(i)
+                break
+            }
+        }
+        // Tree
+        val treeNode = findNode(componentTree.model.root as DefaultMutableTreeNode)
+        treeNode?.let {
+            val treePath = javax.swing.tree.TreePath(it.path)
+            componentTree.selectionPath = treePath
+            componentTree.scrollPathToVisible(treePath)
+        }
+
+        repaint()
     }
 
     private var _selectedComponent: ComponentDefinition? = null

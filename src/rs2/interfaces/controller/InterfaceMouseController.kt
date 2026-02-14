@@ -13,7 +13,7 @@ import kotlin.math.max
 
 class InterfaceMouseController(
     private val panel: Component,
-    var grid: Int = 8,
+    var grid: Int = 1,
     enabled: Boolean,
 ) : MouseAdapter() {
     private var draggingComp: ComponentDefinition? = null
@@ -97,9 +97,7 @@ class InterfaceMouseController(
                 InterfaceUI.currentInterface,
             ) ?: return
 
-        InterfaceUI.instance.selectedComponent = comp
-        InterfaceUI.instance.updateComponentFields(comp)
-
+        InterfaceUI.instance.selectComponent(comp.componentId)
         InterfaceDraw.setValues(comp)
 
         startMouse = e.point
@@ -127,9 +125,7 @@ class InterfaceMouseController(
         draggingComp?.let { comp ->
             comp.baseX = snap(startBaseX + dx, e)
             comp.baseY = snap(startBaseY + dy, e)
-            InterfaceDraw.sizeCache.remove(comp)
-            InterfaceDraw.setValues(comp)
-            InterfaceUI.instance.updateComponentFields(comp)
+            InterfaceUI.instance.selectComponent(comp.componentId)
             panel.repaint()
             return
         }
@@ -180,9 +176,7 @@ class InterfaceMouseController(
 
                 else -> {}
             }
-            InterfaceDraw.sizeCache.remove(comp)
-            InterfaceDraw.setValues(comp)
-            InterfaceUI.instance.updateComponentFields(comp)
+            InterfaceUI.instance.selectComponent(comp.componentId)
             panel.repaint()
         }
     }

@@ -14,12 +14,11 @@ import kotlin.math.max
 class InterfaceMouseController(
     private val panel: Component,
     var grid: Int = 8,
-    var enabled: Boolean = false,
+    enabled: Boolean,
 ) : MouseAdapter() {
     private var draggingComp: ComponentDefinition? = null
     private var resizingComp: ComponentDefinition? = null
     private var activeHandle: ResizeHandle? = null
-
     private var startMouse = Point()
 
     private var startBaseX = 0
@@ -27,12 +26,29 @@ class InterfaceMouseController(
     private var startBaseW = 0
     private var startBaseH = 0
 
+    private var isEnabled = false
+
     init {
         instance = this
-        if (enabled) {
-            panel.addMouseListener(this)
-            panel.addMouseMotionListener(this)
-        }
+        if (enabled) enable() else disable()
+    }
+
+    fun enable() {
+        if (isEnabled) return
+        panel.addMouseListener(this)
+        panel.addMouseMotionListener(this)
+        isEnabled = true
+    }
+
+    fun disable() {
+        if (!isEnabled) return
+        panel.removeMouseListener(this)
+        panel.removeMouseMotionListener(this)
+        draggingComp = null
+        resizingComp = null
+        activeHandle = null
+        panel.cursor = Cursor.getDefaultCursor()
+        isEnabled = false
     }
 
     private fun snap(
@@ -181,5 +197,7 @@ class InterfaceMouseController(
     companion object {
         var instance: InterfaceMouseController? = null
             private set
+        val InterfaceMouseController.isActive: Boolean
+            get() = this.isEnabled
     }
 }

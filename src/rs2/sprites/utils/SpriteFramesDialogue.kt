@@ -53,16 +53,18 @@ class SpriteFramesDialogue(
             val img = archive.getSprite(i) ?: continue
             val tile = FrameTile(i, img)
 
-            tile.addMouseListener(
-                object : java.awt.event.MouseAdapter() {
-                    override fun mouseClicked(e: java.awt.event.MouseEvent) {
-                        selectedFrame?.selected = false
-                        selectedFrame = tile
-                        tile.selected = true
-                        chooseBtn.isEnabled = true
+            tile.addMouseListener(object : java.awt.event.MouseAdapter() {
+                override fun mouseClicked(e: java.awt.event.MouseEvent) {
+                    selectedFrame?.selected = false
+                    selectedFrame = tile
+                    tile.selected = true
+                    chooseBtn.isEnabled = true
+                    if (e.clickCount == 2) {
+                        onSelect(tile.frameId)
+                        dispose()
                     }
-                },
-            )
+                }
+            })
 
             grid.add(tile)
         }

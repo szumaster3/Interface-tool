@@ -8,6 +8,7 @@ import rs2.cache.loaders.ComponentDefinition
 import rs2.interfaces.ComponentConstants
 import rs2.interfaces.InterfaceUtils
 import rs2.interfaces.controller.InterfaceMouseController
+import rs2.interfaces.controller.InterfaceMouseController.Companion.isActive
 import rs2.interfaces.draw.InterfaceDraw
 import rs2.interfaces.draw.InterfaceDrawMode
 import rs2.logging.LogFactory
@@ -177,7 +178,8 @@ class InterfaceUI : JFrame() {
     val gridSlider = gridPanel.getSlider()!!
     val gridLabel = gridPanel.getSliderLabel()!!
 
-    private var viewCombo = JComboBox(arrayOf("all", "type", "layer"))
+    private var viewCombo = JComboBox(arrayOf("All","Type","Layer"))
+    private var drawCombo = JComboBox(arrayOf("Enable","Disable"))
     private var typeCombo = JComboBox(arrayOf("Sprite", "Figure", "Model", "Text", "Line"))
     private var updating = false
 
@@ -235,7 +237,7 @@ class InterfaceUI : JFrame() {
             border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
         }
 
-        val newInterfaceButton = JButton("New Interface").apply {
+        val newInterfaceButton = JButton("New interface").apply {
             maximumSize = Dimension(Int.MAX_VALUE, Constants.BUTTON_HEIGHT)
             alignmentX = Component.CENTER_ALIGNMENT
             addActionListener {
@@ -268,7 +270,7 @@ class InterfaceUI : JFrame() {
             }
         }
 
-        val deleteInterfaceButton = JButton("Delete Selected").apply {
+        val deleteInterfaceButton = JButton("Delete selected").apply {
             maximumSize = Dimension(Int.MAX_VALUE, Constants.BUTTON_HEIGHT)
             alignmentX = Component.CENTER_ALIGNMENT
             addActionListener {
@@ -296,7 +298,7 @@ class InterfaceUI : JFrame() {
                     val newTreeModel = createInterfaceTree(currentInterface)
                     componentTree.model = newTreeModel
                     drawTree(currentInterface)
-                    logger.info("Viewing: [$currentInterface]:[$selectedComp]")
+                    logger.info("[$currentInterface]:[$selectedComp]")
                 }
             }
         }
@@ -305,6 +307,7 @@ class InterfaceUI : JFrame() {
         val rendererLabel = JLabel("Mode:")
         val rendererCombo = JComboBox(arrayOf(*InterfaceDrawMode.values())).apply {
             selectedIndex = 0
+            border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
             addPopupMenuListener(object : javax.swing.event.PopupMenuListener {
                 override fun popupMenuWillBecomeVisible(e: javax.swing.event.PopupMenuEvent?) {}
                 override fun popupMenuWillBecomeInvisible(e: javax.swing.event.PopupMenuEvent?) { viewportPanel?.repaint() }
@@ -324,16 +327,19 @@ class InterfaceUI : JFrame() {
             maximumSize = Dimension(Int.MAX_VALUE, Constants.BUTTON_HEIGHT)
             alignmentX = Component.CENTER_ALIGNMENT
             isOpaque = false
+            border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
             add(rendererLabel)
             add(Box.createRigidArea(Dimension(6, 0)))
             add(rendererCombo)
         }
 
+        rendererCombo.background = Color.WHITE
+
         viewCombo.addActionListener {
             val mode = when (viewCombo.selectedItem as String) {
-                "type" -> InterfaceDraw.ViewMode.BY_TYPE
-                "layer" -> InterfaceDraw.ViewMode.BY_LAYER
-                "none" -> InterfaceDraw.ViewMode.NONE
+                "Type" -> InterfaceDraw.ViewMode.BY_TYPE
+                "Layer" -> InterfaceDraw.ViewMode.BY_LAYER
+                "All" -> InterfaceDraw.ViewMode.NONE
                 else -> InterfaceDraw.ViewMode.NONE
             }
             InterfaceUI.currentViewMode = mode
@@ -359,16 +365,19 @@ class InterfaceUI : JFrame() {
             (componentTree.model as DefaultTreeModel).reload()
             viewportPanel?.repaint()
         }
-        val typeLabel = JLabel("ifType:")
+        val typeLabel = JLabel("Type:")
         val typePanel = JPanel().apply {
             layout = BoxLayout(this, BoxLayout.X_AXIS)
             maximumSize = Dimension(Int.MAX_VALUE, Constants.BUTTON_HEIGHT)
             alignmentX = Component.CENTER_ALIGNMENT
             isOpaque = false
+            border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
             add(typeLabel)
             add(Box.createRigidArea(Dimension(6, 0)))
             add(typeCombo)
         }
+
+        typeCombo.background = Color.WHITE
 
         typeCombo.addActionListener {
             if (!typeCombo.isEnabled) return@addActionListener
@@ -394,10 +403,13 @@ class InterfaceUI : JFrame() {
             maximumSize = Dimension(Int.MAX_VALUE , Constants.BUTTON_HEIGHT)
             alignmentX = Component.CENTER_ALIGNMENT
             isOpaque = false
+            border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
             add(viewLabel)
             add(Box.createRigidArea(Dimension(6, 0)))
             add(viewCombo)
         }
+
+        viewCombo.background = Color.WHITE
 
         interfaceOptionsPanel.layout = BoxLayout(interfaceOptionsPanel, BoxLayout.Y_AXIS)
         interfaceOptionsPanel.border = TitledBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED), "Render", TitledBorder.LEADING, TitledBorder.TOP)
@@ -406,10 +418,9 @@ class InterfaceUI : JFrame() {
         interfaceOptionsPanel.add(viewPanel)
         interfaceOptionsPanel.add(Box.createRigidArea(Dimension(0, 5)))
         interfaceOptionsPanel.add(typePanel)
-        interfaceOptionsPanel.add(Box.createRigidArea(Dimension(0, 5)))
+        interfaceOptionsPanel.add(Box.createRigidArea(Dimension(0, 15)))
 
         moreButtonsPanel.add(interfaceOptionsPanel)
-        moreButtonsPanel.add(Box.createRigidArea(Dimension(0, 10)))
         val premadeComponentsPanel = JPanel().apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
             border = TitledBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED), "Quick Add", TitledBorder.LEADING, TitledBorder.TOP)
@@ -418,7 +429,7 @@ class InterfaceUI : JFrame() {
         }
 
         val premadeCombo = JComboBox(arrayOf(
-            "Select component...",
+            "Select component",
             "Close button",
             "Normal button",
             "Start interface",
@@ -432,9 +443,11 @@ class InterfaceUI : JFrame() {
         val btnAddPremadeComponent = JButton("Add Component").apply {
             maximumSize = Dimension(Int.MAX_VALUE, Constants.BUTTON_HEIGHT)
             alignmentX = Component.CENTER_ALIGNMENT
+            isOpaque = false
+            border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
             addActionListener {
                 val selectedItem = premadeCombo.selectedItem?.toString() ?: return@addActionListener
-                if (selectedItem == "Select component...") {
+                if (selectedItem == "Select component") {
                     JOptionPane.showMessageDialog(
                         premadeComponentsPanel,
                         "Please select a component from the list.",
@@ -447,11 +460,15 @@ class InterfaceUI : JFrame() {
             }
         }
 
+
         premadeComponentsPanel.add(premadeCombo)
         premadeComponentsPanel.add(Box.createRigidArea(Dimension(0, 5)))
         premadeComponentsPanel.add(btnAddPremadeComponent)
         moreButtonsPanel.add(premadeComponentsPanel)
         moreButtonsPanel.add(Box.createRigidArea(Dimension(0, 5)))
+
+        btnAddPremadeComponent.background = Color.WHITE
+
         val actionsPanel = JPanel()
         actionsPanel.layout = BoxLayout(actionsPanel, BoxLayout.Y_AXIS)
         actionsPanel.border =
@@ -663,9 +680,9 @@ class InterfaceUI : JFrame() {
             isEnabled = false
             addActionListener {
                 val viewMode = when (viewCombo.selectedItem as String) {
-                    "type" -> InterfaceDraw.ViewMode.BY_TYPE
-                    "layer" -> InterfaceDraw.ViewMode.BY_LAYER
-                    "none" -> InterfaceDraw.ViewMode.NONE
+                    "Type" -> InterfaceDraw.ViewMode.BY_TYPE
+                    "Layer" -> InterfaceDraw.ViewMode.BY_LAYER
+                    "All" -> InterfaceDraw.ViewMode.NONE
                     else -> InterfaceDraw.ViewMode.NONE
                 }
                 val selectedType = when (typeCombo.selectedItem as String) {
@@ -685,9 +702,9 @@ class InterfaceUI : JFrame() {
 
         viewCombo.addActionListener {
             val viewMode = when (viewCombo.selectedItem as String) {
-                "type" -> InterfaceDraw.ViewMode.BY_TYPE
-                "layer" -> InterfaceDraw.ViewMode.BY_LAYER
-                "none" -> InterfaceDraw.ViewMode.NONE
+                "Type" -> InterfaceDraw.ViewMode.BY_TYPE
+                "Layer" -> InterfaceDraw.ViewMode.BY_LAYER
+                "All" -> InterfaceDraw.ViewMode.NONE
                 else -> InterfaceDraw.ViewMode.NONE
             }
             typeCombo.isEnabled = (viewMode == InterfaceDraw.ViewMode.BY_TYPE)
@@ -1007,9 +1024,9 @@ class InterfaceUI : JFrame() {
 
                 InterfaceDraw.editMode = (currentRenderer == InterfaceDrawMode.EDITING)
                 val viewMode = when (viewCombo.selectedItem as String) {
-                    "type" -> InterfaceDraw.ViewMode.BY_TYPE
-                    "layer" -> InterfaceDraw.ViewMode.BY_LAYER
-                    "none" -> InterfaceDraw.ViewMode.NONE
+                    "Type" -> InterfaceDraw.ViewMode.BY_TYPE
+                    "Layer"-> InterfaceDraw.ViewMode.BY_LAYER
+                    "All" -> InterfaceDraw.ViewMode.NONE
                     else -> InterfaceDraw.ViewMode.NONE
                 }
 
@@ -1127,10 +1144,15 @@ class InterfaceUI : JFrame() {
             topPanel.add(SwingUtils.labeledField(label, field))
         }
 
+
+        if (InterfaceMouseController.instance?.isActive == false) {
+            gridLabel.text = "Grid Locked"
+        }
+
         gridSlider.addChangeListener {
             val value = gridSlider.value
             InterfaceMouseController.instance?.grid = value
-            if (InterfaceMouseController.instance?.enabled == true) {
+            if (InterfaceMouseController.instance?.isActive == true) {
                 gridLabel.text = "Grid: $value"
             }
         }
@@ -1158,12 +1180,15 @@ class InterfaceUI : JFrame() {
         }
 
         btn2?.addActionListener {
-            SpriteBrowser(this) { spriteId, w, h ->
-                if (currentInterface <= 0) return@SpriteBrowser
-                selectedComponent?.spriteId = spriteId
-                selectedComponent?.baseWidth = w
-                selectedComponent?.baseHeight = h
-                setValues(currentInterface, selectedComponent!!.componentId)
+            SpriteBrowser(this) { spriteId, w, h, frameId ->
+                val comp = selectedComponent
+                if (currentInterface <= 0 || comp == null) return@SpriteBrowser
+
+                comp.spriteId = (spriteId?:frameId)!!
+                comp.baseWidth = w
+                comp.baseHeight = h
+
+                setValues(currentInterface, comp.componentId)
                 repaint()
             }
         }
@@ -1207,12 +1232,6 @@ class InterfaceUI : JFrame() {
         root.add(topPanel)
         root.add(Box.createRigidArea(Dimension(0, 6)))
         root.add(scriptsScroll)
-
-        val mouseEnabled = InterfaceMouseController.instance?.enabled ?: false
-        gridSlider.isEnabled = mouseEnabled
-        if (!mouseEnabled) {
-            gridLabel.text = "Grid Locked"
-        }
 
         return root
     }
@@ -1477,31 +1496,33 @@ class InterfaceUI : JFrame() {
             extraMenu.show(extraButton, 0, extraButton.height)
         }
 
-        val lockButton = JToggleButton("Mouse Locked")
-        val lockButtonSize = Dimension(120, 24)
-        lockButton.isFocusable = false
-        lockButton.toolTipText = "Toggle mouse movement"
-        lockButton.isContentAreaFilled = false
-        lockButton.isBorderPainted = true
-        lockButton.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
-        lockButton.isOpaque = false
-        lockButton.background = Color.red
-        lockButton.preferredSize = lockButtonSize
-        lockButton.maximumSize = lockButtonSize
-        lockButton.minimumSize = lockButtonSize
-        lockButton.addActionListener {
-            val status = lockButton.isSelected
+        val mouseController = InterfaceMouseController(viewportPanel!!, gridSlider.value, false)
+        val lockButton = JToggleButton("Mouse Locked").apply {
+            val size = Dimension(120, 24)
+            preferredSize = size
+            maximumSize = size
+            minimumSize = size
+            isFocusable = false
+            toolTipText = "Toggle mouse movement"
+            isContentAreaFilled = false
+            isBorderPainted = true
+            border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+            background = Color.red
 
-            if (status){
-            lockButton.text = "Mouse Active"
-            lockButton.background = Color.green
-            }else{
-                lockButton.text = "Mouse Locked"
-                lockButton.background = Color.red
+            addActionListener {
+                if (isSelected) {
+                    text = "Mouse Active"
+                    background = Color.green
+                    mouseController.enable()
+                } else {
+                    text = "Mouse Locked"
+                    background = Color.red
+                    mouseController.disable()
+                }
+
+                gridSlider.isEnabled = isSelected
+                gridLabel.text = if (isSelected) "Grid: ${gridSlider.value}" else "Grid Locked"
             }
-            InterfaceMouseController(viewportPanel!!, enabled = status)
-            gridSlider.isEnabled = status
-            gridLabel.text = if (status) "Grid: ${gridSlider.value}" else "Grid Locked"
         }
         topButtonPanel.add(Box.createRigidArea(Dimension(5, 0)))
         topButtonPanel.add(extraButton)

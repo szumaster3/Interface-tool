@@ -2,12 +2,6 @@
 
 https://github.com/PaoloKa/Interface-tool
 
-This tool is an interface editor designed for **RuneScape cache revision 530+**.  
-With minor adjustments, it can also be adapted to load **OSRS caches**.
-
-I’m releasing this project to support the community. The code was originally written quite some time ago and has only recently undergone refactoring.  
-While the editor is fully functional, the codebase is still a work in progress and will continue to be improved.
-
 ---
 
 ### Usage

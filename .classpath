@@ -2,11 +2,6 @@
 <classpath>
 	<classpath kind="src" path="src"/>
 	<classpath entry kind="src" path="lib"/>
-	<classpath exported="true" kind="lib" path="lib/synthetica.jar"/>
 	<classpath kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpath exported="true" kind="lib" path="lib/syntheticaBlackEye.jar"/>
-	<classpath exported="true" kind="lib" path="lib/jgoodies-forms-1.8.0.jar"/>
-	<classpath exported="true" kind="lib" path="lib/jgoodies-forms-1.8.0-sources.jar"/>
-	<classpath exported="true" kind="lib" path="lib/substance.jar"/>
 	<classpath kind="output" path="bin"/>
 </classpath>

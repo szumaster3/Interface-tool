@@ -9,9 +9,8 @@ import javax.swing.border.EmptyBorder
 
 class SpriteBrowser(
     parent: JFrame?,
-    private val onSelect: (spriteId: Int, width: Int, height: Int, frameId: Int?) -> Unit
+    private val onSelect: (spriteId: Int, width: Int, height: Int, frameId: Int?) -> Unit,
 ) : JDialog(parent, "Sprite Browser", true) {
-
     private var selectedTile: SpriteTile? = null
     private var selectedFrameId: Int? = null
 
@@ -72,26 +71,28 @@ class SpriteBrowser(
                         tile.addFrameIndicator(archive.size())
                     }
 
-                    tile.addMouseListener(object : java.awt.event.MouseAdapter() {
-                        override fun mouseClicked(e: java.awt.event.MouseEvent) {
-                            selectedTile?.selected = false
-                            selectedTile = tile
-                            tile.selected = true
-                            selectedFrameId = null
+                    tile.addMouseListener(
+                        object : java.awt.event.MouseAdapter() {
+                            override fun mouseClicked(e: java.awt.event.MouseEvent) {
+                                selectedTile?.selected = false
+                                selectedTile = tile
+                                tile.selected = true
+                                selectedFrameId = null
 
-                            selectBtn.isEnabled = true
-                            exportBtn.isEnabled = true
+                                selectBtn.isEnabled = true
+                                exportBtn.isEnabled = true
 
-                            // Podwójne kliknięcie na sprite z wieloma ramkami
-                            if (e.clickCount == 2 && archive != null && archive.size() > 1) {
-                                SpriteFramesDialogue(this@SpriteBrowser, tile.spriteId, archive) { frameId ->
-                                    selectedFrameId = frameId
-                                    onSelect(tile.spriteId, archive.width, archive.height, frameId)
-                                    dispose()
+                                // Podwójne kliknięcie na sprite z wieloma ramkami
+                                if (e.clickCount == 2 && archive != null && archive.size() > 1) {
+                                    SpriteFramesDialogue(this@SpriteBrowser, tile.spriteId, archive) { frameId ->
+                                        selectedFrameId = frameId
+                                        onSelect(tile.spriteId, archive.width, archive.height, frameId)
+                                        dispose()
+                                    }
                                 }
                             }
-                        }
-                    })
+                        },
+                    )
 
                     grid.add(tile)
                 }
@@ -104,14 +105,17 @@ class SpriteBrowser(
     }
 
     private fun importSprites() {
-        val chooser = JFileChooser().apply {
-            isMultiSelectionEnabled = true
-            fileFilter = javax.swing.filechooser.FileNameExtensionFilter("PNG Images", "png")
-        }
+        val chooser =
+            JFileChooser().apply {
+                isMultiSelectionEnabled = true
+                fileFilter = javax.swing.filechooser.FileNameExtensionFilter("PNG Images", "png")
+            }
         if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return
 
-        val spriteId = JOptionPane.showInputDialog(this, "Sprite ID:", SpriteLoader.numSprites.toString())
-            ?.toIntOrNull() ?: return
+        val spriteId =
+            JOptionPane
+                .showInputDialog(this, "Sprite ID:", SpriteLoader.numSprites.toString())
+                ?.toIntOrNull() ?: return
 
         try {
             val archive = SpriteImportUtil.importFromPngs(chooser.selectedFiles.toList())

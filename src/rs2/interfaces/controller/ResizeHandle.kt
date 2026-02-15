@@ -14,24 +14,29 @@ enum class ResizeHandle {
     NE,
     NW,
     SE,
-    SW;
+    SW,
+    ;
 
-    fun drawResizeHandles(g: Graphics, comp: ComponentDefinition) {
+    fun drawResizeHandles(
+        g: Graphics,
+        comp: ComponentDefinition,
+    ) {
         val abs = InterfaceDraw.computeAbsolutePosition(comp)
         val w = comp.width
         val h = comp.height
         val size = 6
 
-        val points = mapOf(
-            NW     to Point(abs.x, abs.y),
-            N      to Point(abs.x + w / 2, abs.y),
-            NE     to Point(abs.x + w, abs.y),
-            W      to Point(abs.x, abs.y + h / 2),
-            E      to Point(abs.x + w, abs.y + h / 2),
-            SW     to Point(abs.x, abs.y + h),
-            S      to Point(abs.x + w / 2, abs.y + h),
-            SE     to Point(abs.x + w, abs.y + h)
-        )
+        val points =
+            mapOf(
+                NW to Point(abs.x, abs.y),
+                N to Point(abs.x + w / 2, abs.y),
+                NE to Point(abs.x + w, abs.y),
+                W to Point(abs.x, abs.y + h / 2),
+                E to Point(abs.x + w, abs.y + h / 2),
+                SW to Point(abs.x, abs.y + h),
+                S to Point(abs.x + w / 2, abs.y + h),
+                SE to Point(abs.x + w, abs.y + h),
+            )
 
         g.color = Color.WHITE
         points.values.forEach { p ->

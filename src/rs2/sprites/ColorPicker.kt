@@ -1,5 +1,7 @@
 package rs2.sprites
 
+import rs2.cache.loaders.ComponentDefinition
+import ui.theme.component.SpinnerTextField
 import java.awt.*
 import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionEvent
@@ -9,8 +11,6 @@ import javax.swing.border.BevelBorder
 import javax.swing.border.EmptyBorder
 import javax.swing.border.LineBorder
 import javax.swing.event.ChangeListener
-import rs2.cache.loaders.ComponentDefinition
-import ui.theme.component.SpinnerTextField
 
 class ColorPicker(
     private val comp: ComponentDefinition,
@@ -29,49 +29,46 @@ class ColorPicker(
         isResizable = false
         layout = BorderLayout(8, 8)
         rootPane.border = EmptyBorder(6, 6, 6, 6)
+
         val mainPanel = JPanel(BorderLayout(8, 8))
         mainPanel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
         add(mainPanel, BorderLayout.CENTER)
-        val buttonPanel = JPanel()
-        buttonPanel.layout =BoxLayout(buttonPanel, BoxLayout.Y_AXIS)
-        val changeColorBtn = createButton("Palette"){openColorChooser()}
-        val copyRS2Btn =
-            createButton("Copy RS2HSB"){ event ->
-                val value = rs2hsb.toString()
-                copyToClipboard(value)
-                showCopiedButton(event.source as JButton, value)
-            }
 
-        val copyRGBBtn =
-            createButton("Copy RGB"){ event ->
-                val rgb = ImageUtils.rs2hsbToRGB(rs2hsb)
-                val hex = String.format("#%06X", rgb and 0xFFFFFF)
-                copyToClipboard(rgb.toString())
-                showCopiedButton(event.source as JButton, hex)
-            }
+        val buttonPanel = JPanel()
+        buttonPanel.layout = BoxLayout(buttonPanel, BoxLayout.Y_AXIS)
+
+        val changeColorBtn = createButton("Select new color") { openColorChooser() }
         val moveToEditorBtn =
-            createButton("Transfer to editor"){
-                val rgb = (selectedColor.red shl 16) or (selectedColor.green shl 8) or (selectedColor.blue)
-                comp.color = rgb
-                colorField.getTextField().text = rgb.toString()
-                colorField.getTextField().requestFocus()
+            createButton("Transfer to editor") {
+                val rs2Color = (selectedColor.red shl 16) or (selectedColor.green shl 8) or selectedColor.blue
+                comp.color = rs2Color
+                colorField.getTextField().text = rs2Color.toString()
                 onColorApplied?.invoke()
             }
 
-        listOf(changeColorBtn, copyRS2Btn, copyRGBBtn, moveToEditorBtn).forEach { btn ->
+        val buttons = listOf(changeColorBtn, moveToEditorBtn)
+        buttons.forEach { btn ->
+            val wrapper = JPanel(BorderLayout())
+            wrapper.isOpaque = false
+            wrapper.border = EmptyBorder(0, 6, 0, 0)
+            wrapper.add(btn, BorderLayout.CENTER)
+            buttonPanel.add(wrapper)
+            buttonPanel.add(Box.createRigidArea(Dimension(0, 6)))
+        }
+
+        listOf(changeColorBtn, moveToEditorBtn).forEach { btn ->
             buttonPanel.add(btn)
             buttonPanel.add(Box.createRigidArea(Dimension(0, 6)))
         }
 
         mainPanel.add(buttonPanel, BorderLayout.WEST)
+
         val previewPanel = JPanel()
         previewPanel.layout = BoxLayout(previewPanel, BoxLayout.Y_AXIS)
 
         colorPreview =
-
             object : JPanel() {
-                override fun paintComponent(g: Graphics)
-                {
+                override fun paintComponent(g: Graphics) {
                     super.paintComponent(g)
                     g.color = selectedColor
                     g.fillRect(0, 0, width, height)
@@ -110,22 +107,18 @@ class ColorPicker(
         setLocationRelativeTo(null)
     }
 
-    private fun createButton(text: String, action: (ActionEvent) -> Unit): JButton =
+    private fun createButton(
+        text: String,
+        action: (ActionEvent) -> Unit,
+    ): JButton =
         JButton(text).apply {
-            font = Font("JetBrains Mono", Font.PLAIN, 11)
+            font = Font("JetBrains Mono", Font.PLAIN, 12)
             preferredSize = Dimension(130, 24)
             maximumSize = preferredSize
             minimumSize = preferredSize
             isFocusPainted = false
             addActionListener { e -> action(e) }
         }
-
-    private fun showCopiedButton(button: JButton, copiedValue: String) {
-        val originalText = button.text
-        button.text = "Copied=[$copiedValue]"
-
-        Timer(59999) { button.text = originalText }.start()
-    }
 
     private fun openColorChooser() {
         val chooser = JColorChooser(selectedColor)
@@ -135,9 +128,6 @@ class ColorPicker(
             ChangeListener {
                 selectedColor = chooser.color
                 updateDisplay()
-                val rgb = (selectedColor.red shl 16) or (selectedColor.green shl 8) or (selectedColor.blue)
-                comp.color = rgb
-                colorField.getTextField().text = rgb.toString()
             },
         )
 
@@ -145,15 +135,10 @@ class ColorPicker(
     }
 
     private fun updateDisplay() {
-        rs2hsb = ImageUtils.rgbToRS2HSB(selectedColor.red, selectedColor.green, selectedColor.blue)
+        rs2hsb = (selectedColor.red shl 16) or (selectedColor.green shl 8) or selectedColor.blue
         colorPreview.repaint()
-        rs2Label.text = "RS2HSB: $rs2hsb"
-        val rgb = ImageUtils.rs2hsbToRGB(rs2hsb)
-        rgbLabel.text = "RGB: $rgb"
-    }
-
-    private fun copyToClipboard(text: String) {
-        val sel = StringSelection(text)
-        Toolkit.getDefaultToolkit().systemClipboard.setContents(sel, null)
+        rs2Label.text = "RS2: $rs2hsb"
+        val hex = String.format("#%06X", rs2hsb and 0xFFFFFF)
+        rgbLabel.text = "RGB: $hex"
     }
 }

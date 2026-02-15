@@ -21,11 +21,17 @@ data class ComponentData(
     var invOptions: Array<String?>? = null,
     var cs1ComparisonOpcodes: IntArray? = null,
     var cs1ComparisonOperands: IntArray? = null,
-    var cs1Scripts: Array<IntArray>? = null
+    var cs1Scripts: Array<IntArray>? = null,
 ) {
-    private fun safeGet(arr: IntArray?, index: Int) = if (arr != null && index in arr.indices) arr[index] else 0
+    private fun safeGet(
+        arr: IntArray?,
+        index: Int,
+    ) = if (arr != null && index in arr.indices) arr[index] else 0
 
-    private fun safeGetOption(arr: Array<String?>?, index: Int) = if (arr != null && index in arr.indices) arr[index] else null
+    private fun safeGetOption(
+        arr: Array<String?>?,
+        index: Int,
+    ) = if (arr != null && index in arr.indices) arr[index] else null
 
     /**
      * Parses the client-side CS1 scripts for a given component.
@@ -64,7 +70,7 @@ data class ComponentData(
         playerX: Int,
         playerY: Int,
         baseXMap: Int,
-        baseYMap: Int
+        baseYMap: Int,
     ): Int {
         if (cs1Scripts == null || idx >= cs1Scripts!!.size) return -2
         val opcodes = cs1Scripts!![idx]
@@ -80,10 +86,22 @@ data class ComponentData(
                 var tempType = 0
 
                 when (opcode) {
-                    0 -> return result
-                    1 -> value = safeGet(currentStats, opcodes.getOrNull(counter++) ?: 0)
-                    2 -> value = safeGet(maxStats, opcodes.getOrNull(counter++) ?: 0)
-                    3 -> value = safeGet(currentExp, opcodes.getOrNull(counter++) ?: 0)
+                    0 -> {
+                        return result
+                    }
+
+                    1 -> {
+                        value = safeGet(currentStats, opcodes.getOrNull(counter++) ?: 0)
+                    }
+
+                    2 -> {
+                        value = safeGet(maxStats, opcodes.getOrNull(counter++) ?: 0)
+                    }
+
+                    3 -> {
+                        value = safeGet(currentExp, opcodes.getOrNull(counter++) ?: 0)
+                    }
+
                     4 -> { // inventory count opcode
                         val inter = safeGetComponent(opcodeComponents, opcodes, counter) ?: null
                         counter += 3 // skip interId, unused, itemId
@@ -98,15 +116,29 @@ data class ComponentData(
                             }
                         }
                     }
-                    5 -> value = safeGet(variousSettings, opcodes.getOrNull(counter++) ?: 0)
-                    6 -> value = xpForLevel.getOrElse(safeGet(maxStats, opcodes.getOrNull(counter++) ?: 1) - 1) { 0 }
-                    7 -> value = (safeGet(variousSettings, opcodes.getOrNull(counter++) ?: 0) * 100) / 46875
-                    8 -> value = 0
+
+                    5 -> {
+                        value = safeGet(variousSettings, opcodes.getOrNull(counter++) ?: 0)
+                    }
+
+                    6 -> {
+                        value = xpForLevel.getOrElse(safeGet(maxStats, opcodes.getOrNull(counter++) ?: 1) - 1) { 0 }
+                    }
+
+                    7 -> {
+                        value = (safeGet(variousSettings, opcodes.getOrNull(counter++) ?: 0) * 100) / 46875
+                    }
+
+                    8 -> {
+                        value = 0
+                    }
+
                     9 -> {
                         for (i in 0 until skillEnabled.size) {
                             if (skillEnabled.getOrNull(i) == true) value += maxStats.getOrElse(i) { 0 }
                         }
                     }
+
                     10 -> { // inventory contains object
                         val inter = safeGetComponent(opcodeComponents, opcodes, counter) ?: null
                         counter += 3
@@ -120,23 +152,49 @@ data class ComponentData(
                             }
                         }
                     }
-                    11 -> value = energy
-                    12 -> value = weight
+
+                    11 -> {
+                        value = energy
+                    }
+
+                    12 -> {
+                        value = weight
+                    }
+
                     13 -> { // varp bit test
                         val i1 = safeGet(variousSettings, opcodes.getOrNull(counter++) ?: 0)
                         val i2 = opcodes.getOrNull(counter++) ?: 0
                         value = if ((1 shl i2 and i1) == 0) 0 else 1
                     }
+
                     14 -> { // varbit
                         val varbitId = opcodes.getOrNull(counter++) ?: 0
                         value = variousSettings.getOrElse(varbitId) { 0 }
                     }
-                    15 -> tempType = 1
-                    16 -> tempType = 2
-                    17 -> tempType = 3
-                    18 -> value = baseXMap + (playerX shr 7)
-                    19 -> value = baseYMap + (playerY shr 7)
-                    20 -> value = opcodes.getOrNull(counter++) ?: 0
+
+                    15 -> {
+                        tempType = 1
+                    }
+
+                    16 -> {
+                        tempType = 2
+                    }
+
+                    17 -> {
+                        tempType = 3
+                    }
+
+                    18 -> {
+                        value = baseXMap + (playerX shr 7)
+                    }
+
+                    19 -> {
+                        value = baseYMap + (playerY shr 7)
+                    }
+
+                    20 -> {
+                        value = opcodes.getOrNull(counter++) ?: 0
+                    }
                 }
 
                 when (tempType) {
@@ -149,7 +207,10 @@ data class ComponentData(
                         }
                         type = 0
                     }
-                    else -> type = tempType
+
+                    else -> {
+                        type = tempType
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -158,7 +219,11 @@ data class ComponentData(
         return result
     }
 
-    private fun safeGetComponent(opcodeComponents: Map<Int, Array<ComponentData?>>, opcodes: IntArray, counter: Int): ComponentData? {
+    private fun safeGetComponent(
+        opcodeComponents: Map<Int, Array<ComponentData?>>,
+        opcodes: IntArray,
+        counter: Int,
+    ): ComponentData? {
         val interId = ((opcodes.getOrNull(counter) ?: 0) shl 16) + (opcodes.getOrNull(counter + 1) ?: 0)
         val compId = interId and 0xFFFF
         val ifaceId = interId shr 16
@@ -181,7 +246,7 @@ data class ComponentData(
         playerX: Int,
         playerY: Int,
         baseXMap: Int,
-        baseYMap: Int
+        baseYMap: Int,
     ): Boolean {
         if (cs1ComparisonOpcodes == null || cs1ComparisonOperands == null) return false
         for (i in cs1ComparisonOpcodes!!.indices) {
@@ -200,7 +265,7 @@ data class ComponentData(
                     playerX,
                     playerY,
                     baseXMap,
-                    baseYMap
+                    baseYMap,
                 )
             val req = cs1ComparisonOperands!!.getOrNull(i) ?: 0
             when (cs1ComparisonOpcodes!![i]) {

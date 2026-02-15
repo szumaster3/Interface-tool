@@ -152,7 +152,7 @@ class CopyTask internal constructor(
     fun Name(`val`: String?): CopyTask = modify { cd: ComponentDefinition -> cd.optionBase = `val` }
 
     fun rightClickOptions(vararg options: String?): CopyTask =
-        modify { c: ComponentDefinition -> c.rightclickOptions = options as Array<String?> }
+        modify { c: ComponentDefinition -> c.rightClickOptions = options as Array<String?> }
 
     fun mainOption(option: Int): CopyTask = modify { c: ComponentDefinition -> c.Option = option }
 

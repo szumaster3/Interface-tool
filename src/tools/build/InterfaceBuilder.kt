@@ -39,7 +39,7 @@ object InterfaceBuilder {
                                    c.baseWidth = 32;
                                    c.baseHeight = 32;
                                    c.aString4784 = "Click";
-                                   c.rightclickOptions = new String[]{"Use", "Examine"};
+                                   c.rightClickOptions = new String[]{"Use", "Examine"};
                                    c.optionMask = 1;
                                }
                        )
@@ -61,7 +61,7 @@ object InterfaceBuilder {
                                    c.baseHeight = 7;
                                    c.inventoryTriggers = new int[]{0};
                                    c.optionMask = 1024;
-                                   c.rightclickOptions = new String[]{
+                                   c.rightClickOptions = new String[]{
                                            "Use", "Drop", "Examine"
                                    };
                                }

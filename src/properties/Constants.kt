@@ -37,6 +37,6 @@ object Constants {
     const val INFO_FIELD_WIDTH: Int = 300
     const val INFO_FIELD_HEIGHT: Int = BUTTON_HEIGHT_SMALL
     val BG_FILL_COLOR: Color = Color.lightGray
-    const val VIEWPORT_WIDTH: Int = 512
-    const val VIEWPORT_HEIGHT: Int = 334
+    var VIEWPORT_WIDTH: Int = 512 // 960//765//512
+    var VIEWPORT_HEIGHT: Int = 334 // 720//503//334
 }

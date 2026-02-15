@@ -6,7 +6,10 @@ import javax.swing.*
 class SpinnerTextField(
     columns: Int,
 ) : JPanel() {
-    private val textField = JTextField(columns)
+    private val textField =
+        JTextField(columns).apply {
+            font = Font("JetBrains Mono", Font.TRUETYPE_FONT, 12)
+        }
     private val upButton = JButton()
     private val downButton = JButton()
 

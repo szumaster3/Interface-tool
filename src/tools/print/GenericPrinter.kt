@@ -89,7 +89,7 @@ object GenericPrinter {
 
         val type = field.type
 
-        if (name.startsWith("on") || name == "rightclickOptions") return false
+        if (name.startsWith("on") || name == "rightClickOptions") return false
 
         if (type == String::class.java) return (value as String).trim().isNotEmpty()
         if (type == Boolean::class.javaPrimitiveType || type == Boolean::class.java) return value as Boolean
@@ -143,7 +143,7 @@ object GenericPrinter {
             val value = field[comp] ?: continue
             val name = field.name
 
-            if (name.startsWith("on") || name == "rightclickOptions") {
+            if (name.startsWith("on") || name == "rightClickOptions") {
                 out.write("comp.$name = ${format(value)};\n")
             }
         }

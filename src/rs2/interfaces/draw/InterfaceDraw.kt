@@ -1,10 +1,5 @@
 package rs2.interfaces.draw
 
-import java.awt.*
-import java.awt.image.BufferedImage
-import java.io.File
-import javax.imageio.ImageIO
-import kotlin.math.min
 import properties.Constants
 import rs2.cache.loaders.ComponentDefinition
 import rs2.cache.loaders.ComponentDefinition.Companion.getInterface
@@ -14,6 +9,11 @@ import rs2.interfaces.InterfaceUtils
 import rs2.sprites.ImageUtils
 import rs2.sprites.SpriteLoader
 import ui.InterfaceUI
+import java.awt.*
+import java.awt.image.BufferedImage
+import java.io.File
+import javax.imageio.ImageIO
+import kotlin.math.min
 
 object InterfaceDraw {
     var editMode = true
@@ -28,7 +28,7 @@ object InterfaceDraw {
     enum class ViewMode {
         NONE,
         BY_TYPE,
-        BY_LAYER
+        BY_LAYER,
     }
 
     private val DEFAULT_FONT = Font("Helvetica", Font.PLAIN, 11)
@@ -43,21 +43,33 @@ object InterfaceDraw {
         return childrenCache[interfaceId to -1] ?: emptyList()
     }
 
-    private fun realSize(c: ComponentDefinition, pw: Int, ph: Int) {
+    private fun realSize(
+        c: ComponentDefinition,
+        pw: Int,
+        ph: Int,
+    ) {
         c.width =
             when (c.aspectWidthType.toInt()) {
                 0 -> c.baseWidth
+
                 1 -> pw - c.baseWidth
+
                 2,
-                4 -> pw * c.baseWidth shr FIXED_SHIFT
+                4,
+                -> pw * c.baseWidth shr FIXED_SHIFT
+
                 else -> c.width
             }
         c.height =
             when (c.aspectHeightType.toInt()) {
                 0 -> c.baseHeight
+
                 1 -> ph - c.baseHeight
+
                 2,
-                4 -> ph * c.baseHeight shr FIXED_SHIFT
+                4,
+                -> ph * c.baseHeight shr FIXED_SHIFT
+
                 else -> c.height
             }
         if (c.type == ComponentConstants.LAYER) {
@@ -66,7 +78,11 @@ object InterfaceDraw {
         }
     }
 
-    private fun realPosition(c: ComponentDefinition, pw: Int, ph: Int) {
+    private fun realPosition(
+        c: ComponentDefinition,
+        pw: Int,
+        ph: Int,
+    ) {
         c.positionX =
             when (c.yMode.toInt()) {
                 0 -> c.baseX
@@ -131,7 +147,7 @@ object InterfaceDraw {
         showHidden: Boolean,
         showModels: Boolean,
         viewMode: ViewMode,
-        selectedType: Int? = null
+        selectedType: Int? = null,
     ) {
         val g2 = g as Graphics2D
         sizeCache.clear()
@@ -161,7 +177,7 @@ object InterfaceDraw {
         showHidden: Boolean,
         showModels: Boolean,
         viewMode: ViewMode,
-        selectedType: Int?
+        selectedType: Int?,
     ) {
         if (!showHidden && InterfaceUtils.isHidden(comp)) return
 
@@ -188,7 +204,7 @@ object InterfaceDraw {
                 ComponentConstants.FIGURE -> drawFigure(g2, comp, x, y, w, h)
                 ComponentConstants.MODEL -> if (showModels) drawModel(g2, comp, x, y, w, h)
                 ComponentConstants.TEXT -> drawText(g2, comp, x, y, w, h)
-                ComponentConstants.LINE -> drawLine(g2, comp, x, y, w, h)
+                ComponentConstants.LINE -> drawLine(g2, comp)
             }
 
             val selected = InterfaceUI.instance.selectedComponent == comp
@@ -235,7 +251,14 @@ object InterfaceDraw {
         g.stroke = oldStroke
     }
 
-    private fun drawFigure(g: Graphics2D, comp: ComponentDefinition, x: Int, y: Int, w: Int, h: Int) {
+    private fun drawFigure(
+        g: Graphics2D,
+        comp: ComponentDefinition,
+        x: Int,
+        y: Int,
+        w: Int,
+        h: Int,
+    ) {
         if (w <= 0 || h <= 0) return
         if (drawEnabled) {
             val alpha = 255 - comp.transparency
@@ -251,7 +274,14 @@ object InterfaceDraw {
         }
     }
 
-    private fun drawSprite(g: Graphics2D, comp: ComponentDefinition, x: Int, y: Int, w: Int, h: Int) {
+    private fun drawSprite(
+        g: Graphics2D,
+        comp: ComponentDefinition,
+        x: Int,
+        y: Int,
+        w: Int,
+        h: Int,
+    ) {
         if (!drawEnabled || comp.spriteId < 0) return
 
         var sprite = SpriteLoader.getSprite(comp.spriteId) ?: return
@@ -291,12 +321,23 @@ object InterfaceDraw {
         g.composite = oldComposite
     }
 
-    private fun drawLayer(g: Graphics2D, comp: ComponentDefinition, x: Int, y: Int, width: Int, height: Int, showContainers: Boolean) {
+    private fun drawLayer(
+        g: Graphics2D,
+        comp: ComponentDefinition,
+        x: Int,
+        y: Int,
+        width: Int,
+        height: Int,
+        showContainers: Boolean,
+    ) {
         if (width <= 0 || height <= 0) return
         var sprite: BufferedImage? = null
         if (drawEnabled) {
-            if (ContainerHelper.isScrollBar(comp)) sprite = loadSprite("data/theme/icons/scripts/scroll_bar.png", width, height, comp)
-            else if (ContainerHelper.isButton(comp)) sprite = loadSprite("data/theme/icons/scripts/button.png", width, height, comp)
+            if (ContainerHelper.isScrollBar(comp)) {
+                sprite = loadSprite("data/theme/icons/scripts/scroll_bar.png", width, height, comp)
+            } else if (ContainerHelper.isButton(comp)) {
+                sprite = loadSprite("data/theme/icons/scripts/button.png", width, height, comp)
+            }
             sprite?.let { g.drawImage(it, x, y, width, height, null) }
 
             if (showContainers) {
@@ -307,21 +348,27 @@ object InterfaceDraw {
         }
     }
 
-    private fun drawLine(g: Graphics2D, comp: ComponentDefinition, x: Int, y: Int, w: Int, h: Int) {
-        if (drawEnabled) {
-            val oldComposite = g.composite
-            val alpha = 1f - (comp.transparency / 255f)
-            g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)
-
-            g.color = Color(comp.color, true)
-            g.stroke = BasicStroke(comp.lineWidth.toFloat())
-            g.drawRect(x, y, w, h)
-
-            g.composite = oldComposite
-        }
+    private fun drawLine(
+        g: Graphics2D,
+        comp: ComponentDefinition,
+    ) {
+        g.color = Color(comp.color)
+        g.stroke = BasicStroke(comp.lineWidth.toFloat())
+        val startX = comp.baseX
+        val startY = comp.baseY
+        val endX = if (comp.unknownProp_8) startX else startX + comp.baseWidth
+        val endY = if (comp.unknownProp_8) startY + comp.baseHeight else startY
+        g.drawLine(startX, startY, endX, endY)
     }
 
-    private fun drawModel(g: Graphics2D, comp: ComponentDefinition, x: Int, y: Int, w: Int, h: Int) {
+    private fun drawModel(
+        g: Graphics2D,
+        comp: ComponentDefinition,
+        x: Int,
+        y: Int,
+        w: Int,
+        h: Int,
+    ) {
         if (drawEnabled) {
             g.color = Color.BLUE
             g.stroke = BasicStroke(1.0f)
@@ -329,7 +376,14 @@ object InterfaceDraw {
         }
     }
 
-    private fun drawText(g: Graphics2D, comp: ComponentDefinition, x: Int, y: Int, w: Int, h: Int) {
+    private fun drawText(
+        g: Graphics2D,
+        comp: ComponentDefinition,
+        x: Int,
+        y: Int,
+        w: Int,
+        h: Int,
+    ) {
         val raw = comp.text ?: return
         if (raw.isEmpty() || w <= 0 || h <= 0) return
         g.font = DEFAULT_FONT
@@ -343,7 +397,9 @@ object InterfaceDraw {
                 if (fm.stringWidth(test) > w && current.isNotEmpty()) {
                     lines.add(current)
                     current = word
-                } else current = test
+                } else {
+                    current = test
+                }
             }
             if (current.isNotEmpty()) lines.add(current)
         }
@@ -377,7 +433,12 @@ object InterfaceDraw {
         }
     }
 
-    private fun loadSprite(path: String, width: Int, height: Int, comp: ComponentDefinition): BufferedImage? =
+    private fun loadSprite(
+        path: String,
+        width: Int,
+        height: Int,
+        comp: ComponentDefinition,
+    ): BufferedImage? =
         try {
             var sprite = ImageUtils.resize(ImageIO.read(File(path)), width, height)
             if (comp.hFlip) sprite = ImageUtils.horizontalFlip(sprite)
@@ -387,7 +448,15 @@ object InterfaceDraw {
             null
         }
 
-    private fun drawOutlines(g2: Graphics2D, comp: ComponentDefinition, x: Int, y: Int, w: Int, h: Int, selected: Boolean) {
+    private fun drawOutlines(
+        g2: Graphics2D,
+        comp: ComponentDefinition,
+        x: Int,
+        y: Int,
+        w: Int,
+        h: Int,
+        selected: Boolean,
+    ) {
         if (!editMode) return
 
         g2.color = Color.WHITE
@@ -411,5 +480,4 @@ object InterfaceDraw {
         g2.color = fillColor
         g2.fillRect(x, y, w, h)
     }
-
 }

@@ -3,6 +3,7 @@ package tools.print
 import properties.PropertyValues.loadValues
 import rs2.cache.Cache
 import tools.print.GenericPrinter.printInterface
+import javax.swing.UIManager
 
 object Printer {
     @Throws(Exception::class)
@@ -10,7 +11,6 @@ object Printer {
     fun main(args: Array<String>) {
         loadValues()
         Cache.init()
-
         printInterface(834)
     }
 }

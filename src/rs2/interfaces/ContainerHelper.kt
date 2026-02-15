@@ -3,24 +3,26 @@ package rs2.interfaces
 import rs2.cache.loaders.ComponentDefinition
 
 object ContainerHelper {
-
-    private val SCROLL_BAR_SCRIPTS = setOf(
-        ComponentConstants.SCROLL_BAR_SCRIPT,
-        ComponentConstants.SCROLL_BAR_SCRIPT_2,
-        ComponentConstants.SCROLL_BAR_SCRIPT_3,
-        ComponentConstants.SCROLL_BAR_SCRIPT_4,
-        ComponentConstants.SCROLL_BAR_SCRIPT_5
-    )
+    private val SCROLL_BAR_SCRIPTS =
+        setOf(
+            ComponentConstants.SCROLL_BAR_SCRIPT,
+            ComponentConstants.SCROLL_BAR_SCRIPT_2,
+            ComponentConstants.SCROLL_BAR_SCRIPT_3,
+            ComponentConstants.SCROLL_BAR_SCRIPT_4,
+            ComponentConstants.SCROLL_BAR_SCRIPT_5,
+        )
 
     @JvmStatic
     fun isScrollBar(component: ComponentDefinition?): Boolean {
         if (component?.baseWidth ?: 0 > 16) return false
 
-        val first = component?.onLoadScript
-            ?.firstOrNull()
-            ?.toString()
-            ?.toIntOrNull()
-            ?: return false
+        val first =
+            component
+                ?.onLoadScript
+                ?.firstOrNull()
+                ?.toString()
+                ?.toIntOrNull()
+                ?: return false
 
         return first in SCROLL_BAR_SCRIPTS
     }

@@ -4,8 +4,11 @@ import java.io.File
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.FloatControl
 
-object ThemeSoundsUtils{
-    fun playSFX(path: String, volume: Float = 0.5f) {
+object ThemeSoundsUtils {
+    fun playSFX(
+        path: String,
+        volume: Float = 0.5f,
+    ) {
         val file = File(path)
         if (!file.exists()) return
 

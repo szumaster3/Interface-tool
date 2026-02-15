@@ -7,7 +7,6 @@ import rs2.cache.util.InputStreamUtils
 import rs2.interfaces.ComponentConstants
 import rs2.interfaces.InterfaceUtils.getParent
 import rs2.logging.LogFactory.createLogger
-import java.io.PushbackInputStream
 import java.util.*
 import kotlin.math.max
 
@@ -88,7 +87,7 @@ class ComponentDefinition {
     var aspectHeightType: Byte = 0
     var modelType: Int = 1
 
-    var rightclickOptions: Array<String?>? = null
+    var rightClickOptions: Array<String?>? = null
     var optionBase: String? = ""
     var optionCircumfix: String? = ""
     var optionMask: Int = 0
@@ -287,11 +286,11 @@ class ComponentDefinition {
         }
 
         out.writeString(optionBase ?: "")
-        val optionCount = rightclickOptions?.size ?: 0
+        val optionCount = rightClickOptions?.size ?: 0
         val cursorFlag = if (opCursors != null && opCursors!!.any { it != -1 }) 1 else 0
         out.writeByte((cursorFlag shl 4) or optionCount)
 
-        rightclickOptions?.forEach { out.writeString(it ?: "") }
+        rightClickOptions?.forEach { out.writeString(it ?: "") }
 
         if (cursorFlag > 0) {
             val index = opCursors!!.indexOfFirst { it != -1 }
@@ -345,7 +344,11 @@ class ComponentDefinition {
 
     private fun encodeIf1(): ByteArray? = null
 
-    fun decode(stream: com.alex.io.InputStream, componentId: Int, interfaceId: Int) {
+    fun decode(
+        stream: com.alex.io.InputStream,
+        componentId: Int,
+        interfaceId: Int,
+    ) {
         val firstByte = stream.readByte()
 
         if (firstByte.toInt() == -1) {
@@ -360,7 +363,7 @@ class ComponentDefinition {
     fun decodeIf1(
         stream: InputStream,
         componentId: Int,
-        interfaceId: Int
+        interfaceId: Int,
     ) {
         stream.readUnsignedByte()
         version = 1
@@ -385,11 +388,12 @@ class ComponentDefinition {
         transparency = stream.readUnsignedByte()
 
         var over = stream.readUnsignedShort()
-        parentId = if (over == 65535) {
-            -1
-        } else {
-            (interfaceId shl 16) or over
-        }
+        parentId =
+            if (over == 65535) {
+                -1
+            } else {
+                (interfaceId shl 16) or over
+            }
 
         unknownProp_11 = stream.readUnsignedShort()
 
@@ -406,10 +410,11 @@ class ComponentDefinition {
 
         val scriptCount = stream.readUnsignedByte()
         if (scriptCount > 0) {
-            cs1Scripts = Array(scriptCount) {
-                val len = stream.readUnsignedShort()
-                IntArray(len)
-            }
+            cs1Scripts =
+                Array(scriptCount) {
+                    val len = stream.readUnsignedShort()
+                    IntArray(len)
+                }
 
             for (i in 0 until scriptCount) {
                 for (j in cs1Scripts!![i].indices) {
@@ -426,6 +431,7 @@ class ComponentDefinition {
                 scrollMaxV = stream.readUnsignedShort()
                 hidden = stream.readUnsignedByte() == 1
             }
+
             ComponentConstants.INVENTORY -> {
                 dynamicWidth = 3
                 dynamicHeight = 3
@@ -468,6 +474,7 @@ class ComponentDefinition {
                     }
                 }
             }
+
             ComponentConstants.TEXT -> {
                 textHorizontalAli = stream.readUnsignedByte()
                 textVerticalAli = stream.readUnsignedByte()
@@ -481,10 +488,12 @@ class ComponentDefinition {
                 overColor = stream.readInt()
                 unknownColor = stream.readInt()
             }
+
             ComponentConstants.SPRITE -> {
                 spriteId = stream.readInt()
                 activeSpriteId = stream.readInt()
             }
+
             ComponentConstants.MODEL -> {
                 modelType = 1
                 modelId = stream.readUnsignedShort().let { if (it == 65535) -1 else it }
@@ -506,12 +515,13 @@ class ComponentDefinition {
         if (buttonType == 1 || buttonType == 4 || buttonType == 5 || buttonType == 6) {
             option = InputStreamUtils.getJagString(stream)
             if (option.isEmpty()) {
-                option = when (buttonType) {
-                    1 -> "Ok"
-                    4, 5 -> "Select"
-                    6 -> "Continue"
-                    else -> option
-                }
+                option =
+                    when (buttonType) {
+                        1 -> "Ok"
+                        4, 5 -> "Select"
+                        6 -> "Continue"
+                        else -> option
+                    }
             }
         }
         if (buttonType == 1 || buttonType == 4 || buttonType == 5) flags = flags or 0x400000
@@ -638,9 +648,9 @@ class ComponentDefinition {
         val cursorFlag = flags shr 4
 
         if (optionCount > 0) {
-            rightclickOptions = arrayOfNulls(optionCount)
+            rightClickOptions = arrayOfNulls(optionCount)
             repeat(optionCount) {
-                rightclickOptions!![it] = InputStreamUtils.getJagString(stream)
+                rightClickOptions!![it] = InputStreamUtils.getJagString(stream)
             }
         }
 
@@ -778,7 +788,6 @@ class ComponentDefinition {
 
         val map = mutableMapOf<Int, Array<ComponentDefinition?>>()
         for ((ifaceId, compList) in grouped) {
-
             val maxId = compList.maxOfOrNull { it.componentId } ?: 0
             val arr = arrayOfNulls<ComponentDefinition>(maxId + 1)
             for (comp in compList) {
@@ -837,7 +846,6 @@ class ComponentDefinition {
         textHorizontalAli = 0
         textVerticalAli = 0
         vPadding = 0
-        multiline = false
 
         scrollMaxH = 0
         scrollMaxV = 0
@@ -913,10 +921,10 @@ class ComponentDefinition {
             for (i in 0 until filesCount) {
                 val data = storeIndex.getFile(id, i) ?: continue
 
-                //-------------------------------
+                // -------------------------------
                 val version = data[0].toInt() and 0xFF
                 if (version != 255) continue
-                //-------------------------------
+                // -------------------------------
 
                 val defs = ComponentDefinition()
                 defs.componentHash = (id shl 16) or i

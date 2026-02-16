@@ -26,13 +26,11 @@ class IfaceUI : JFrame() {
     private val fieldMap            = mutableMapOf<String, JComponent>()
     private val renderPanel         = RenderPanel()
     private var orderedComponents: List<ComponentDefinition> = emptyList()
-    private var selectedComponent: ComponentDefinition? = null
-    private val propertyTabs        = JTabbedPane()
+    private var selectedComponent: ComponentDefinition?      = null
     private val propertyPanel       = JPanel()
-    private var sectionIndex        = 0
-    private val MAX_COLUMNS         = 2
 
-    companion object {
+    companion object
+    {
         @JvmStatic var instance: IfaceUI? = null
 
         @JvmStatic
@@ -42,19 +40,16 @@ class IfaceUI : JFrame() {
                 try {
                     if (args.isEmpty()) loadValues() else setCachePath(args[0])
                     Cache.init(cache_path)
-                    instance =
-                        IfaceUI().apply {
-                            setLocationRelativeTo(null)
-                            isVisible = true
-                        }
-                } catch (e: Exception) {
+                    instance = IfaceUI().apply {
+                        setLocationRelativeTo(null)
+                        isVisible = true
+                    }
+                }
+                catch (e: Exception) {
                     e.printStackTrace()
                 }
-
             }
-
         }
-
     }
 
     init
@@ -69,18 +64,20 @@ class IfaceUI : JFrame() {
 
     private fun loadPanels()
     {
-        val mainPanel = JPanel().apply { layout = BoxLayout(this, BoxLayout.X_AXIS) }
+        val mainPanel = JPanel(BorderLayout())
+        val topPanel = JPanel(GridBagLayout())
+        val gbc = GridBagConstraints().apply { fill = GridBagConstraints.BOTH; insets = Insets(2,2,2,2); weighty = 1.0 }
 
-        val leftPanel =
-            JPanel(BorderLayout()).apply {
-                border = BorderFactory.createBevelBorder(BevelBorder.RAISED)
-                preferredSize = Dimension(UIConsts.LEFT_PANEL_WIDTH, UIConsts.DEFAULT_HEIGHT)
-                add(JScrollPane(interfacesList), BorderLayout.CENTER)
-            }
+        val leftPanel = JPanel(BorderLayout()).apply {
+            border = BorderFactory.createBevelBorder(BevelBorder.RAISED)
+            preferredSize = Dimension(UIConsts.LEFT_PANEL_WIDTH, UIConsts.DEFAULT_HEIGHT)
+            add(JScrollPane(interfacesList), BorderLayout.CENTER)
+        }
 
         interfacesList.selectionMode = ListSelectionModel.SINGLE_SELECTION
         interfacesList.addListSelectionListener { e ->
-            if (!e.valueIsAdjusting) {
+            if (!e.valueIsAdjusting)
+            {
                 interfacesList.selectedValue?.let { id ->
                     renderPanel.interfaceId = id
                     loadComponents(id)
@@ -88,57 +85,69 @@ class IfaceUI : JFrame() {
             }
         }
 
-        propertyPanel.layout = GridBagLayout()
-        propertyPanel.border = BorderFactory.createEmptyBorder(5, 5, 5, 5)
-        initPropertyLayout()
-        propertyTabs.addTab("Properties", JScrollPane(propertyPanel))
-        propertyTabs.addTab("Events", JPanel())
-        propertyTabs.addTab("Advanced", JPanel())
+        gbc.gridx = 0; gbc.weightx = 0.15
+        topPanel.add(leftPanel, gbc)
 
-        val centerPanel = createCenterPanel()
+        gbc.gridx = 1; gbc.weightx = 0.55
+        topPanel.add(JScrollPane(renderPanel), gbc)
 
-        val rightPanel =
-            JPanel(BorderLayout()).apply {
-                border = BorderFactory.createBevelBorder(BevelBorder.RAISED)
-                preferredSize = Dimension(UIConsts.RIGHT_PANEL_WIDTH, UIConsts.DEFAULT_HEIGHT)
-            }
-
+        val rightPanel = JPanel(BorderLayout()).apply {
+            border        = BorderFactory.createBevelBorder(BevelBorder.RAISED)
+            preferredSize = Dimension(UIConsts.RIGHT_PANEL_WIDTH, UIConsts.DEFAULT_HEIGHT)
+        }
         setupRightPanel(rightPanel)
+        gbc.gridx = 2; gbc.weightx = 0.3
+        topPanel.add(rightPanel, gbc)
 
-        mainPanel.add(leftPanel)
-        mainPanel.add(centerPanel)
-        mainPanel.add(rightPanel)
+        mainPanel.add(topPanel, BorderLayout.CENTER)
+
+        val bottomPanel = JPanel(BorderLayout())
+
+        val buttonPanel = JPanel(GridLayout(1,0,2,2)).apply { border = BorderFactory.createEmptyBorder(1,1,1,1) }
+
+        listOf(
+            createNewInterfaceButton(),
+            createDeleteInterfaceButton(),
+            createAddSpriteButton(),
+            createAddLayerButton(),
+            createAddFigureButton(),
+            createAddTextButton(),
+            createAddLineButton(),
+            createSaveButton(),
+            createPrintComponentButton(),
+            createPrintInterfaceButton(),
+            createCopyButton(),
+            createPasteButton()
+        ).forEach { buttonPanel.add(it) }
+
+        bottomPanel.add(buttonPanel, BorderLayout.NORTH)
+
+        propertyPanel.removeAll()
+        propertyPanel.layout = BoxLayout(propertyPanel, BoxLayout.X_AXIS)
+        propertyPanel.border = BorderFactory.createEmptyBorder(1,1,1,1)
+
+        initPropertyLayout()
+
+        val sectionsScroll = JScrollPane(propertyPanel).apply {
+            horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+            verticalScrollBarPolicy   = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+            border = BorderFactory.createEmptyBorder()
+        }
+
+        bottomPanel.add(sectionsScroll, BorderLayout.CENTER)
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH)
 
         add(mainPanel, BorderLayout.CENTER)
-    }
-
-    private fun createCenterPanel(): JPanel
-    {
-        val renderScroll = JScrollPane(renderPanel)
-
-        val verticalSplit = JSplitPane(
-            JSplitPane.VERTICAL_SPLIT,
-            renderScroll,
-            propertyTabs
-        )
-
-        verticalSplit.resizeWeight = 0.7
-        verticalSplit.dividerSize = 6
-        verticalSplit.border = null
-
-        return JPanel(BorderLayout()).apply {
-            border = BorderFactory.createBevelBorder(BevelBorder.RAISED)
-            add(verticalSplit, BorderLayout.CENTER)
-        }
     }
 
     private fun setupRightPanel(rightPanel: JPanel)
     {
         val tabsPanel = JPanel(GridLayout(1, 2)).apply { preferredSize = Dimension(UIConsts.RIGHT_PANEL_WIDTH, 30) }
-        val treeTab = JButton("Tree")
-        val listTab = JButton("List")
+        val treeTab   = JButton("Tree")
+        val listTab   = JButton("List")
 
-        fun updateTabs() {
+        fun updateTabs()
+        {
             treeTab.background = if (treeView) Color.LIGHT_GRAY else null
             listTab.background = if (!treeView) Color.LIGHT_GRAY else null
             updateComponentView()
@@ -273,7 +282,7 @@ class IfaceUI : JFrame() {
 
     private fun createNewInterfaceButton(): JPanel
     {
-        val panel = JPanel(BorderLayout())
+        val panel    = JPanel(BorderLayout())
         panel.border = BorderFactory.createTitledBorder(
             BorderFactory.createBevelBorder(BevelBorder.LOWERED),
             "New Interface"
@@ -286,7 +295,7 @@ class IfaceUI : JFrame() {
 
     private fun createDeleteInterfaceButton(): JPanel
     {
-        val panel = JPanel(BorderLayout())
+        val panel    = JPanel(BorderLayout())
         panel.border = BorderFactory.createTitledBorder(
             BorderFactory.createBevelBorder(BevelBorder.LOWERED),
             "Delete Interface"
@@ -299,7 +308,7 @@ class IfaceUI : JFrame() {
 
     private fun createAddSpriteButton(): JPanel
     {
-        val panel = JPanel(BorderLayout())
+        val panel    = JPanel(BorderLayout())
         panel.border = BorderFactory.createTitledBorder(
             BorderFactory.createBevelBorder(BevelBorder.LOWERED),
             "Add Sprite"
@@ -312,7 +321,7 @@ class IfaceUI : JFrame() {
 
     private fun createAddLayerButton(): JPanel
     {
-        val panel = JPanel(BorderLayout())
+        val panel    = JPanel(BorderLayout())
         panel.border = BorderFactory.createTitledBorder(
             BorderFactory.createBevelBorder(BevelBorder.LOWERED),
             "Add Layer"
@@ -325,7 +334,7 @@ class IfaceUI : JFrame() {
 
     private fun createAddFigureButton(): JPanel
     {
-        val panel = JPanel(BorderLayout())
+        val panel    = JPanel(BorderLayout())
         panel.border = BorderFactory.createTitledBorder(
             BorderFactory.createBevelBorder(BevelBorder.LOWERED),
             "Add Figure"
@@ -338,7 +347,7 @@ class IfaceUI : JFrame() {
 
     private fun createAddTextButton(): JPanel
     {
-        val panel = JPanel(BorderLayout())
+        val panel    = JPanel(BorderLayout())
         panel.border = BorderFactory.createTitledBorder(
             BorderFactory.createBevelBorder(BevelBorder.LOWERED),
             "Add Text"
@@ -351,7 +360,7 @@ class IfaceUI : JFrame() {
 
     private fun createAddLineButton(): JPanel
     {
-        val panel = JPanel(BorderLayout())
+        val panel    = JPanel(BorderLayout())
         panel.border = BorderFactory.createTitledBorder(
             BorderFactory.createBevelBorder(BevelBorder.LOWERED),
             "Add Line"
@@ -364,7 +373,7 @@ class IfaceUI : JFrame() {
 
     private fun createSaveButton(): JPanel
     {
-        val panel = JPanel(BorderLayout())
+        val panel    = JPanel(BorderLayout())
         panel.border = BorderFactory.createTitledBorder(
             BorderFactory.createBevelBorder(BevelBorder.LOWERED),
             "Save"
@@ -377,7 +386,7 @@ class IfaceUI : JFrame() {
 
     private fun createPrintComponentButton(): JPanel
     {
-        val panel = JPanel(BorderLayout())
+        val panel    = JPanel(BorderLayout())
         panel.border = BorderFactory.createTitledBorder(
             BorderFactory.createBevelBorder(BevelBorder.LOWERED),
             "Print Component"
@@ -390,7 +399,7 @@ class IfaceUI : JFrame() {
 
     private fun createPrintInterfaceButton(): JPanel
     {
-        val panel = JPanel(BorderLayout())
+        val panel    = JPanel(BorderLayout())
         panel.border = BorderFactory.createTitledBorder(
             BorderFactory.createBevelBorder(BevelBorder.LOWERED),
             "Print Interface"
@@ -403,7 +412,7 @@ class IfaceUI : JFrame() {
 
     private fun createCopyButton(): JPanel
     {
-        val panel = JPanel(BorderLayout())
+        val panel    = JPanel(BorderLayout())
         panel.border = BorderFactory.createTitledBorder(
             BorderFactory.createBevelBorder(BevelBorder.LOWERED),
             "Copy"
@@ -416,7 +425,7 @@ class IfaceUI : JFrame() {
 
     private fun createPasteButton(): JPanel
     {
-        val panel = JPanel(BorderLayout())
+        val panel    = JPanel(BorderLayout())
         panel.border = BorderFactory.createTitledBorder(
             BorderFactory.createBevelBorder(BevelBorder.LOWERED),
             "Paste"
@@ -429,21 +438,6 @@ class IfaceUI : JFrame() {
 
     private fun initPropertyLayout()
     {
-        val topPanel = JPanel(GridLayout(0, 4, 4, 4))
-        topPanel.add(createNewInterfaceButton())
-        topPanel.add(createDeleteInterfaceButton())
-        topPanel.add(createAddSpriteButton())
-        topPanel.add(createAddLayerButton())
-        topPanel.add(createAddFigureButton())
-        topPanel.add(createAddTextButton())
-        topPanel.add(createAddLineButton())
-        topPanel.add(createSaveButton())
-        topPanel.add(createPrintComponentButton())
-        topPanel.add(createPrintInterfaceButton())
-        topPanel.add(createCopyButton())
-        topPanel.add(createPasteButton())
-        propertyPanel.add(topPanel)
-
         val standardSection = createSection(
             "Standard",
             listOf("Hash", "Type", "ContentType", "ParentID", "X", "Y", "Width", "Height", "WidthMode", "HeightMode", "XMode", "YMode", "Hidden"))
@@ -497,8 +491,7 @@ class IfaceUI : JFrame() {
 
     private fun buildPropertyPanel(comp: ComponentDefinition)
     {
-        sectionIndex = 0
-        propertyPanel.removeAll()
+        selectedComponent = comp
 
         set("Hash",             comp.componentHash)
         set("Type",             Utils.getComponentType(comp.type))
@@ -601,31 +594,31 @@ class IfaceUI : JFrame() {
                 else -> return@forEach
             }
             when (name) {
-                "X"              -> comp.baseX = text.toIntOrNull() ?: 0
-                "Y"              -> comp.baseY = text.toIntOrNull() ?: 0
-                "Width"          -> comp.baseWidth = text.toIntOrNull() ?: 0
-                "Height"         -> comp.baseHeight = text.toIntOrNull() ?: 0
-                "ParentID"       -> comp.parentId = text.toIntOrNull() ?: -1
-                "Transparency"   -> comp.transparency = text.toIntOrNull() ?: 255
-                "Color"          -> comp.color = text.toIntOrNull() ?: 0
-                "LineWidth"      -> comp.lineWidth = text.toIntOrNull()?.toByte() ?: 0
-                "ScrollMaxH"     -> comp.scrollMaxH = text.toIntOrNull() ?: 0
-                "ScrollMaxV"     -> comp.scrollMaxV = text.toIntOrNull() ?: 0
-                "SpriteID"       -> comp.spriteId = text.toIntOrNull() ?: -1
-                "ModelID"        -> comp.modelId = text.toIntOrNull() ?: -1
-                "AnimID"         -> comp.modelAnimId = text.toIntOrNull() ?: -1
-                "XAngle"         -> comp.modelXAngle = text.toIntOrNull() ?: 0
-                "YAngle"         -> comp.modelYAngle = text.toIntOrNull() ?: 0
-                "YOffset"        -> comp.modelYOffset = text.toIntOrNull() ?: 0
-                "Zoom"           -> comp.modelZoom = text.toIntOrNull() ?: 100
-                "Hidden"         -> comp.hidden = text.toBoolean()
+                "X"              -> comp.baseX          = text.toIntOrNull() ?: 0
+                "Y"              -> comp.baseY          = text.toIntOrNull() ?: 0
+                "Width"          -> comp.baseWidth      = text.toIntOrNull() ?: 0
+                "Height"         -> comp.baseHeight     = text.toIntOrNull() ?: 0
+                "ParentID"       -> comp.parentId       = text.toIntOrNull() ?: -1
+                "Transparency"   -> comp.transparency   = text.toIntOrNull() ?: 255
+                "Color"          -> comp.color          = text.toIntOrNull() ?: 0
+                "LineWidth"      -> comp.lineWidth      = text.toIntOrNull()?.toByte() ?: 0
+                "ScrollMaxH"     -> comp.scrollMaxH     = text.toIntOrNull() ?: 0
+                "ScrollMaxV"     -> comp.scrollMaxV     = text.toIntOrNull() ?: 0
+                "SpriteID"       -> comp.spriteId       = text.toIntOrNull() ?: -1
+                "ModelID"        -> comp.modelId        = text.toIntOrNull() ?: -1
+                "AnimID"         -> comp.modelAnimId    = text.toIntOrNull() ?: -1
+                "XAngle"         -> comp.modelXAngle    = text.toIntOrNull() ?: 0
+                "YAngle"         -> comp.modelYAngle    = text.toIntOrNull() ?: 0
+                "YOffset"        -> comp.modelYOffset   = text.toIntOrNull() ?: 0
+                "Zoom"           -> comp.modelZoom      = text.toIntOrNull() ?: 100
+                "Hidden"         -> comp.hidden         = text.toBoolean()
                 "NoClickThrough" -> comp.noClickThrough = text.toBoolean()
-                "HFlip"          -> comp.hFlip = text.toBoolean()
-                "VFlip"          -> comp.vFlip = text.toBoolean()
-                "Repeat"         -> comp.spriteTiling = text.toBoolean()
-                "HasAlpha"       -> comp.hasAlpha = text.toBoolean()
-                "Shadow"         -> comp.shadow = text.toBoolean()
-                "Filled"         -> comp.filled = text.toBoolean()
+                "HFlip"          -> comp.hFlip          = text.toBoolean()
+                "VFlip"          -> comp.vFlip          = text.toBoolean()
+                "Repeat"         -> comp.spriteTiling   = text.toBoolean()
+                "HasAlpha"       -> comp.hasAlpha       = text.toBoolean()
+                "Shadow"         -> comp.shadow         = text.toBoolean()
+                "Filled"         -> comp.filled         = text.toBoolean()
                 else -> {
                     if (
                         name in
@@ -633,37 +626,37 @@ class IfaceUI : JFrame() {
                     ) {
                         val arr = Utils.getScriptArray(text)
                         when (name) {
-                            "Load"              -> comp.onLoadScript = arr
-                            "MouseHover"        -> comp.onMouseHoverScript = arr
-                            "MouseLeave"        -> comp.onMouseLeaveScript = arr
-                            "OptionClick"       -> comp.onOptionClick = arr
-                            "UseWith"           -> comp.onUseWith = arr
-                            "Use"               -> comp.onUse = arr
-                            "VarpTransmit"      -> comp.onVarpTransmit = arr
-                            "InvTransmit"       -> comp.onInvTransmit = arr
-                            "StatTransmit"      -> comp.onStatTransmit = arr
-                            "Timer"             -> comp.onTimer = arr
-                            "MouseRepeat"       -> comp.onMouseRepeat = arr
-                            "ClickRepeat"       -> comp.onClickRepeat = arr
-                            "Drag"              -> comp.onDrag = arr
-                            "Release"           -> comp.onRelease = arr
-                            "Hold"              -> comp.onHold = arr
-                            "DragStart"         -> comp.onDragStart = arr
-                            "DragRelease"       -> comp.onDragRelease = arr
-                            "Scroll"            -> comp.onScroll = arr
-                            "VarcTransmit"      -> comp.onVarcTransmit = arr
-                            "VarcStrTransmit"   -> comp.onVarcStrTransmit = arr
+                            "Load"              -> comp.onLoadScript        = arr
+                            "MouseHover"        -> comp.onMouseHoverScript  = arr
+                            "MouseLeave"        -> comp.onMouseLeaveScript  = arr
+                            "OptionClick"       -> comp.onOptionClick       = arr
+                            "UseWith"           -> comp.onUseWith           = arr
+                            "Use"               -> comp.onUse               = arr
+                            "VarpTransmit"      -> comp.onVarpTransmit      = arr
+                            "InvTransmit"       -> comp.onInvTransmit       = arr
+                            "StatTransmit"      -> comp.onStatTransmit      = arr
+                            "Timer"             -> comp.onTimer             = arr
+                            "MouseRepeat"       -> comp.onMouseRepeat       = arr
+                            "ClickRepeat"       -> comp.onClickRepeat       = arr
+                            "Drag"              -> comp.onDrag              = arr
+                            "Release"           -> comp.onRelease           = arr
+                            "Hold"              -> comp.onHold              = arr
+                            "DragStart"         -> comp.onDragStart         = arr
+                            "DragRelease"       -> comp.onDragRelease       = arr
+                            "Scroll"            -> comp.onScroll            = arr
+                            "VarcTransmit"      -> comp.onVarcTransmit      = arr
+                            "VarcStrTransmit"   -> comp.onVarcStrTransmit   = arr
                         }
                     }
                     else if (name in listOf("VarpTriggers", "InventoryTriggers", "StatTriggers", "VarcTriggers", "VarcStrTriggers"))
                     {
                         val arr = Utils.getConfigArray(text)
                         when (name) {
-                            "VarpTriggers"      -> comp.varpTriggers = arr
-                            "InventoryTriggers" -> comp.inventoryTriggers = arr
-                            "StatTriggers"      -> comp.statTriggers = arr
-                            "VarcTriggers"      -> comp.varcTriggers = arr
-                            "VarcStrTriggers"   -> comp.varcstrTriggers = arr
+                            "VarpTriggers"      -> comp.varpTriggers        = arr
+                            "InventoryTriggers" -> comp.inventoryTriggers   = arr
+                            "StatTriggers"      -> comp.statTriggers        = arr
+                            "VarcTriggers"      -> comp.varcTriggers        = arr
+                            "VarcStrTriggers"   -> comp.varcstrTriggers     = arr
                         }
                     }
                 }
@@ -673,49 +666,61 @@ class IfaceUI : JFrame() {
 
     private fun createSection(title: String, fields: List<String>): JPanel
     {
-        val section = JPanel(GridBagLayout())
-        section.border = BorderFactory.createTitledBorder(
+        val sectionPanel = JPanel(GridBagLayout())
+        sectionPanel.border = BorderFactory.createTitledBorder(
             BorderFactory.createBevelBorder(BevelBorder.LOWERED),
             title
         )
+        sectionPanel.alignmentX = Component.LEFT_ALIGNMENT
 
-        val gbc = GridBagConstraints()
-        gbc.fill = GridBagConstraints.HORIZONTAL
-        gbc.insets = Insets(2, 6, 2, 6)
+        val contentPanel = JPanel(GridBagLayout())
+        val gbc = GridBagConstraints().apply {
+            fill = GridBagConstraints.HORIZONTAL
+            insets = Insets(2, 2, 2, 2)
+            weightx = 1.0
+        }
 
         fields.forEachIndexed { index, name ->
-
             gbc.gridy = index
             gbc.gridx = 0
             gbc.weightx = 0.3
-            section.add(JLabel(name), gbc)
+            contentPanel.add(JLabel(name), gbc)
 
             gbc.gridx = 1
             gbc.weightx = 0.7
-
-            val field = JTextField()
-            section.add(field, gbc)
-
+            val field = JTextField(10)
+            field.maximumSize = Dimension(Int.MAX_VALUE, 25)
+            contentPanel.add(field, gbc)
             fieldMap[name] = field
         }
 
-        return section
+        val filler = JPanel()
+        gbc.gridy = fields.size
+        gbc.gridx = 0
+        gbc.gridwidth = 2
+        gbc.weighty = 1.0
+        gbc.fill = GridBagConstraints.VERTICAL
+        contentPanel.add(filler, gbc)
+
+        val scrollPane = JScrollPane(contentPanel).apply {
+            verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+            horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+            border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+            viewport.view = contentPanel
+        }
+
+        val outerPanel = JPanel(BorderLayout())
+        outerPanel.add(scrollPane, BorderLayout.CENTER)
+        outerPanel.maximumSize = Dimension(Int.MAX_VALUE, 250)
+        outerPanel.preferredSize = Dimension(250, 250)
+
+        return outerPanel
     }
 
     private fun addSection(section: JPanel)
     {
-        val gbc = GridBagConstraints()
-
-        gbc.gridx = sectionIndex % MAX_COLUMNS
-        gbc.gridy = sectionIndex / MAX_COLUMNS
-
-        gbc.weightx = 1.0
-        gbc.fill = GridBagConstraints.BOTH
-        gbc.insets = Insets(6, 6, 6, 6)
-
-        propertyPanel.add(section, gbc)
-
-        sectionIndex++
+        section.alignmentY = Component.TOP_ALIGNMENT
+        propertyPanel.add(section)
     }
 
     fun set(name: String, value: Any?)
@@ -723,7 +728,7 @@ class IfaceUI : JFrame() {
         val field = fieldMap[name] ?: return
         when (field) {
             is JTextField -> field.text = value?.toString() ?: ""
-            is JCheckBox -> field.isSelected = value as? Boolean ?: false
+            is JCheckBox  -> field.isSelected = value as? Boolean ?: false
         }
 
     }

@@ -1,7 +1,6 @@
-package util
+package rs.cache.sprite
 
-import cache.sprite.SpriteArchive
-import cache.sprite.SpriteArchive.Companion.decode
+import rs.cache.sprite.SpriteArchive.Companion.decode
 import fs.com.alex.Cache
 import fs.com.alex.store.Index
 import java.awt.image.BufferedImage
@@ -39,7 +38,7 @@ object SpriteLoader {
 
         if (success) {
             spriteCache.remove(archiveId)
-            println("[SpriteLoader] Sprite $archiveId written to cache (${data.size} bytes)")
+            println("[SpriteLoader] Sprite $archiveId written to rs.cache (${data.size} bytes)")
         } else {
             println("[SpriteLoader] Failed to write sprite $archiveId")
         }
@@ -49,7 +48,7 @@ object SpriteLoader {
 
     fun invalidate(archiveId: Int) {
         spriteCache.remove(archiveId)
-        println("[SpriteLoader] Sprite $archiveId cache invalidated")
+        println("[SpriteLoader] Sprite $archiveId rs.cache invalidated")
     }
 
     private val spriteIndex: Index

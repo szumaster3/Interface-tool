@@ -1,4 +1,4 @@
-package cache.sprite
+package rs.cache.sprite
 
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream

@@ -1,4 +1,4 @@
-package util
+package rs.cache.sprite
 
 import properties.PropertyValues
 import java.io.File

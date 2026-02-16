@@ -8,7 +8,7 @@ https://github.com/PaoloKa/Interface-tool
 
 #### Startup
 1. Open the **`config.properties`** file.
-2. Update the **`cache_path`** to point to your cache directory. 
+2. Update the **`cache_path`** to point to your rs.cache directory. 
    - Use `\\` or `/` as path separators.
    - Make sure the path ends with a trailing slash.
 3. Launch the application either by:
@@ -17,7 +17,7 @@ ___
 #### Tool Properties
 
 ```properties
-cache_path=D:\\server\\data\\cache\\
+cache_path=D:\\server\\data\\rs.cache\\
 dump_path=dump/
 sprite_path=dump/
 version=1
@@ -36,7 +36,7 @@ ___
 
 ### Font IDs
 
-Below is a list of font IDs currently identified in the cache:
+Below is a list of font IDs currently identified in the rs.cache:
 
 ```
 305, 307, 468, 473, 494, 495, 496, 497, 584, 591,

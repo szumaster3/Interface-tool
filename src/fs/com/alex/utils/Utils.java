@@ -1,7 +1,7 @@
 package fs.com.alex.utils;
 
-import cache.ComponentDefinition;
-import cache.ComponentType;
+import rs.cache.ComponentDefinition;
+import rs.cache.ComponentType;
 import fs.com.alex.io.InputStream;
 import fs.com.alex.io.OutputStream;
 

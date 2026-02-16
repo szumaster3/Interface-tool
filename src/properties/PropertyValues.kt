@@ -7,7 +7,7 @@ import java.io.InputStream
 import java.util.*
 
 object PropertyValues {
-    var cache_path: String? = "data/cache/"
+    var cache_path: String? = "data/rs.cache/"
     var dump_path: String = "dump/"
     var sprite_path: String? = null
     var input: InputStream? = null
@@ -26,7 +26,7 @@ object PropertyValues {
             } else {
                 println("Config file not found. Creating default config at $propFileName")
 
-                prop.setProperty("cache_path", cache_path ?: "data/cache/")
+                prop.setProperty("cache_path", cache_path ?: "data/rs.cache/")
                 prop.setProperty("dump_path", dump_path)
                 prop.setProperty("sprite_path", sprite_path ?: "")
 

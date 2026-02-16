@@ -1,4 +1,4 @@
-package cache
+package rs.cache
 
 class IComponentSettings(var settings: Int, var mask: Int) {
     fun hasUnlockedSlots(): Boolean = ((settings and 0x2EAA42) shr 13) != 0

@@ -1,4 +1,4 @@
-package cache
+package rs.cache
 
 import fs.com.alex.Cache
 import fs.com.alex.io.InputStream

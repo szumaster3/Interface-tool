@@ -1,16 +1,18 @@
-package ui
+package ui.draw
 
-import cache.ComponentDefinition
-import cache.ComponentDefinition.Companion.getInterface
-import cache.ComponentType
+import rs.cache.ComponentDefinition
+import rs.cache.ComponentDefinition.Companion.getInterface
+import rs.cache.ComponentType
 import fs.com.alex.utils.Utils
+import rs.cache.sprite.SpriteLoader
+import ui.Consts
 import util.ImageUtils
-import util.SpriteLoader
+import util.InterfaceUtils
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.lang.Integer.min
 
-object IfaceDraw {
+object InterfaceDraw {
     var editMode = true
     private const val FIXED_SHIFT = 14
     private val DEFAULT_FONT = Font("Helvetica", Font.PLAIN, 11)
@@ -43,7 +45,7 @@ object IfaceDraw {
             childrenCache[comp.componentHash]?.forEach { layout(it, comp.width, comp.height) }
         }
 
-        preparedRoots.forEach { layout(it, UIConsts.CENTER_PANEL_WIDTH, UIConsts.DEFAULT_HEIGHT) }
+        preparedRoots.forEach { layout(it, Consts.CENTER_PANEL_WIDTH, Consts.CENTER_PANEL_HEIGHT) }
     }
 
     fun drawPreparedInterface(
@@ -57,7 +59,7 @@ object IfaceDraw {
     ) {
         val g2 = g as Graphics2D
         drawBackground(g2)
-        g2.clip = Rectangle(0, 0, UIConsts.CENTER_PANEL_WIDTH, UIConsts.DEFAULT_HEIGHT)
+        g2.clip = Rectangle(0, 0, Consts.CENTER_PANEL_WIDTH, Consts.CENTER_PANEL_HEIGHT)
 
         preparedRoots.forEach {
             drawComponent(g2, it, 0, 0, showContainers, showHidden, showModels, viewMode, selectedType, selectedComponent)
@@ -84,7 +86,7 @@ object IfaceDraw {
         val h = comp.height
 
         if (w <= 0 || h <= 0) return
-        if (x > UIConsts.CENTER_PANEL_WIDTH || y > UIConsts.DEFAULT_HEIGHT || x + w < 0 || y + h < 0) return
+        if (x > Consts.CENTER_PANEL_WIDTH || y > Consts.CENTER_PANEL_HEIGHT || x + w < 0 || y + h < 0) return
 
         val shouldDraw =
             when (viewMode) {
@@ -101,6 +103,8 @@ object IfaceDraw {
                 ComponentType.TEXT -> drawText(g, comp, x, y, w, h)
                 ComponentType.LINE -> drawLine(g, comp)
             }
+            val selected = selectedComponent == comp
+            InterfaceUtils.drawOutlines(g, comp, x, y, w, h, selected)
         }
 
         childrenCache[comp.componentHash]?.forEach {
@@ -276,14 +280,14 @@ object IfaceDraw {
 
     private fun drawBackground(g: Graphics2D) {
         g.color = if (editMode) Color.BLACK else Color.LIGHT_GRAY
-        g.fillRect(0, 0, UIConsts.CENTER_PANEL_WIDTH, UIConsts.DEFAULT_HEIGHT)
+        g.fillRect(0, 0, Consts.CENTER_PANEL_WIDTH, Consts.CENTER_PANEL_HEIGHT)
         if (!editMode) return
         val oldColor = g.color
         val oldStroke = g.stroke
         g.color = Color(80, 80, 80)
         g.stroke = BasicStroke(1f)
-        for (x in 0..UIConsts.CENTER_PANEL_WIDTH step 16) g.drawLine(x, 0, x, UIConsts.DEFAULT_HEIGHT)
-        for (y in 0..UIConsts.DEFAULT_HEIGHT step 16) g.drawLine(0, y, UIConsts.CENTER_PANEL_WIDTH, y)
+        for (x in 0..Consts.CENTER_PANEL_WIDTH step 16) g.drawLine(x, 0, x, Consts.CENTER_PANEL_HEIGHT)
+        for (y in 0..Consts.CENTER_PANEL_HEIGHT step 16) g.drawLine(0, y, Consts.CENTER_PANEL_WIDTH, y)
         g.color = oldColor
         g.stroke = oldStroke
     }

@@ -1,4 +1,4 @@
-package cache;
+package rs.cache;
 
 public final class ComponentType {
     public static final int LAYER = 0;

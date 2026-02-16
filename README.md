@@ -12,7 +12,7 @@ https://github.com/PaoloKa/Interface-tool
    - Use `\\` or `/` as path separators.
    - Make sure the path ends with a trailing slash.
 3. Launch the application either by:
-   - Starting **`InterfaceUI.kt`** directly from your IDE.
+   - Starting **`IfaceUI.kt`** directly from your IDE.
 ___
 #### Tool Properties
 

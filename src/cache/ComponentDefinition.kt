@@ -1,10 +1,9 @@
 package cache
 
-import com.alex.Cache
-import com.alex.io.InputStream
-import com.alex.io.OutputStream
-import com.alex.utils.Utils
-import kotlin.math.max
+import fs.com.alex.Cache
+import fs.com.alex.io.InputStream
+import fs.com.alex.io.OutputStream
+import fs.com.alex.utils.Utils
 
 class ComponentDefinition {
     var version: Byte = 0
@@ -311,7 +310,7 @@ class ComponentDefinition {
     private fun encodeIf1(): ByteArray? = null
 
     fun decode(
-        stream: com.alex.io.InputStream,
+        stream: fs.com.alex.io.InputStream,
         componentId: Int,
         interfaceId: Int,
     ) {
@@ -842,94 +841,66 @@ class ComponentDefinition {
         varcstrTriggers = null
     }
 
+    override fun toString(): String {
+        return if (parentId == interfaceId) {
+            "[IF $interfaceId (P)]"
+        } else {
+            "[IF ${interfaceId shr 16}, CH ${interfaceId and 0xFF} (${Utils.getComponentType(type)})]"
+        }
+    }
+
     companion object {
-        var componentDefinition: Array<Array<ComponentDefinition?>?>? = arrayOfNulls<Array<ComponentDefinition?>?>(interfaceDefinitionsSize)
-        private val storeIndex = Cache.getStore()!!.indexes[3]
+        private var componentDefinition: Array<Array<ComponentDefinition?>?>? = arrayOfNulls<Array<ComponentDefinition?>?>(getInterfaceDefinitionsSize())
 
         @JvmStatic
-        fun getInterface(
-            id: Int,
-            reload: Boolean,
-        ): Array<ComponentDefinition?>? {
-            if (componentDefinition == null) {
-                componentDefinition = arrayOfNulls<Array<ComponentDefinition?>?>(storeIndex.lastArchiveId + 1)
-            }
-
-            if (id < 0 || id >= componentDefinition!!.size) {
-                println("Interface id $id is out of bounds.")
+        fun getInterfaceComponent(interfaceId: Int, component: Int): ComponentDefinition? {
+            val inter = getInterface(interfaceId)
+            if (inter == null || component >= inter.size) {
+                println("[$interfaceId]:[$component] = null")
                 return null
             }
+            return inter[component]
+        }
 
-            if (componentDefinition!![id] != null && !reload) {
-                return componentDefinition!![id]
-            }
+        @JvmStatic
+        fun getInterface(id: Int): Array<ComponentDefinition?>? {
+            return getInterface(id, false)
+        }
 
-            val filesCount = storeIndex!!.getValidFilesCount(id)
-            if (filesCount <= 0) return null
+        @JvmStatic
+        fun getInterface(id: Int, reload: Boolean): Array<ComponentDefinition?>? {
+            if (componentDefinition == null || id >= componentDefinition!!.size) return null
+            if (componentDefinition!![id] == null || reload) {
+                val size = getInterfaceDefinitionsComponentsSize(id)
+                componentDefinition!![id] = arrayOfNulls(size)
 
-            val components = mutableListOf<ComponentDefinition?>()
-
-            for (i in 0 until filesCount) {
-                val data = storeIndex.getFile(id, i) ?: continue
-
-                // -------------------------------
-                val version = data[0].toInt() and 0xFF
-                if (version != 255) continue
-                // -------------------------------
-
-                val defs = ComponentDefinition()
-                defs.componentHash = (id shl 16) or i
-
-                try {
-                    defs.decodeIf3(InputStream(data), i, id)
-                    components.add(defs)
-                } catch (ex: Exception) {
-                    println("Failed to decode interface=$id component=$i: ${ex.message}")
-                    continue
+                for (i in 0 until size) {
+                    val data: ByteArray? = Cache.getStore().indexes[3].getFile(id, i)
+                    if (data == null) {
+                        println("[$id]:[$i] = null")
+                    } else {
+                        val defs = ComponentDefinition()
+                        defs.componentHash = i + (id shl 16)
+                        defs.decode(InputStream(data), i, id)
+                        componentDefinition!![id]!![i] = defs
+                    }
                 }
             }
 
-            if (components.isEmpty()) return null
-
-            componentDefinition!![id] = components.toTypedArray()
             return componentDefinition!![id]
         }
 
         @JvmStatic
-        fun getInterfaceDefinitionsComponentsSize(id: Int): Int {
-            if (storeIndex == null || !storeIndex.archiveExists(id)) {
-                return 0
-            }
-            return max(storeIndex.getValidFilesCount(id), 0)
-        }
-
-        val interfaceDefinitionsSize: Int
-            get() {
-                if (Cache.getStore() == null || Cache.getStore()!!.indexes == null || Cache.getStore()!!.indexes.size <= 3) {
-                    return 0
-                }
-                return Cache.getStore()!!.indexes[3].lastArchiveId + 1
-            }
+        fun getInterfaceDefinitionsSize(): Int = Cache.getStore().indexes[3].lastArchiveId + 1
 
         @JvmStatic
-        fun getInterfaceComponent(
-            interfaceId: Int,
-            componentId: Int,
-        ): ComponentDefinition? {
-            val components = getInterface(interfaceId, false)
-            if (components == null || componentId < 0 || componentId >= components.size) {
-                return null
-            }
-            return components[componentId]
-        }
+        fun getInterfaceDefinitionsComponentsSize(interfaceId: Int): Int = Cache.getStore().indexes[3].getLastFileId(interfaceId) + 1
 
+        @JvmStatic
         fun method925(optionMask: Int): Int = (optionMask and 0x3FDA8) shr 11
 
         @JvmStatic
-        fun getChildsByParent(
-            interfaceId: Int,
-            hash: Int,
-        ): ArrayList<ComponentDefinition> {
+        fun getChildsByParent(interfaceId: Int, hash: Int): ArrayList<ComponentDefinition> {
             val allComponents = getInterface(interfaceId, false)
             val foundChilderen = ArrayList<ComponentDefinition>()
             if (allComponents != null) {
@@ -942,10 +913,7 @@ class ComponentDefinition {
         }
 
         @JvmStatic
-        fun hasChilds(
-            interfaceId: Int,
-            parentHash: Int,
-        ): Boolean {
+        fun hasChilds(interfaceId: Int, parentHash: Int): Boolean {
             val list = getInterface(interfaceId, false)
             for (c in list!!) {
                 if (c == null) continue
@@ -967,42 +935,6 @@ class ComponentDefinition {
             }
 
             return containers
-        }
-
-        @JvmStatic
-        fun getX(
-            c: ComponentDefinition,
-            inter: Int,
-        ): Int {
-            if (c.parentId == -1) return c.positionX
-
-            var parent = Utils.getParent(c.parentId)
-            var positionX = c.positionX
-
-            while (parent != null) {
-                positionX += parent.positionX
-                parent = Utils.getParent(parent.parentId)
-            }
-
-            return positionX
-        }
-
-        @JvmStatic
-        fun getY(
-            c: ComponentDefinition,
-            inter: Int,
-        ): Int {
-            if (c.parentId == -1) return c.positionY
-
-            var parent = Utils.getParent(c.parentId)
-            var positionY = c.positionY
-
-            while (parent != null) {
-                positionY += parent.positionY
-                parent = Utils.getParent(parent.parentId)
-            }
-
-            return positionY
         }
     }
 }

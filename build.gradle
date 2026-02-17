@@ -1,0 +1,72 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.8.20'
+    id 'com.github.johnrengelman.shadow' version '6.0.0'
+    id 'application'
+    id 'idea'
+    id 'java'
+}
+
+group = 'org.example'
+version = '1.0.0'
+archivesBaseName = 'interface'
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+mainClassName = 'ui.InterfaceUI'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20'
+    implementation files('libs/gl.jar')
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/', 'src/main/']
+        }
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+    test {
+        java {
+            srcDirs = ['src/test/', 'src/test/']
+        }
+        resources {
+            srcDirs = ['src/test/resources']
+        }
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+
+    from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+shadowJar {
+    archiveBaseName.set('example')
+    archiveVersion.set('1.0.0')
+    archiveClassifier.set('')
+    manifest {
+        attributes(
+                'Main-Class': mainClassName
+        )
+    }
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+

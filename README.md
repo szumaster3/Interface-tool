@@ -17,7 +17,7 @@ ___
 #### Tool Properties
 
 ```properties
-cache_path=D:\\server\\data\\rs.cache\\
+cache_path=D:\\server\\data\\cache\\
 dump_path=dump/
 sprite_path=dump/
 version=1

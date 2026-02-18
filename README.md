@@ -4,17 +4,32 @@ https://github.com/PaoloKa/Interface-tool
 
 ---
 
-### Usage
+## Usage
 
-#### Startup
+### Startup
+
 1. Open the **`config.properties`** file.
-2. Update the **`cache_path`** to point to your rs.cache directory. 
-   - Use `\\` or `/` as path separators.
-   - Make sure the path ends with a trailing slash.
-3. Launch the application either by:
-   - Starting **`IfaceUI.kt`** directly from your IDE.
-___
-#### Tool Properties
+2. Update the **`cache_path`** to point to your `cache` directory.
+    - Use `\\` or `/` as path separators.
+    - Make sure the path ends with a trailing slash.
+3. Launch the application via Gradle:
+**From command line:**
+      
+```bash
+./gradlew run
+```
+or on Windows:
+      
+```bat
+gradlew.bat run
+```
+
+**From IDE:**
+-  Import the project as a Gradle project and run the `run` task.
+
+---
+
+### Tool Properties
 
 ```properties
 cache_path=D:\\server\\data\\cache\\
@@ -32,7 +47,7 @@ ___
 
 ---
 
-## Additional Information
+### Additional Information
 
 ### Font IDs
 
@@ -61,7 +76,9 @@ Example – transparency script:
 ```
 1357;-2147483645;100;
 ```
+
 ___
+
 The script logic (not editable in this editor) looks like this:
 ```java
 void script_1357(Widget widget0, int arg1) {
@@ -69,7 +86,8 @@ void script_1357(Widget widget0, int arg1) {
 }
 ```
 ___
-#### What do these values mean?
+
+### What do these values mean?
 
 - **1357** – Script ID  
   The first value is always the script identifier.

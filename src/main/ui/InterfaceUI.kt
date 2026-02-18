@@ -204,7 +204,8 @@ class InterfaceUI : JFrame()
         add(mainPanel, BorderLayout.CENTER)
     }
 
-    private fun setupRightPanel(rightPanel: JPanel) {
+    private fun setupRightPanel(rightPanel: JPanel)
+    {
         val tabsPanel = JPanel(GridLayout(1, 2)).apply {
             preferredSize = Dimension(Consts.RIGHT_PANEL_WIDTH, Consts.BUTTON_HEIGHT)
         }
@@ -311,7 +312,8 @@ class InterfaceUI : JFrame()
         renderPanel.repaint()
     }
 
-    private fun loadComponents(interfaceId: Int) {
+    private fun loadComponents(interfaceId: Int)
+    {
         clearSelection()
         InterfaceDraw.prepareInterface(interfaceId)
 
@@ -442,11 +444,9 @@ class InterfaceUI : JFrame()
                 if (i == 0) {
                     val base = ComponentDefinition.getInterfaceComponent(interfaceId, 0)
                     base?.parentId = -1
-                    Cache.getStore()!!.indexes[3]
-                        .putFile(interfaceId, 0, base!!.encodeIf3())
+                    Cache.getStore()!!.indexes[3].putFile(interfaceId, 0, base!!.encodeIf3())
                 } else {
-                    Cache.getStore()!!.indexes[3]
-                        .removeFile(interfaceId, i)
+                    Cache.getStore()!!.indexes[3].removeFile(interfaceId, i)
                 }
             }
             try {
@@ -553,12 +553,20 @@ class InterfaceUI : JFrame()
 
     private fun createSaveButton(): JPanel
     {
-        val panel    = JPanel(BorderLayout())
+        val panel = JPanel(BorderLayout())
         panel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
         val btn = JButton("Save")
         btn.addActionListener {
-            if (selectedComponent!!.interfaceId != -1 && selectedComponent!!.componentId != -1) save(selectedComponent!!)
-            else JOptionPane.showMessageDialog(this, "Please select a component & interface before saving it.")
+            val comp = selectedComponent ?: run {
+                JOptionPane.showMessageDialog(this, "Please select a component before saving it.")
+                return@addActionListener
+            }
+            if (comp.interfaceId == -1 || comp.componentId == -1)
+            {
+                JOptionPane.showMessageDialog(this, "Please select a valid component & interface before saving it.")
+                return@addActionListener
+            }
+            save(comp)
         }
         panel.add(btn, BorderLayout.CENTER)
         return panel
@@ -566,12 +574,25 @@ class InterfaceUI : JFrame()
 
     private fun createPrintComponentButton(): JPanel
     {
-        val panel    = JPanel(BorderLayout())
+        val panel = JPanel(BorderLayout())
         panel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
         val btn = JButton("Print")
+        btn.toolTipText = "Prints the selected component to txt format."
         btn.addActionListener {
-            if(selectedComponent!!.interfaceId <= 0) return@addActionListener
-            GenericPrinter.printComponent(selectedComponent!!.interfaceId, selectedComponent!!.componentId)
+            val comp = selectedComponent
+            if (comp == null || comp.interfaceId <= 0)
+            {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Please select a component before printing."
+                )
+                return@addActionListener
+            }
+            GenericPrinter.printComponent(comp.interfaceId, comp.componentId)
+            JOptionPane.showMessageDialog(
+                this,
+                "Component [${comp.componentId}] from interface [${comp.interfaceId}] was exported to data/prints/"
+            )
         }
         panel.add(btn, BorderLayout.CENTER)
         return panel
@@ -579,12 +600,26 @@ class InterfaceUI : JFrame()
 
     private fun createPrintInterfaceButton(): JPanel
     {
-        val panel    = JPanel(BorderLayout())
+        val panel = JPanel(BorderLayout())
         panel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
         val btn = JButton("Print")
+        btn.toolTipText = "Print all components of a given interface to a text format."
         btn.addActionListener {
-            if(selectedComponent!!.interfaceId <= 0) return@addActionListener
-            GenericPrinter.printInterface(selectedComponent!!.interfaceId)
+            val comp = selectedComponent
+            if (comp == null || comp.interfaceId <= 0)
+            {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Please select an interface before printing."
+                )
+                return@addActionListener
+            }
+            GenericPrinter.printInterface(comp.interfaceId)
+            val count = ComponentDefinition.getInterfaceDefinitionsComponentsSize(comp.interfaceId)
+            JOptionPane.showMessageDialog(
+                this,
+                "Interface [${comp.interfaceId}] with $count components was exported to data/prints/"
+            )
         }
         panel.add(btn, BorderLayout.CENTER)
         return panel
@@ -592,13 +627,13 @@ class InterfaceUI : JFrame()
 
     private fun createCopyButton(): JPanel
     {
-        val panel    = JPanel(BorderLayout())
+        val panel = JPanel(BorderLayout())
         panel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
         val btn = JButton("Copy")
         btn.toolTipText = "Copy selected interface."
-        val comp = selectedComponent
         btn.addActionListener {
-            if (comp!!.interfaceId <= 0 || comp == null) return@addActionListener
+            val comp = selectedComponent ?: return@addActionListener
+            if (comp.interfaceId <= 0) return@addActionListener
             clonedComponent = ComponentDefinition.getInterfaceComponent(comp.interfaceId, comp.componentId)
             clonedComponent?.let {
                 println("Component [${it.componentId}] copied from interface [${it.interfaceId}]")
@@ -610,13 +645,13 @@ class InterfaceUI : JFrame()
 
     private fun createPasteButton(): JPanel
     {
-        val panel    = JPanel(BorderLayout())
+        val panel = JPanel(BorderLayout())
         panel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
         val btn = JButton("Paste")
         btn.toolTipText = "Paste your copied component into the selected interface"
-        val comp = selectedComponent
         btn.addActionListener {
-            if (comp!!.interfaceId <= 0 || comp == null) return@addActionListener
+            val comp = selectedComponent ?: return@addActionListener
+            if (comp.interfaceId <= 0) return@addActionListener
             InterfaceUtils.pasteComponent()
             InterfaceDraw.setValues(comp)
             repaint()
@@ -627,14 +662,15 @@ class InterfaceUI : JFrame()
 
     private fun createSpriteLibraryButton(): JPanel
     {
-        val panel    = JPanel(BorderLayout())
+        val panel = JPanel(BorderLayout())
         panel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
         val btn = JButton("Sprites")
+        btn.toolTipText = "Allows you to select any sprite loaded from the cache."
         btn.addActionListener {
+            val comp = selectedComponent ?: return@addActionListener
             SpriteManager(this) { spriteId, w, h, frameId ->
-                val comp = selectedComponent
-                if (comp!!.interfaceId <= 0 || comp == null) return@SpriteManager
-                comp.spriteId = (spriteId ?: frameId)!!
+                if (comp.interfaceId <= 0) return@SpriteManager
+                comp.spriteId = (spriteId ?: frameId) ?: return@SpriteManager
                 comp.baseWidth = w
                 comp.baseHeight = h
                 InterfaceDraw.setValues(comp)
@@ -645,15 +681,18 @@ class InterfaceUI : JFrame()
         return panel
     }
 
-    private fun createColorPickButton(): JPanel {
+    private fun createColorPickButton(): JPanel
+    {
         val panel = JPanel(BorderLayout())
         panel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
         val btn = JButton("Color")
+        btn.toolTipText = "Select the color you want to use."
 
         btn.addActionListener {
             val comp = selectedComponent ?: return@addActionListener
             val colorField = fieldMap["Color"] as? JTextField ?: return@addActionListener
-            val picker = ColorPicker(comp, colorField) {
+            val picker = ColorPicker(comp, colorField)
+            {
                 set("Color", comp.color)
                 InterfaceDraw.setValues(comp)
                 repaint()

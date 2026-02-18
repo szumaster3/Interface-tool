@@ -568,7 +568,7 @@ class InterfaceUI : JFrame()
     {
         val panel    = JPanel(BorderLayout())
         panel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
-        val btn = JButton("ComponentTXT")
+        val btn = JButton("Print")
         btn.addActionListener {
             if(selectedComponent!!.interfaceId <= 0) return@addActionListener
             GenericPrinter.printComponent(selectedComponent!!.interfaceId, selectedComponent!!.componentId)
@@ -581,7 +581,7 @@ class InterfaceUI : JFrame()
     {
         val panel    = JPanel(BorderLayout())
         panel.border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
-        val btn = JButton("InterfaceTXT")
+        val btn = JButton("Print")
         btn.addActionListener {
             if(selectedComponent!!.interfaceId <= 0) return@addActionListener
             GenericPrinter.printInterface(selectedComponent!!.interfaceId)

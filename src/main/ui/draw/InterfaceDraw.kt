@@ -12,7 +12,6 @@ import java.awt.*
 import java.awt.image.BufferedImage
 import java.lang.Integer.min
 
-
 object InterfaceDraw {
     var editMode = false
     private const val FIXED_SHIFT = 14
@@ -49,17 +48,38 @@ object InterfaceDraw {
         preparedRoots.forEach { layout(it, Consts.CENTER_PANEL_WIDTH, Consts.CENTER_PANEL_HEIGHT) }
     }
 
-    fun drawPreparedInterface(g: Graphics, showContainers: Boolean, showHidden: Boolean, showModels: Boolean, viewMode: ViewMode, selectedType: Int?, selectedComponent: ComponentDefinition?) {
+    fun drawPreparedInterface(
+        g: Graphics,
+        showContainers: Boolean,
+        showHidden: Boolean,
+        showModels: Boolean,
+        viewMode: ViewMode,
+        selectedType: Int?,
+        selectedComponent: ComponentDefinition?
+    ) {
         val g2 = g as Graphics2D
         drawBackground(g2)
-        g2.clip = Rectangle(0, 0, Consts.CENTER_PANEL_WIDTH, Consts.CENTER_PANEL_HEIGHT)
+
+        val rootClip = Rectangle(0, 0, Consts.CENTER_PANEL_WIDTH, Consts.CENTER_PANEL_HEIGHT)
+        g2.clip = rootClip
 
         preparedRoots.forEach {
             drawComponent(g2, it, 0, 0, showContainers, showHidden, showModels, viewMode, selectedType, selectedComponent)
         }
     }
 
-    private fun drawComponent(g: Graphics2D, comp: ComponentDefinition, parentAbsX: Int, parentAbsY: Int, showContainers: Boolean, showHidden: Boolean, showModels: Boolean, viewMode: ViewMode, selectedType: Int?, selectedComponent: ComponentDefinition?) {
+    private fun drawComponent(
+        g: Graphics2D,
+        comp: ComponentDefinition,
+        parentAbsX: Int,
+        parentAbsY: Int,
+        showContainers: Boolean,
+        showHidden: Boolean,
+        showModels: Boolean,
+        viewMode: ViewMode,
+        selectedType: Int?,
+        selectedComponent: ComponentDefinition?
+    ) {
         if (Utils.isHidden(comp) && !showHidden) return
 
         val x = parentAbsX + comp.positionX
@@ -68,70 +88,115 @@ object InterfaceDraw {
         val h = comp.height
 
         if (w <= 0 || h <= 0) return
-        if (x > Consts.CENTER_PANEL_WIDTH || y > Consts.CENTER_PANEL_HEIGHT || x + w < 0 || y + h < 0) return
+
+        val oldClip = g.clip
+
+        if (comp.type == ComponentType.LAYER) {
+            val compClip = Rectangle(x, y, w, h)
+            g.clip = if (oldClip == null)
+                compClip
+            else
+                oldClip.bounds.intersection(compClip)
+        }
 
         val shouldDraw =
-            when (viewMode)
-            {
+            when (viewMode) {
                 ViewMode.NONE -> true
                 ViewMode.BY_TYPE -> selectedType != null && comp.type == selectedType
             }
 
-        if (shouldDraw)
-        {
-            when (comp.type)
-            {
+        if (shouldDraw) {
+            when (comp.type) {
                 ComponentType.LAYER  -> drawLayer(g, comp, x, y, w, h, showContainers)
                 ComponentType.SPRITE -> drawSprite(g, comp, x, y, w, h)
                 ComponentType.FIGURE -> drawFigure(g, comp, x, y, w, h)
                 ComponentType.MODEL  -> if (showModels) drawModel(g, x, y, w, h)
                 ComponentType.TEXT   -> drawText(g, comp, x, y, w, h)
-                ComponentType.LINE   -> drawLine(g, comp)
+                ComponentType.LINE   -> drawLine(g, comp, x, y)
             }
 
             val selected = selectedComponent == comp
-            InterfaceUtils.drawOutlines(g, comp, x, y, w, h, selected)
+            InterfaceUtils.drawOutlines(g, comp, x, y, w - 1, h - 1, selected)
         }
 
         childrenCache[comp.componentHash]?.forEach {
-            drawComponent(g, it, x, y, showContainers, showHidden, showModels, viewMode, selectedType, selectedComponent)
+            drawComponent(
+                g, it, x, y,
+                showContainers, showHidden, showModels,
+                viewMode, selectedType, selectedComponent
+            )
         }
+
+        g.clip = oldClip
     }
 
-    private fun drawSprite(g: Graphics2D, comp: ComponentDefinition, x: Int, y: Int, w: Int, h: Int) {
+    private fun drawSprite(
+        g: Graphics2D,
+        comp: ComponentDefinition,
+        x: Int,
+        y: Int,
+        w: Int,
+        h: Int
+    ) {
         var sprite = SpriteLoader.getSprite(comp.spriteId) ?: return
 
         if (comp.hFlip) sprite = ImageUtils.horizontalFlip(sprite)
         if (comp.vFlip) sprite = ImageUtils.verticalFlip(sprite)
 
+        val oldComposite = g.composite
+        val alpha = 255 - comp.transparency
+        if (alpha < 255) {
+            g.composite =
+                AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha / 255f)
+        }
+
+        if (comp.borderThickness > 0) {
+            g.color = Color(comp.shadowColor)
+
+            for (i in 1..comp.borderThickness) {
+                g.drawImage(sprite, x - i, y, w, h, null)
+                g.drawImage(sprite, x + i, y, w, h, null)
+                g.drawImage(sprite, x, y - i, w, h, null)
+                g.drawImage(sprite, x, y + i, w, h, null)
+            }
+        }
+
         if (comp.spriteTiling) {
+
             val sw = sprite.width
             val sh = sprite.height
+
             var tx = x
             while (tx < x + w) {
                 var ty = y
                 while (ty < y + h) {
+
                     val dw = min(sw, x + w - tx)
                     val dh = min(sh, y + h - ty)
-                    g.drawImage(sprite, tx, ty, tx + dw, ty + dh, 0, 0, dw, dh, null)
+
+                    g.drawImage(
+                        sprite,
+                        tx, ty,
+                        tx + dw, ty + dh,
+                        0, 0,
+                        dw, dh,
+                        null
+                    )
+
                     ty += sh
                 }
                 tx += sw
             }
-            return
+
+        } else {
+
+            val key = "${comp.spriteId}-$w-$h-${comp.hFlip}-${comp.vFlip}"
+            val resized = spriteCache.getOrPut(key) {
+                ImageUtils.resize(sprite, w, h)
+            }
+
+            g.drawImage(resized, x, y, null)
         }
-
-        val key = "${comp.spriteId}-$w-$h-${comp.hFlip}-${comp.vFlip}"
-        val resized = spriteCache.getOrPut(key) { ImageUtils.resize(sprite, w, h) }
-
-        val oldComposite = g.composite
-        val alpha = 255 - comp.transparency
-        if (alpha < 255) g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha / 255f)
-
-        val oldClip = g.clip
-        g.clip = Rectangle(x, y, w, h)
-        g.drawImage(resized, x, y, null)
-        g.clip = oldClip
 
         g.composite = oldComposite
     }
@@ -145,64 +210,165 @@ object InterfaceDraw {
         g.composite = old
     }
 
-    private fun drawLayer(g: Graphics2D, comp: ComponentDefinition, x: Int, y: Int, w: Int, h: Int, showContainers: Boolean) {
+    private fun drawLayer(
+        g: Graphics2D,
+        comp: ComponentDefinition,
+        x: Int,
+        y: Int,
+        w: Int,
+        h: Int,
+        showContainers: Boolean
+    ) {
         if (showContainers) {
             g.color = if (comp.parentId > 0) Color.RED else Color.GREEN
-            g.drawRect(x, y, w, h)
+            g.drawRect(x, y, w - 1, h - 1)
         }
     }
 
-    private fun drawModel(g: Graphics2D, x: Int, y: Int, w: Int, h: Int) {
+    private fun drawModel(
+        g: Graphics2D,
+        x: Int,
+        y: Int,
+        w: Int,
+        h: Int
+    ) {
         g.color = Color.BLUE
-        g.drawRect(x, y, w, h)
+        g.drawRect(x, y, w - 1, h - 1)
     }
 
-    private fun drawLine(g: Graphics2D, comp: ComponentDefinition) {
+    private fun drawLine(g: Graphics2D, comp: ComponentDefinition, x: Int, y: Int) {
         g.color = Color(comp.color)
         g.stroke = BasicStroke(comp.lineWidth.toFloat())
-        val startX = comp.baseX
-        val startY = comp.baseY
-        val endX = if (comp.unknownProp_8) startX else startX + comp.baseWidth
-        val endY = if (comp.unknownProp_8) startY + comp.baseHeight else startY
-        g.drawLine(startX, startY, endX, endY)
-    }
 
-    private fun drawText(g: Graphics2D, comp: ComponentDefinition, x: Int, y: Int, w: Int, h: Int) {
+        val endX = if (comp.unknownProp_8) x else x + comp.width
+        val endY = if (comp.unknownProp_8) y + comp.height else y
+
+        g.drawLine(x, y, endX, endY)
+    }
+/*
+    private fun drawText(
+        g: Graphics2D,
+        comp: ComponentDefinition,
+        x: Int,
+        y: Int,
+        w: Int,
+        h: Int
+    ) {
         val raw = comp.text ?: return
         if (raw.isEmpty()) return
+
         g.font = DEFAULT_FONT
         val fm = g.fontMetrics
-        val key = "$raw-$w"
+
+        val lineHeight = fm.ascent + fm.descent
+
+        val key = "$raw-$w-${comp.vPadding}"
         val lines = textCache.getOrPut(key) { wrapText(raw, w, fm) }
 
-        val innerHeight = h
-        val totalTextHeight = lines.size * fm.height
+        if (lines.isEmpty()) return
+
+        val totalHeight =
+            lines.size * lineHeight + (lines.size - 1) * comp.vPadding
+
         val verticalOffset =
             when (comp.textVerticalAli) {
-                1 -> (innerHeight - totalTextHeight) / 2
-                2 -> innerHeight - totalTextHeight
+                1 -> (h - totalHeight) / 2
+                2 -> h - totalHeight
                 else -> 0
             }
 
-        var drawY = y + verticalOffset
+        var drawY = y + verticalOffset + fm.ascent
+
         val mainColor = Color(comp.color)
 
         for (line in lines) {
+
             val lineWidth = fm.stringWidth(line)
+
             val drawX =
                 when (comp.textHorizontalAli) {
                     1 -> x + (w - lineWidth) / 2
                     2 -> x + w - lineWidth
                     else -> x
                 }
-            val finalY = drawY + fm.ascent
+
+            if (comp.shadow) {
+                g.color = comp.shadowColor?.let { Color(it) }
+                    ?: Color(0, 0, 0, 150)
+                g.drawString(line, drawX + 1, drawY + 1)
+            }
+
+            g.color = mainColor
+            g.drawString(line, drawX, drawY)
+
+            drawY += lineHeight + comp.vPadding
+        }
+    }
+
+    private fun wrapText(raw: String, width: Int, fm: FontMetrics): List<String> {
+        val lines = mutableListOf<String>()
+        for (part in raw.split("<br>")) {
+            var current = ""
+            for (word in part.split(" ")) {
+                val test = if (current.isEmpty()) word else "$current $word"
+                if (fm.stringWidth(test) > width && current.isNotEmpty()) {
+                    lines.add(current)
+                    current = word
+                } else current = test
+            }
+            if (current.isNotEmpty()) lines.add(current)
+        }
+        return lines
+    }
+
+ */
+
+    private fun drawText(
+        g: Graphics2D,
+        comp: ComponentDefinition,
+        x: Int,
+        y: Int,
+        w: Int,
+        h: Int
+    ) {
+        val raw = comp.text ?: return
+        if (raw.isEmpty()) return
+
+        g.font = DEFAULT_FONT
+        val fm = g.fontMetrics
+
+        val lines = textCache.getOrPut("$raw-$w-${comp.vPadding}") { wrapText(raw, w, fm) }
+        if (lines.isEmpty()) return
+
+        val lineHeight = fm.height + comp.vPadding
+        val totalHeight = lines.size * lineHeight - comp.vPadding
+
+        val verticalOffset = when (comp.textVerticalAli) {
+            1 -> (h - totalHeight) / 2
+            2 -> h - totalHeight
+            else -> 0
+        }
+
+        var drawY = y + verticalOffset + fm.ascent
+        val mainColor = Color(comp.color)
+
+        for (line in lines) {
+            val lineWidth = fm.stringWidth(line)
+            val drawX = when (comp.textHorizontalAli) {
+                1 -> x + (w - lineWidth) / 2
+                2 -> x + w - lineWidth
+                else -> x
+            }
+
             if (comp.shadow) {
                 g.color = comp.shadowColor?.let { Color(it) } ?: Color(0, 0, 0, 150)
-                g.drawString(line, drawX + 1, finalY + 1)
+                g.drawString(line, drawX + 1, drawY + 1)
             }
+
             g.color = mainColor
-            g.drawString(line, drawX, finalY)
-            drawY += fm.height
+            g.drawString(line, drawX, drawY)
+
+            drawY += lineHeight
         }
     }
 

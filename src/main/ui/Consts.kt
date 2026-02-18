@@ -6,8 +6,8 @@ import java.awt.Color
 object Consts {
     const val APP_VERSION = "1.0.0"
 
-    const val EDITOR_WIDTH = 1440
-    const val EDITOR_HEIGHT = 900
+    const val EDITOR_WIDTH = 1440 - 253
+    const val EDITOR_HEIGHT = 900 - 169
 
     const val SECTION_WIDTH = 256
     const val SECTION_HEIGHT = 250 + 26
@@ -15,8 +15,8 @@ object Consts {
     const val LEFT_PANEL_WIDTH = 256
     const val RIGHT_PANEL_WIDTH = 258 + 158 - 16
 
-    const val CENTER_PANEL_WIDTH = 765
-    const val CENTER_PANEL_HEIGHT = 503
+    const val CENTER_PANEL_WIDTH = 512
+    const val CENTER_PANEL_HEIGHT = 334
 
     const val BUTTON_HEIGHT = 25
 

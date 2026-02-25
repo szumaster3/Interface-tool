@@ -722,6 +722,7 @@ class InterfaceUI : JFrame()
                 is JTextField -> comp.text
                 is JCheckBox -> comp.isSelected.toString()
                 is JComboBox<*> -> comp.selectedItem?.toString() ?: ""
+                is JSpinner -> (comp.value as? Number)?.toInt()?.toString() ?: "0"
                 else -> ""
             }
         }

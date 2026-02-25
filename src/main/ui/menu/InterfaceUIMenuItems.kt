@@ -1,0 +1,119 @@
+package ui.menu
+
+import javax.swing.JMenuItem
+
+object InterfaceUIMenuItems {
+
+    fun newArchiveItem() = JMenuItem("New").apply {
+        addActionListener { InterfaceUIButton.addNewInterface() }
+    }
+
+    fun cleanArchiveItem() = JMenuItem("Clean").apply {
+        addActionListener { InterfaceUIButton.deleteInterface() }
+    }
+
+    fun openArchiveItem() = JMenuItem("Open").apply {
+        addActionListener { }
+    }
+    fun saveArchiveItem() = JMenuItem("Save").apply {
+        addActionListener { }
+    }
+
+    fun undoItem() = JMenuItem("Undo").apply {
+        addActionListener { }
+    }
+    fun redoItem() = JMenuItem("Redo").apply {
+        addActionListener { }
+    }
+    fun copyItem() = JMenuItem("Copy").apply {
+        addActionListener { }
+    }
+
+    fun zoomInItem() = JMenuItem("Zoom In").apply {
+        addActionListener { }
+    }
+    fun zoomOutItem() = JMenuItem("Zoom Out").apply {
+        addActionListener { }
+    }
+    fun resetViewItem() = JMenuItem("Reset View").apply {
+        addActionListener { }
+    }
+
+    fun addLayerItem() = JMenuItem("Add Layer").apply {
+        addActionListener { InterfaceUIButton.addLayer() }
+    }
+    fun addFigureItem() = JMenuItem("Add Figure").apply {
+        addActionListener { InterfaceUIButton.addFigure() }
+    }
+    fun addSpriteItem() = JMenuItem("Add Sprite").apply {
+        addActionListener { InterfaceUIButton.addSprite() }
+    }
+    fun addModelItem() = JMenuItem("Add Model").apply {
+        addActionListener { InterfaceUIButton.addModel() }
+    }
+    fun addTextItem() = JMenuItem("Add Text").apply {
+        addActionListener { InterfaceUIButton.addText() }
+    }
+    fun addLineItem() = JMenuItem("Add Line").apply {
+        addActionListener { InterfaceUIButton.addLine() }
+    }
+
+    fun template1Item() = JMenuItem("Template 1").apply {
+        addActionListener { println("Template 1 clicked") }
+    }
+    fun template2Item() = JMenuItem("Template 2").apply {
+        addActionListener { println("Template 2 clicked") }
+    }
+
+    fun control1Item() = JMenuItem("Control 1").apply {
+        addActionListener { println("Control 1 clicked") }
+    }
+    fun control2Item() = JMenuItem("Control 2").apply {
+        addActionListener { println("Control 2 clicked") }
+    }
+
+    fun playAnimationItem() = JMenuItem("Play Animation").apply {
+        addActionListener { println("Play Animation clicked") }
+    }
+    fun stopAnimationItem() = JMenuItem("Stop Animation").apply {
+        addActionListener { println("Stop Animation clicked") }
+    }
+
+    fun importMediaItem() = JMenuItem("Import Media").apply {
+        addActionListener { println("Import Media clicked") }
+    }
+    fun exportMediaItem() = JMenuItem("Export Media").apply {
+        addActionListener { println("Export Media clicked") }
+    }
+
+    fun commitItem() = JMenuItem("Commit").apply {
+        addActionListener { println("Commit clicked") }
+    }
+    fun pushItem() = JMenuItem("Push").apply {
+        addActionListener { println("Push clicked") }
+    }
+    fun pullItem() = JMenuItem("Pull").apply {
+        addActionListener { println("Pull clicked") }
+    }
+
+    fun tool1Item() = JMenuItem("Tool 1").apply {
+        addActionListener { println("Tool 1 clicked") }
+    }
+    fun tool2Item() = JMenuItem("Tool 2").apply {
+        addActionListener { println("Tool 2 clicked") }
+    }
+
+    fun minimizeItem() = JMenuItem("Minimize").apply {
+        addActionListener { println("Minimize clicked") }
+    }
+    fun maximizeItem() = JMenuItem("Maximize").apply {
+        addActionListener { println("Maximize clicked") }
+    }
+
+    fun documentationItem() = JMenuItem("Documentation").apply {
+        addActionListener { println("Documentation clicked") }
+    }
+    fun aboutItem() = JMenuItem("About").apply {
+        addActionListener { InterfaceUIButton.aboutDialogue() }
+    }
+}

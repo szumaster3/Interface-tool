@@ -17,7 +17,6 @@ import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
-import javax.swing.border.BevelBorder
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeSelectionModel
@@ -53,6 +52,7 @@ class InterfaceUI : JFrame()
         {
             EventQueue.invokeLater {
                 try {
+                    UIManager.put("MenuBar.gradient", listOf(0.0f, 0.0f, Color(230, 230, 230), Color(245, 245, 245), Color(190, 190, 190)))
                     if (args.isEmpty()) loadValues() else setCachePath(args[0])
                     Cache.init(PropertyValues.cache_path)
                     instance = InterfaceUI().apply {
@@ -73,9 +73,7 @@ class InterfaceUI : JFrame()
         defaultCloseOperation = EXIT_ON_CLOSE
         setSize(Consts.EDITOR_WIDTH, Consts.EDITOR_HEIGHT)
         layout = BorderLayout()
-
         jMenuBar = InterfaceUIMenu()
-        jMenuBar.background = Color(240, 240, 240, 100)
 
         loadTree()
         loadPanels()
@@ -140,7 +138,7 @@ class InterfaceUI : JFrame()
                 InterfaceDraw.selectedType == null || it.type == InterfaceDraw.selectedType
             }
         }
-        val rootNode = DefaultMutableTreeNode("Root")
+        val rootNode = DefaultMutableTreeNode("root")
         filtered.forEach { rootNode.add(buildTreeNode(it)) }
         treeModel.setRoot(rootNode)
         treeModel.reload()
@@ -180,6 +178,7 @@ class InterfaceUI : JFrame()
         val mainPanel = JPanel(BorderLayout())
         val leftPanel = JPanel(BorderLayout()).apply {
             preferredSize = Dimension(Consts.LEFT_PANEL_WIDTH, 0)
+            border = BorderFactory.createLoweredBevelBorder()
         }
         val searchPanel = JPanel(BorderLayout()).apply {
             border = BorderFactory.createRaisedSoftBevelBorder()
@@ -287,22 +286,17 @@ class InterfaceUI : JFrame()
         listTab.addActionListener { treeView = false; updateTabs() }
         tabsPanel.add(treeTab)
         tabsPanel.add(listTab)
-
-        componentTree.background = Color.BLACK
-        componentTree.foreground = Color.GREEN
+        val bgColor = Color(30,30,30)
+        componentTree.background = bgColor
         componentTree.isOpaque = true
-
-        componentList.background = Color.BLACK
-        componentList.foreground = Color.GREEN
+        componentList.background = bgColor
         componentList.isOpaque = true
-
 
         val optionsPanel = JPanel().apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            border = BorderFactory.createBevelBorder(BevelBorder.LOWERED)
         }
 
-        val showPanel = JPanel(FlowLayout(FlowLayout.LEFT, 5, 0))
+        val showPanel = JPanel(FlowLayout(FlowLayout.LEFT, 1, 0))
         val showLayersCB = JCheckBox("Show Layers", renderPanel.showContainers).apply {
             addActionListener { renderPanel.showContainers = isSelected; renderPanel.repaint() }
         }
@@ -329,29 +323,26 @@ class InterfaceUI : JFrame()
             selectedIndex = 0
         }
 
-        val comboRow = JPanel(GridLayout(1, 3, 0, 0)).apply {
-            border = BorderFactory.createEmptyBorder(2, 0, 0, 0)
-        }
+        val comboRow = JPanel(GridLayout(1, 3, 0, 0))
 
-        val viewModeLabel = JLabel("View by:").apply {
-            border = BorderFactory.createRaisedSoftBevelBorder()
-
+        val viewModeLabel = JLabel("View by").apply {
+            border = BorderFactory.createRaisedBevelBorder()
         }
         val viewModePanel = JPanel(BorderLayout()).apply {
             add(viewModeLabel, BorderLayout.WEST)
             add(viewModeComboBox, BorderLayout.CENTER)
         }
 
-        val typeFilterLabel = JLabel("Filter:").apply {
-            border = BorderFactory.createRaisedSoftBevelBorder()
+        val typeFilterLabel = JLabel("Filter").apply {
+            border = BorderFactory.createRaisedBevelBorder()
         }
         val typeFilterPanel = JPanel(BorderLayout()).apply {
             add(typeFilterLabel, BorderLayout.WEST)
             add(typeFilterComboBox, BorderLayout.CENTER)
         }
 
-        val renderLabel = JLabel("Render:").apply {
-            border = BorderFactory.createRaisedSoftBevelBorder()
+        val renderLabel = JLabel("Render").apply {
+            border = BorderFactory.createRaisedBevelBorder()
         }
         val renderPanelPanel = JPanel(BorderLayout()).apply {
             add(renderLabel, BorderLayout.WEST)
@@ -478,7 +469,7 @@ class InterfaceUI : JFrame()
         val optionSection = createSection(
             "Options",
                     (1..10).map { "Option $it" } +
-                    listOf("UseOnGround", "UseOnNpc", "UseOnObject", "UseOnPlayer", "UseOnSelf", "UseOnComponent", "OptionBase", "OptionCircumfix", "Cursor1Index", "Cursor1ID", "Cursor2Index", "Cursor2ID"),
+                    listOf("OptionBase", "OptionCircumfix", "UseOnGround", "UseOnNpc", "UseOnObject", "UseOnPlayer", "UseOnSelf", "UseOnComponent", "Cursor1Index", "Cursor1ID", "Cursor2Index", "Cursor2ID"),
             width = 240,
             labelWidth = 130
         )
@@ -926,6 +917,7 @@ class InterfaceUI : JFrame()
         val unlockIcon = InterfaceUtils.loadIcon("/icons/unlock.png")
         val lockIcon   = InterfaceUtils.loadIcon("/icons/lock.png")
         val resetIcon  = InterfaceUtils.loadIcon("/icons/reset.png")
+        val jSpinnerFont = Font("DotumChe", Font.PLAIN, 12)
 
         var expandedWidth = sectionWidth
         val minWidth = 100
@@ -944,6 +936,7 @@ class InterfaceUI : JFrame()
             maximumSize = Dimension(Int.MAX_VALUE, fieldHeight)
 
             val titleLabel = JLabel(title, JLabel.LEFT)
+            titleLabel.border = BorderFactory.createEmptyBorder(0, 2, 0, 0)
             add(titleLabel, BorderLayout.CENTER)
 
             val buttonPanel = JPanel(FlowLayout(FlowLayout.RIGHT, 1, 4)).apply {
@@ -1098,12 +1091,12 @@ class InterfaceUI : JFrame()
                     }
                     combo
                 }
-                name in textFields -> JTextField()
-                step1Fields.any { name.contains(it) } -> InterfaceUtils.createSpinner(step = 1)
-                name == "ModelZoom"    -> InterfaceUtils.createSpinner(step = 100)
-                name == "Transparency" -> InterfaceUtils.createSpinner(max = 255, step = 5)
-                listOf("Width", "Height").any { name.contains(it) } -> InterfaceUtils.createSpinner(step = 4)
-                else -> InterfaceUtils.createSpinner(step = 1)
+                name in textFields -> JTextField().apply {font=jSpinnerFont}
+                step1Fields.any { name.contains(it) } -> InterfaceUtils.createSpinner(step = 1,font = jSpinnerFont)
+                name == "ModelZoom"    -> InterfaceUtils.createSpinner(step = 100,font = jSpinnerFont)
+                name == "Transparency" -> InterfaceUtils.createSpinner(max = 255, step = 5,font = jSpinnerFont)
+                listOf("Width", "Height").any { name.contains(it) } -> InterfaceUtils.createSpinner(step = 4,font = jSpinnerFont)
+                else -> InterfaceUtils.createSpinner(step = 1,font = jSpinnerFont)
             }
 
             fieldComponent.preferredSize = Dimension(fieldComponent.preferredSize.width, fieldHeight)

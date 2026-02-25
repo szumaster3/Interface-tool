@@ -7,16 +7,15 @@ import rs.cache.ComponentType
 import rs.cache.sprite.util.SpriteManager
 import ui.Consts
 import ui.InterfaceUI
-import ui.draw.InterfaceDraw
 import util.ColorPicker
 import util.GenericPrinter
 import util.InterfaceUtils
-import javax.swing.*
-import javax.swing.border.LineBorder
 import java.awt.BorderLayout
+import javax.swing.*
+import javax.swing.border.Border
+import javax.swing.border.LineBorder
 
 object InterfaceUIButton {
-
     fun addSprite() = InterfaceUI.instance?.addComponent(801, 4)
     fun addModel()  = InterfaceUI.instance?.addComponent(205, 90) { it.baseX = 0; it.baseY = 0 }
     fun addLayer()  = InterfaceUI.instance?.addComponent(778, 0) { it.baseX = 0; it.baseY = 0; it.baseWidth = 50; it.baseHeight = 50 }
@@ -228,8 +227,7 @@ object InterfaceUIButton {
                 "<html>" +
                         "<h2>Interface Editor</h2>" +
                         "<p>Made by: Shnek<br>Discord: Cara Shnek#6969</p>" +
-                        "<p>Major code refactoring & improvements by: Ceikry</p>" +
-                        "<p>Recent changes: szumaster (05.02.2026)</p></html>"
+                        "<p>Major code refactoring & improvements by: Ceikry</p>"
             )
             add(message, BorderLayout.CENTER)
             setSize(400, 200)
@@ -238,80 +236,43 @@ object InterfaceUIButton {
         }
     }
 
-    fun newInterfaceButton(): JButton = JButton("New").apply {
-        toolTipText = "Create a new interface."
-        addActionListener { addNewInterface() }
-    }
-    fun deleteButton(): JButton = JButton("<html><center>Delete<br>component</html>").apply {
-        font = font.deriveFont(9f)
-        addActionListener { deleteComponent() }
-    }
-    fun cleanInterfaceButton(): JButton = JButton("Clean").apply {
-        toolTipText = "Clean the selected interface (remove all components except 0)."
-        addActionListener { deleteInterface() }
+    fun createButton(name: String, tooltip: String? = null, border: Border? = null, onClick: () -> Unit): JButton {
+        return JButton(name).apply {
+            tooltip?.let { toolTipText = it }
+            border?.let { this.border = it }
+            addActionListener { onClick() }
+        }
     }
 
-    fun addSpriteButton() = JButton("Sprite").apply {
-        border = LineBorder(Consts.SPRITE_COLOR, 1)
-        toolTipText = "Create a sprite component."
-        addActionListener { addSprite() }
-    }
-    fun addModelButton()  = JButton("Model").apply  {
-        border = LineBorder(Consts.MODEL_COLOR, 1)
-        toolTipText = "Create a model component."
-        addActionListener { addModel() }
-    }
-    fun addLayerButton()  = JButton("Layer").apply  {
-        border = LineBorder(Consts.LAYER_COLOR, 1)
-        toolTipText = "Create a layer component."
-        addActionListener { addLayer() }
-    }
-    fun addFigureButton() = JButton("Figure").apply {
-        border = LineBorder(Consts.FIGURE_COLOR, 1)
-        toolTipText = "Create a figure component."
-        addActionListener { addFigure() }
-    }
-    fun addTextButton()   = JButton("Text").apply   {
-        border = LineBorder(Consts.TEXT_COLOR, 1)
-        toolTipText = "Create a text component."
-        addActionListener { addText() }
-    }
-    fun addLineButton()   = JButton("Line").apply   {
-        border = LineBorder(Consts.LINE_COLOR, 1)
-        toolTipText = "Create a line component."
-        addActionListener { addLine() }
-    }
+    fun newInterfaceButton()    = createButton(name = "New",    tooltip = "Create a new interface") { addNewInterface() }
 
-    fun saveButton() = JButton("Save").apply {
-        toolTipText = "Save the selected component."
-        addActionListener { saveComponent() }
-    }
-    fun copyButton() = JButton("Copy").apply {
-        toolTipText = "Copy the selected component."
-        addActionListener { copyComponent() }
-    }
-    fun pasteButton() = JButton("Paste").apply {
-        toolTipText = "Paste the copied component into the selected interface."
-        addActionListener { pasteComponent() }
-    }
+    fun deleteButton()          = createButton(name = "Delete", onClick = { deleteComponent() })
 
-    fun printButton() = JButton("<html><center>Dump<br>to txt file</html>").apply {
-        font = font.deriveFont(9f)
-        toolTipText = "Print either the selected component or the entire interface to a text file."
-        addActionListener { printComponent() }
-    }
-    fun spriteLibraryButton() = JButton("<html><center>Sprite<br>Library</html>").apply {
-        font = font.deriveFont(9f)
-        toolTipText = "Allows you to select any sprite loaded from the cache."
-        addActionListener { openSpriteLibrary() }
-    }
-    fun colorPickButton() = JButton("Picker").apply {
-        toolTipText = "Select the color."
-        addActionListener { openColorPicker() }
-    }
+    fun cleanInterfaceButton()  = createButton(name = "Clean",  tooltip = "Clean the selected interface (remove all components except 0)") { deleteInterface() }
 
-    fun aboutButton() = JButton("About").apply {
-        toolTipText = "Show credits."
-        addActionListener { aboutDialogue() }
-    }
+    fun addSpriteButton()       = createButton(name = "Sprite", tooltip = "Create a sprite component", LineBorder(Consts.SPRITE_COLOR, 1)) { addSprite() }
+
+    fun addModelButton()        = createButton(name = "Model",  tooltip = "Create a model component", LineBorder(Consts.MODEL_COLOR, 1)) { addModel() }
+
+    fun addLayerButton()        = createButton(name = "Layer",  tooltip = "Create a layer component", LineBorder(Consts.LAYER_COLOR, 1)) { addLayer() }
+
+    fun addFigureButton()       = createButton(name = "Figure", tooltip = "Create a figure component", LineBorder(Consts.FIGURE_COLOR, 1)) { addFigure() }
+
+    fun addTextButton()         = createButton(name = "Text",   tooltip = "Create a text component", LineBorder(Consts.TEXT_COLOR, 1)) { addText() }
+
+    fun addLineButton()         = createButton(name = "Line",   tooltip = "Create a line component", LineBorder(Consts.LINE_COLOR, 1)) { addLine() }
+
+    fun saveButton()            = createButton(name = "Save",   tooltip = "Save the selected component") { saveComponent() }
+
+    fun copyButton()            = createButton(name = "Copy",   tooltip = "Copy the selected component") { copyComponent() }
+
+    fun pasteButton()           = createButton(name = "Paste",  tooltip = "Paste the copied component into the selected interface") { pasteComponent() }
+
+    fun printButton()           = createButton(name = "dumptxt",   tooltip = "Print either the selected component or the entire interface to a text file") { printComponent() }
+
+    fun spriteLibraryButton()   = createButton(name = "sprites", tooltip = "Allows you to select any sprite loaded from the cache") { openSpriteLibrary() }
+
+    fun colorPickButton()       = createButton(name = "Pick color", tooltip = "Select the color") { openColorPicker() }
+
+    fun aboutButton()           = createButton(name = "About",  tooltip = "Show credits") { aboutDialogue() }
 }

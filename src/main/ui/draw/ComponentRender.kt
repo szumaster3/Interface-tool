@@ -3,9 +3,8 @@ package ui.draw
 import fs.com.alex.utils.Utils
 import rs.cache.ComponentDefinition
 import rs.cache.ComponentType
+import ui.Consts
 import java.awt.*
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 import javax.swing.tree.DefaultMutableTreeNode
@@ -16,7 +15,7 @@ class ComponentRender(private val onHideToggle: (ComponentDefinition) -> Unit) :
     ListCellRenderer<ComponentDefinition>, TreeCellRenderer {
 
     private val uiFont = Font("Dialog", Font.PLAIN, 12)
-    private val cellHeight = 19
+    private val cellHeight = 18
 
     private val hideLabel = JLabel()
     private val typeLabel = JLabel()
@@ -31,10 +30,10 @@ class ComponentRender(private val onHideToggle: (ComponentDefinition) -> Unit) :
         isOpaque = true
     }
 
-    private val closeTree = ImageIcon(javaClass.getResource("/icons/tree_close.png"))
-    private val openTree  = ImageIcon(javaClass.getResource("/icons/tree_open.png"))
-    private val hideIcon  = ImageIcon(javaClass.getResource("/icons/hide_true.png"))
-    private val showIcon  = ImageIcon(javaClass.getResource("/icons/hide.png"))
+    private val closeTree   = ImageIcon(javaClass.getResource("/icons/tree_close.png"))
+    private val openTree    = ImageIcon(javaClass.getResource("/icons/tree_open.png"))
+    private val hideIcon    = ImageIcon(javaClass.getResource("/icons/hide_true.png"))
+    private val showIcon    = ImageIcon(javaClass.getResource("/icons/hide.png"))
     private val defaultIcon = ImageIcon(javaClass.getResource("/icons/default.png"))
 
     private val componentIcons = mapOf(
@@ -48,6 +47,15 @@ class ComponentRender(private val onHideToggle: (ComponentDefinition) -> Unit) :
         ComponentType.INVENTORY  to ImageIcon(javaClass.getResource("/icons/inventory.png"))
     )
 
+    private val typeColors = mapOf(
+        ComponentType.SPRITE to Consts.SPRITE_COLOR,
+        ComponentType.FIGURE to Consts.FIGURE_COLOR,
+        ComponentType.TEXT   to Consts.TEXT_COLOR,
+        ComponentType.MODEL  to Consts.MODEL_COLOR,
+        ComponentType.LAYER  to Consts.LAYER_COLOR,
+        ComponentType.LINE   to Consts.LINE_COLOR
+    )
+
     private var currentComp: ComponentDefinition? = null
 
     init {
@@ -56,14 +64,20 @@ class ComponentRender(private val onHideToggle: (ComponentDefinition) -> Unit) :
         textLabel.font = uiFont
     }
 
+    private fun getColorForComponent(comp: ComponentDefinition?): Color {
+        return comp?.let { typeColors[it.type] } ?: Color.GREEN
+    }
+
     private fun updatePanel(comp: ComponentDefinition) {
         currentComp = comp
-        val typeName = comp?.let { it -> Utils.getComponentFromInt(it.type)?.replaceFirstChar { it.uppercaseChar() } }
+        val typeName = Utils.getComponentFromInt(comp.type)?.replaceFirstChar { it.uppercaseChar() }
+
         hideLabel.icon = if (comp.hidden) hideIcon else showIcon
         hideLabel.text = ""
         typeLabel.icon = componentIcons[comp.type] ?: defaultIcon
         typeLabel.text = ""
-        val color = Color.GREEN
+
+        val color = getColorForComponent(comp)
         textLabel.foreground = color
         typeLabel.foreground = color
         textLabel.text = "${comp.componentId}: $typeName"
@@ -77,14 +91,14 @@ class ComponentRender(private val onHideToggle: (ComponentDefinition) -> Unit) :
         cellHasFocus: Boolean
     ): Component {
         updatePanel(value)
-        panel.background = if (isSelected) Color.DARK_GRAY else Color.BLACK
-        textLabel.foreground = if (isSelected) Color.WHITE else Color.GREEN
+        panel.background = if (isSelected) Color.DARK_GRAY else Color(30,30,30)
+        textLabel.foreground = if (isSelected) Color.WHITE else getColorForComponent(value)
         panel.preferredSize = Dimension(panel.preferredSize.width, cellHeight)
         return panel
     }
 
     private val treeRenderer = DefaultTreeCellRenderer().apply {
-        backgroundNonSelectionColor = Color.BLACK
+        backgroundNonSelectionColor = Color(30,30,30)
         backgroundSelectionColor    = Color.DARK_GRAY
         font                        = uiFont
         closedIcon = closeTree
@@ -103,18 +117,19 @@ class ComponentRender(private val onHideToggle: (ComponentDefinition) -> Unit) :
         if (value is DefaultMutableTreeNode) {
             val comp = value.userObject as? ComponentDefinition
             val typeName = comp?.let { Utils.getComponentFromInt(it.type)?.replaceFirstChar { it.uppercaseChar() } }
+
             if (comp != null) {
                 updatePanel(comp)
                 renderer.icon = typeLabel.icon
                 renderer.text = "${comp.componentId}: $typeName"
-                renderer.foreground = if (selected) Color.WHITE else Color.GREEN
-                renderer.background = if (selected) Color.DARK_GRAY else Color.BLACK
+                renderer.foreground = if (selected) Color.WHITE else getColorForComponent(comp)
+                renderer.background = if (selected) Color.DARK_GRAY else Color(30,30,30)
                 renderer.font = uiFont
                 renderer.isOpaque = true
             } else if (value === tree.model.root) {
                 renderer.text = value.userObject.toString()
                 renderer.foreground = Color.GREEN
-                renderer.background = if (selected) Color.DARK_GRAY else Color.BLACK
+                renderer.background = if (selected) Color.DARK_GRAY else Color(30,30,30)
                 renderer.font = uiFont.deriveFont(Font.BOLD)
                 renderer.icon = openTree
                 renderer.isOpaque = true

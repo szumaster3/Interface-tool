@@ -9,7 +9,7 @@ plugins {
 }
 
 group = 'org.example'
-version = '1.0.2'
+version = '1.0.4'
 archivesBaseName = 'interface'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
@@ -24,7 +24,6 @@ repositories {
 
 dependencies {
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20'
-    implementation files('libs/jogl-all-2.5.0.jar')
 }
 
 sourceSets {
@@ -59,7 +58,7 @@ jar {
 
 shadowJar {
     archiveBaseName.set('example')
-    archiveVersion.set('1.0.3')
+    archiveVersion.set('1.0.4')
     archiveClassifier.set('')
     manifest {
         attributes(

@@ -4,7 +4,7 @@ import rs.cache.ComponentType
 import java.awt.Color
 
 object Consts {
-    const val APP_VERSION = "1.0.3"
+    const val APP_VERSION = "1.0.4"
 
     const val EDITOR_WIDTH = 1440 - 253
     const val EDITOR_HEIGHT = 900 - 178
@@ -21,30 +21,31 @@ object Consts {
     const val BUTTON_HEIGHT_SMALL = 25
     const val BUTTON_HEIGHT_MEDIUM = BUTTON_HEIGHT_SMALL + 5
 
-    private const val ALPHA = 50
+    private const val ALPHA = 90
 
     val fillColors = mapOf(
         ComponentType.SPRITE to Color(90, 90, 220, ALPHA),
         ComponentType.FIGURE to Color(255, 160, 0, ALPHA),
-        ComponentType.TEXT   to Color(255, 255, 0, ALPHA),
+        ComponentType.TEXT   to Color(255, 255, 0, 50),
         ComponentType.MODEL  to Color(230, 230, 230, ALPHA),
-        ComponentType.LAYER  to Color(0, 250, 0, ALPHA),
+        ComponentType.LAYER  to Color(0, 250, 0, 50),
         ComponentType.LINE   to Color(255, 255, 255, ALPHA)
     )
 
     val outlineColors = mapOf(
         ComponentType.SPRITE to Color(90, 90, 220),
-        ComponentType.FIGURE to Color(255, 160, 0),
-        ComponentType.TEXT   to Color(255, 255, 0),
+        ComponentType.FIGURE to Color(255, 145, 0),
+        ComponentType.TEXT   to Color(255, 250, 0),
         ComponentType.MODEL  to Color(230, 230, 230),
-        ComponentType.LAYER  to Color(0, 250, 0),
+        ComponentType.LAYER  to Color(0, 255, 0),
         ComponentType.LINE   to Color(255, 255, 255)
     )
 
-    val SPRITE_COLOR = outlineColors[ComponentType.SPRITE]
-    val FIGURE_COLOR = outlineColors[ComponentType.FIGURE]
-    val TEXT_COLOR   = outlineColors[ComponentType.TEXT]
-    val MODEL_COLOR  = outlineColors[ComponentType.MODEL]
-    val LAYER_COLOR  = outlineColors[ComponentType.LAYER]
-    val LINE_COLOR   = outlineColors[ComponentType.LINE]
+    @JvmField val SPRITE_COLOR = outlineColors[ComponentType.SPRITE]
+    @JvmField val FIGURE_COLOR = outlineColors[ComponentType.FIGURE]
+    @JvmField val TEXT_COLOR   = outlineColors[ComponentType.TEXT]
+    @JvmField val MODEL_COLOR  = outlineColors[ComponentType.MODEL]
+    @JvmField val LAYER_COLOR  = outlineColors[ComponentType.LAYER]
+    @JvmField val LINE_COLOR   = outlineColors[ComponentType.LINE]
+
 }

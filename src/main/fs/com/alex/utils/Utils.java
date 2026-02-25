@@ -4,6 +4,7 @@ import rs.cache.ComponentDefinition;
 import rs.cache.ComponentType;
 import fs.com.alex.io.InputStream;
 import fs.com.alex.io.OutputStream;
+import ui.Consts;
 
 import java.awt.*;
 import java.math.BigInteger;
@@ -209,6 +210,20 @@ public final class Utils {
                 catch (NumberFormatException e) {
                     return -1;
                 }
+        }
+    }
+
+    public static Color getColorFromComponentString(String name) {
+        if (name == null) return Color.RED;
+
+        switch (name.toLowerCase()) {
+            case "sprite":   return Consts.SPRITE_COLOR;
+            case "figure":   return Consts.FIGURE_COLOR;
+            case "text":     return Consts.TEXT_COLOR;
+            case "model":    return Consts.MODEL_COLOR;
+            case "layer":    return Consts.LAYER_COLOR;
+            case "line":     return Consts.LINE_COLOR;
+            default:         return Color.GREEN;
         }
     }
 

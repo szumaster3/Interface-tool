@@ -40,11 +40,9 @@ class InterfaceUI : JFrame()
     private val scriptsList         = listOf("Load", "MouseHover", "MouseLeave", "OptionClick", "UseWith", "Use", "VarpTransmit", "InvTransmit", "StatTransmit", "Timer", "MouseRepeat", "ClickRepeat", "Drag", "Release", "Hold", "DragStart", "DragRelease", "Scroll", "VarcTransmit", "VarcStrTransmit", "VarpTriggers", "InventoryTriggers", "StatTriggers", "VarcTriggers", "VarcStrTriggers")
 
     private var orderedComponents: List<ComponentDefinition> = emptyList()
-    var selectedComponent: ComponentDefinition? = null
-    var clonedComponent: ComponentDefinition? = null
-
     companion object
     {
+        var selectedComponent: ComponentDefinition? = null
         @JvmStatic var instance: InterfaceUI? = null
 
         @JvmStatic
@@ -904,6 +902,35 @@ class InterfaceUI : JFrame()
 
         c.settings.settings = newSettings
         c.optionMask = newSettings
+
+        // Scripts
+        c.onLoadScript       = Utils.getScriptArray(getText("Load"))
+        c.onMouseHoverScript = Utils.getScriptArray(getText("MouseHover"))
+        c.onMouseLeaveScript = Utils.getScriptArray(getText("MouseLeave"))
+        c.onOptionClick      = Utils.getScriptArray(getText("OptionClick"))
+        c.onUseWith          = Utils.getScriptArray(getText("UseWith"))
+        c.onUse              = Utils.getScriptArray(getText("Use"))
+        c.onVarpTransmit     = Utils.getScriptArray(getText("VarpTransmit"))
+        c.onInvTransmit      = Utils.getScriptArray(getText("InvTransmit"))
+        c.onStatTransmit     = Utils.getScriptArray(getText("StatTransmit"))
+        c.onTimer            = Utils.getScriptArray(getText("Timer"))
+        c.onMouseRepeat      = Utils.getScriptArray(getText("MouseRepeat"))
+        c.onClickRepeat      = Utils.getScriptArray(getText("ClickRepeat"))
+        c.onDrag             = Utils.getScriptArray(getText("Drag"))
+        c.onRelease          = Utils.getScriptArray(getText("Release"))
+        c.onHold             = Utils.getScriptArray(getText("Hold"))
+        c.onDragStart        = Utils.getScriptArray(getText("DragStart"))
+        c.onDragRelease      = Utils.getScriptArray(getText("DragRelease"))
+        c.onScroll           = Utils.getScriptArray(getText("Scroll"))
+        c.onVarcTransmit     = Utils.getScriptArray(getText("VarcTransmit"))
+        c.onVarcStrTransmit  = Utils.getScriptArray(getText("VarcStrTransmit"))
+
+        // Triggers
+        c.varpTriggers       = Utils.getConfigArray(getText("VarpTriggers"))
+        c.inventoryTriggers  = Utils.getConfigArray(getText("InventoryTriggers"))
+        c.statTriggers       = Utils.getConfigArray(getText("StatTriggers"))
+        c.varcTriggers       = Utils.getConfigArray(getText("VarcTriggers"))
+        c.varcstrTriggers    = Utils.getConfigArray(getText("VarcStrTriggers"))
     }
 
 

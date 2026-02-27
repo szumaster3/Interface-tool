@@ -4,7 +4,7 @@ import rs.cache.ComponentType
 import java.awt.Color
 
 object Consts {
-    const val APP_VERSION = "1.0.4"
+    const val APP_VERSION = "1.0.5"
 
     const val EDITOR_WIDTH = 1440 - 253
     const val EDITOR_HEIGHT = 900 - 178

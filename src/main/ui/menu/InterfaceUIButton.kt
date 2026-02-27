@@ -9,7 +9,6 @@ import ui.Consts
 import ui.InterfaceUI
 import util.ColorPicker
 import util.GenericPrinter
-import util.InterfaceUtils
 import java.awt.BorderLayout
 import javax.swing.*
 import javax.swing.border.Border
@@ -47,7 +46,7 @@ object InterfaceUIButton {
 
     fun deleteComponent()
     {
-        val comp = InterfaceUI.instance?.selectedComponent ?: run {
+        val comp = InterfaceUI.selectedComponent ?: run {
             JOptionPane.showMessageDialog(null, "Please select a component first.")
             return
         }
@@ -123,7 +122,7 @@ object InterfaceUIButton {
     }
 
     fun saveComponent() {
-        val comp = InterfaceUI.instance?.selectedComponent ?: run {
+        val comp = InterfaceUI.selectedComponent ?: run {
             JOptionPane.showMessageDialog(null, "Please select a component before saving it.")
             return
         }
@@ -140,30 +139,54 @@ object InterfaceUIButton {
     }
 
     fun copyComponent() {
-        val comp = InterfaceUI.instance?.selectedComponent ?: return
-        if (comp.interfaceId <= 0) return
-        InterfaceUI.instance?.clonedComponent = ComponentDefinition.getInterfaceComponent(comp.interfaceId, comp.componentId)
+        var comp = InterfaceUI.selectedComponent
+        if (comp != null) {
+            ComponentDefinition.getInterfaceComponent(comp.interfaceId, comp.componentId)
+        }
     }
 
     fun pasteComponent() {
-        val i = InterfaceUI.instance!!.selectedComponent ?: return
-        if (i.interfaceId == -1) {
+        var comp = InterfaceUI.selectedComponent
+        if (comp == null) {
+            JOptionPane.showMessageDialog(null, "No component was selected to paste.")
             return
         }
-        InterfaceUtils.pasteComponent()
+        if (comp.type == ComponentType.LAYER) {
+            val layer = ComponentDefinition.getInterfaceDefinitionsComponentsSize(comp.interfaceId)
+            comp.parentId = -1
 
-        ComponentDefinition.getInterface(i.interfaceId, true)
-        InterfaceUI.instance?.loadComponents(i.interfaceId)
-
-        val size = ComponentDefinition.getInterfaceDefinitionsComponentsSize(i.interfaceId)
-        val newComp = ComponentDefinition.getInterfaceComponent(i.interfaceId, size - 1)
-        if (newComp != null) InterfaceUI.instance?.selectComponent(newComp)
-
-        InterfaceUI.instance?.repaint()
+            Cache.getStore()!!.indexes[3].putFile(comp.interfaceId, layer, comp.encode(true))
+            val childs = ComponentDefinition.getChildsByParent(comp.interfaceId, comp.componentHash)
+            for (c in childs) {
+                if (c.type != ComponentType.LAYER) {
+                    Cache.getStore()!!.indexes[3].putFile(comp.interfaceId, ComponentDefinition.getInterfaceDefinitionsComponentsSize(comp!!.interfaceId), c.encode(true))
+                }
+            }
+            ComponentDefinition.getInterface(comp.interfaceId, true)
+            val size = ComponentDefinition.getInterfaceDefinitionsComponentsSize(comp.interfaceId)
+            val parent = ComponentDefinition.getInterfaceComponent(comp.interfaceId, layer)
+            for (i in size - childs.size - 1 until size) {
+                val component = ComponentDefinition.getInterfaceComponent(comp.interfaceId, i)
+                if (component != null && component.type != 0) {
+                    if (parent != null) {
+                        component.parentId = parent.componentHash
+                    }
+                    Cache.getStore()!!.indexes[3].putFile(comp.interfaceId, i, component.encode(true))
+                }
+            }
+        } else {
+            comp.parentId = -1
+            Cache.getStore()!!.indexes[3].putFile(comp.interfaceId, ComponentDefinition.getInterfaceDefinitionsComponentsSize(comp.interfaceId), comp.encode(true))
+        }
+        ComponentDefinition.getInterface(comp.interfaceId, true)
+        InterfaceUI.instance?.loadComponents(comp.interfaceId)
+        ComponentDefinition.getInterfaceComponent(comp.interfaceId, comp.componentId)?.let { InterfaceUI.instance?.selectComponent(it) }
+        InterfaceUI.instance?.renderPanel?.interfaceId = comp.interfaceId
+        InterfaceUI.instance?.renderPanel?.repaint()
     }
 
     fun printComponent() {
-        val comp = InterfaceUI.instance?.selectedComponent ?: run {
+        val comp = InterfaceUI.selectedComponent ?: run {
             JOptionPane.showMessageDialog(null, "Please select a component or interface.")
             return
         }
@@ -191,7 +214,7 @@ object InterfaceUIButton {
     }
 
     fun openSpriteLibrary() {
-        val comp = InterfaceUI.instance?.selectedComponent ?: run {
+        val comp = InterfaceUI.selectedComponent ?: run {
             JOptionPane.showMessageDialog(null, "Please select a component first.", "Warning", JOptionPane.WARNING_MESSAGE)
             return
         }
@@ -206,7 +229,7 @@ object InterfaceUIButton {
     }
 
     fun openColorPicker() {
-        val comp = InterfaceUI.instance?.selectedComponent ?: run {
+        val comp = InterfaceUI.selectedComponent ?: run {
             JOptionPane.showMessageDialog(null, "Please select a component first.", "Warning", JOptionPane.WARNING_MESSAGE)
             return
         }

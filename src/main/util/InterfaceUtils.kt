@@ -3,14 +3,8 @@ package util
 import rs.cache.ComponentDefinition
 import ui.Consts.fillColors
 import ui.Consts.outlineColors
-import java.awt.BasicStroke
-import java.awt.Color
-import java.awt.Font
-import java.awt.Graphics2D
-import javax.swing.ImageIcon
-import javax.swing.JFormattedTextField
-import javax.swing.JSpinner
-import javax.swing.SpinnerNumberModel
+import java.awt.*
+import javax.swing.*
 
 object InterfaceUtils {
 
@@ -63,5 +57,21 @@ object InterfaceUtils {
     fun loadIcon(path: String): ImageIcon {
         val url = javaClass.getResource(path)
         return if (url != null) ImageIcon(url) else ImageIcon()
+    }
+
+    fun iconButton(
+        icon: Icon,
+        tooltip: String,
+        onClick: () -> Unit
+    ): JButton {
+        return JButton(icon).apply {
+            toolTipText = tooltip
+            isFocusPainted = false
+            isContentAreaFilled = false
+            isBorderPainted = true
+            margin = Insets(0, 0, 0, 0)
+            preferredSize = Dimension(18, 18)
+            addActionListener { onClick() }
+        }
     }
 }

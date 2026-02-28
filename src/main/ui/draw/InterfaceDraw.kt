@@ -118,12 +118,7 @@ object InterfaceDraw {
                 ComponentType.LINE   -> drawLine(g, comp, x, y)
             }
 
-            InterfaceUtils.drawOutlines(
-                g, comp, x, y, w, h,
-                selectedComponent == comp
-            )
         }
-
 
         childrenCache[comp.componentHash]?.forEach { child ->
             val childShouldDraw = when (viewMode) {
@@ -134,6 +129,11 @@ object InterfaceDraw {
                 drawComponent(g, child, x, y, showContainers, showHidden, showModels, viewMode, selectedType, selectedComponent)
             }
         }
+
+        InterfaceUtils.drawOutlines(
+            g, comp, x, y, w, h,
+            selectedComponent == comp
+        )
 
         g.clip = oldClip
     }

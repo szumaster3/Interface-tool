@@ -13,6 +13,7 @@ import ui.draw.RenderPanel
 import ui.menu.InterfaceUIButton
 import ui.menu.InterfaceUIMenu
 import util.InterfaceUtils
+import util.InterfaceUtils.iconButton
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -38,8 +39,22 @@ class InterfaceUI : JFrame()
     val renderPanel                 = RenderPanel()
     private val propertyPanel       = JPanel()
     private val scriptsList         = listOf("Load", "MouseHover", "MouseLeave", "OptionClick", "UseWith", "Use", "VarpTransmit", "InvTransmit", "StatTransmit", "Timer", "MouseRepeat", "ClickRepeat", "Drag", "Release", "Hold", "DragStart", "DragRelease", "Scroll", "VarcTransmit", "VarcStrTransmit", "VarpTriggers", "InventoryTriggers", "StatTriggers", "VarcTriggers", "VarcStrTriggers")
+    private val scriptsPanel        = JPanel().apply{layout = BoxLayout(this, BoxLayout.Y_AXIS)}
 
     private var orderedComponents: List<ComponentDefinition> = emptyList()
+
+    private val undoIcon            = ImageIcon(javaClass.getResource("/icons/undo.png"))
+    private val undoButton          = iconButton(undoIcon, "Undo")
+    {
+        renderPanel.repaint()
+    }
+
+    private val redoIcon            = ImageIcon(javaClass.getResource("/icons/redo.png"))
+    private val redoButton          = iconButton(redoIcon, "Redo")
+    {
+        renderPanel.repaint()
+    }
+
     companion object
     {
         var selectedComponent: ComponentDefinition? = null
@@ -50,7 +65,8 @@ class InterfaceUI : JFrame()
         {
             EventQueue.invokeLater {
                 try {
-                    UIManager.put("MenuBar.gradient", listOf(0.0f, 0.0f, Color(230, 230, 230), Color(245, 245, 245), Color(190, 190, 190)))
+                    UIManager.put("Button.gradient", listOf(0.3f, 0.0f, Color(248, 248, 248) , Color(230, 230, 230) , Color(200, 200, 200)))
+                    UIManager.put("MenuBar.gradient", listOf(0.25f, 0.0f, Color(180, 180, 180), Color(145, 145, 145), Color(105, 105, 105)))
                     if (args.isEmpty()) loadValues() else setCachePath(args[0])
                     Cache.init(PropertyValues.cache_path)
                     instance = InterfaceUI().apply {
@@ -178,33 +194,40 @@ class InterfaceUI : JFrame()
             preferredSize = Dimension(Consts.LEFT_PANEL_WIDTH, 0)
             border = BorderFactory.createLoweredBevelBorder()
         }
+
         val searchPanel = JPanel(BorderLayout()).apply {
             border = BorderFactory.createRaisedSoftBevelBorder()
         }
+        val findIcon = ImageIcon(javaClass.getResource("/icons/find.png"))
         val searchField = JTextField()
-        val searchButton = JButton("Search").apply {
-            preferredSize = Dimension(100, Consts.BUTTON_HEIGHT_SMALL)
+        val searchButton = JButton(findIcon).apply {
+            preferredSize = Dimension(40, Consts.BUTTON_HEIGHT_SMALL - 5)
         }
         searchPanel.add(searchField, BorderLayout.CENTER)
         searchPanel.add(searchButton, BorderLayout.EAST)
+
         val scrollInterfaces = JScrollPane(interfacesList).apply {
             horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
-            verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_ALWAYS
+            verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
         }
+
         val interfacesWrapper = JPanel(BorderLayout())
         interfacesWrapper.add(searchPanel, BorderLayout.NORTH)
         interfacesWrapper.add(scrollInterfaces, BorderLayout.CENTER)
         leftPanel.add(interfacesWrapper, BorderLayout.CENTER)
         setupInterfaceListListener()
+
         val centerWrapper = JPanel(GridBagLayout()).apply {
-            background = Color.DARK_GRAY
+            background = Color.LIGHT_GRAY
             add(renderPanel)
         }
+
         val rightPanel = JPanel(BorderLayout()).apply {
             border = BorderFactory.createLoweredBevelBorder()
             preferredSize = Dimension(Consts.RIGHT_PANEL_WIDTH, 0)
         }
         setupRightPanel(rightPanel)
+
         val topPanel = JPanel(BorderLayout()).apply {
             border = BorderFactory.createLoweredBevelBorder()
             add(leftPanel, BorderLayout.WEST)
@@ -212,11 +235,12 @@ class InterfaceUI : JFrame()
             add(rightPanel, BorderLayout.EAST)
         }
         mainPanel.add(topPanel, BorderLayout.CENTER)
+
         val bottomPanel = JPanel(BorderLayout())
+
         val buttonPanel = JPanel(GridLayout(1, 0, 1, 1)).apply {
             border = BorderFactory.createEmptyBorder(1, 1, 1, 1)
         }
-
         listOf(
             InterfaceUIButton.newInterfaceButton(),
             InterfaceUIButton.cleanInterfaceButton(),
@@ -239,7 +263,6 @@ class InterfaceUI : JFrame()
         bottomPanel.border = BorderFactory.createLoweredBevelBorder()
         bottomPanel.add(buttonPanel, BorderLayout.NORTH)
 
-
         propertyPanel.removeAll()
         propertyPanel.layout = BoxLayout(propertyPanel, BoxLayout.X_AXIS)
         propertyPanel.border = BorderFactory.createEmptyBorder(1, 1, 1, 1)
@@ -247,11 +270,23 @@ class InterfaceUI : JFrame()
 
         val sectionsScroll = JScrollPane(propertyPanel).apply {
             verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
-            horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS
+            horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
             verticalScrollBar.unitIncrement = 7
             horizontalScrollBar.unitIncrement = 20
+            border = BorderFactory.createEmptyBorder()
         }
         bottomPanel.add(sectionsScroll, BorderLayout.CENTER)
+
+        initScriptsPanel()
+
+        val scriptsScroll = JScrollPane(scriptsPanel).apply {
+            verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+            horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+            border = BorderFactory.createEmptyBorder()
+        }
+
+        bottomPanel.add(scriptsScroll, BorderLayout.SOUTH)
+
         mainPanel.add(bottomPanel, BorderLayout.SOUTH)
         add(mainPanel, BorderLayout.CENTER)
         loadTree()
@@ -259,11 +294,10 @@ class InterfaceUI : JFrame()
         searchButton.addActionListener {
             val text = searchField.text
             val id = text.toIntOrNull()
-            if (id != null)
-            {
-                val index = (0 until interfacesList.model.size).firstOrNull { interfacesList.model.getElementAt(it) == id }
-                if (index != null)
-                {
+            if (id != null) {
+                val index = (0 until interfacesList.model.size)
+                    .firstOrNull { interfacesList.model.getElementAt(it) == id }
+                if (index != null) {
                     interfacesList.selectedIndex = index
                     interfacesList.ensureIndexIsVisible(index)
                 } else {
@@ -275,7 +309,6 @@ class InterfaceUI : JFrame()
 
     private fun setupRightPanel(rightPanel: JPanel)
     {
-
         val tabsPanel = JPanel(GridLayout(1, 2)).apply {
             preferredSize = Dimension(Consts.RIGHT_PANEL_WIDTH, Consts.BUTTON_HEIGHT_SMALL)
             border = BorderFactory.createLoweredBevelBorder()
@@ -295,18 +328,24 @@ class InterfaceUI : JFrame()
         }
 
         val showPanel = JPanel(FlowLayout(FlowLayout.LEFT, 1, 0))
-        val showLayersCB = JCheckBox("Show Layers", renderPanel.showContainers).apply {
+        val showLayersCB = JCheckBox("Layers", renderPanel.showContainers).apply {
             addActionListener { renderPanel.showContainers = isSelected; renderPanel.repaint() }
         }
         val showHiddenCB = JCheckBox("Show Hidden", renderPanel.showHidden).apply {
             addActionListener { renderPanel.showHidden = isSelected; renderPanel.repaint() }
         }
-        val showModelsCB = JCheckBox("Show Models", renderPanel.showModels).apply {
+        val showModelsCB = JCheckBox("Models", renderPanel.showModels).apply {
             addActionListener { renderPanel.showModels = isSelected; renderPanel.repaint() }
         }
-        showPanel.add(showLayersCB)
+
         showPanel.add(showHiddenCB)
+        showPanel.add(showLayersCB)
         showPanel.add(showModelsCB)
+        showPanel.add(Box.createHorizontalStrut(8))
+        showPanel.add(undoButton)
+        showPanel.add(Box.createHorizontalStrut(4))
+        showPanel.add(redoButton)
+
         showPanel.border = BorderFactory.createLoweredBevelBorder()
         optionsPanel.add(showPanel)
 
@@ -326,6 +365,7 @@ class InterfaceUI : JFrame()
         val viewModeLabel = JLabel("View by").apply {
             border = BorderFactory.createRaisedBevelBorder()
         }
+
         val viewModePanel = JPanel(BorderLayout()).apply {
             add(viewModeLabel, BorderLayout.WEST)
             add(viewModeComboBox, BorderLayout.CENTER)
@@ -452,7 +492,8 @@ class InterfaceUI : JFrame()
             "Standard",
             listOf("ParentID", "Hash", "Hidden", "Type", "ContentType", "X", "Y", "Width", "Height", "WidthMode", "HeightMode", "XMode", "YMode"),
             width = 200,
-            labelWidth = 90
+            labelWidth = 90,
+            fieldHeight = 23
         )
         addSection(standardSection)
 
@@ -460,33 +501,44 @@ class InterfaceUI : JFrame()
             "Individual properties",
             listOf("SpriteID", "BorderThickness", "HFlip", "VFlip", "Tiling", "HasAlpha", "Transparency", "Color", "Angle2D", "ShadowColor", "Text",  "FontID", "XAlign", "YAlign", "TextLineHeight", "Shadow", "ModelID", "AnimID", "ModelOriginX", "ModelOriginY", "XAngle", "YAngle", "ZAngle", "ModelZoom", "Orthogonal", "ModelObjectWidth", "ModelObjectHeight", "UnknownProp3", "UnknownProp4", "UnknownProp5", "Fill", "ScrollWidth", "ScrollHeight", "NoClickThrough", "DragDeadzone", "DragDeadtime", "DragRenderBehavior", "LineWidth", "UnknownProp8"),
             width = 250,
-            labelWidth = 130
+            labelWidth = 130,
+            fieldHeight = 23
         )
         addSection(individualSection)
 
         val optionSection = createSection(
             "Options",
                     (1..10).map { "Option $it" } +
-                    listOf("OptionBase", "OptionCircumfix", "UseOnGround", "UseOnNpc", "UseOnObject", "UseOnPlayer", "UseOnSelf", "UseOnComponent", "Cursor1Index", "Cursor1ID", "Cursor2Index", "Cursor2ID"),
-            width = 240,
-            labelWidth = 130
+                    listOf("OptionBase", "OptionCircumfix", "UseOnGround", "UseOnNpc", "UseOnObject", "UseOnPlayer", "UseOnSelf", "UseOnIComp", "Cursor1Index", "Cursor1ID", "Cursor2Index", "Cursor2ID"),
+            width = 200,
+            labelWidth = 90,
+            fieldHeight = 23
         )
         addSection(optionSection)
 
         val settingsSection = createSection(
             "Active properties",
             (1..10).map { "Slot $it" } + listOf("RightClickAllowed", "HasUnlockedSlots", "IEventDepth", "CanBeUsedOn", "UnknownBit21", "UnknownBits28to30", "UnknownBit31"),
-            labelWidth = 110,
-            width = 200
+            labelWidth = 90,
+            width = 200,
+            fieldHeight = 23
         )
         addSection(settingsSection)
+    }
 
-        val scriptSection = createSection(
-            "Scripts",
+
+    fun initScriptsPanel()
+    {
+        scriptsPanel.removeAll()
+
+        val scriptSection = createSection(null,
             scriptsList,
-            labelWidth = 110
+            fieldHeight = 20,
+            labelWidth = 110,
+            height = 96
         )
-        addSection(scriptSection)
+
+        scriptsPanel.add(scriptSection)
     }
 
     private val componentTypes = mapOf(
@@ -618,7 +670,7 @@ class InterfaceUI : JFrame()
         set("UseOnObject",              s.canUseOnObjects())
         set("UseOnPlayer",              s.canUseOnOtherPlayers())
         set("UseOnSelf",                s.canUseOnSelf())
-        set("UseOnComponent",           s.canUseOnInterfaceComponent())
+        set("UseOnIComp",           s.canUseOnInterfaceComponent())
 
         set("ScrollWidth",       c.scrollWidth)
         set("ScrollHeight",       c.scrollHeight)
@@ -804,7 +856,7 @@ class InterfaceUI : JFrame()
                 "UseOnObject"       -> setBit(13, text.toBoolean())
                 "UseOnPlayer"       -> setBit(14, text.toBoolean())
                 "UseOnSelf"         -> setBit(15, text.toBoolean())
-                "UseOnComponent"    -> setBit(16, text.toBoolean())
+                "UseOnIComp"        -> setBit(16, text.toBoolean())
 
                 "UnknownBit21" -> setBit(21, text.toBoolean())
                 "CanBeUsedOn"  -> setBit(22, text.toBoolean())
@@ -886,7 +938,7 @@ class InterfaceUI : JFrame()
         if ((fieldMap["UseOnObject"] as? JCheckBox)?.isSelected == true)    targetMask = targetMask or (1 shl 2)
         if ((fieldMap["UseOnPlayer"] as? JCheckBox)?.isSelected == true)    targetMask = targetMask or (1 shl 3)
         if ((fieldMap["UseOnSelf"] as? JCheckBox)?.isSelected == true)      targetMask = targetMask or (1 shl 4)
-        if ((fieldMap["UseOnComponent"] as? JCheckBox)?.isSelected == true) targetMask = targetMask or (1 shl 5)
+        if ((fieldMap["UseOnIComp"] as? JCheckBox)?.isSelected == true) targetMask = targetMask or (1 shl 5)
 
         if (targetMask == 0)
         {
@@ -934,11 +986,13 @@ class InterfaceUI : JFrame()
     }
 
 
-    private fun createSection(title: String, fields: List<String>, componentTypes: Map<String, Int>? = null, width: Int? = null, labelWidth: Int? = null): JPanel
+    private fun createSection(title: String?= null, fields: List<String>, componentTypes: Map<String, Int>? = null, width: Int? = null, labelWidth: Int? = null, height: Int? = null, fieldHeight: Int? = null): JPanel
     {
         val sectionWidth = width ?: Consts.SECTION_WIDTH
+        val sectionHeight = height ?: Consts.SECTION_HEIGHT
+
         val labelWidth = labelWidth ?: 120
-        val fieldHeight = Consts.BUTTON_HEIGHT_SMALL
+        val fieldHeight = fieldHeight?: Consts.BUTTON_HEIGHT_SMALL
         val showInfo = title == "Standard"
         val infoIcon   = InterfaceUtils.loadIcon("/icons/info.png")
         val unlockIcon = InterfaceUtils.loadIcon("/icons/unlock.png")
@@ -956,87 +1010,94 @@ class InterfaceUI : JFrame()
             background = Color.WHITE
         }
 
-        val titlePanel = JPanel(BorderLayout()).apply {
-            border = BorderFactory.createLoweredBevelBorder()
-            background = Color.WHITE
-            preferredSize = Dimension(sectionWidth, fieldHeight)
-            maximumSize = Dimension(Int.MAX_VALUE, fieldHeight)
+        if (title != null) {
+            val titlePanel = JPanel(BorderLayout()).apply {
+                border = BorderFactory.createLoweredBevelBorder()
+                font.deriveFont(11f)
+                background = Color.WHITE
+                preferredSize = Dimension(sectionWidth, fieldHeight)
+                maximumSize = Dimension(Int.MAX_VALUE, fieldHeight)
 
-            val titleLabel = JLabel(title, JLabel.LEFT)
-            titleLabel.border = BorderFactory.createEmptyBorder(0, 2, 0, 0)
-            add(titleLabel, BorderLayout.CENTER)
+                val titleLabel = JLabel(title, JLabel.LEFT)
+                titleLabel.border = BorderFactory.createEmptyBorder(0, 2, 0, 0)
+                add(titleLabel, BorderLayout.CENTER)
 
-            val buttonPanel = JPanel(FlowLayout(FlowLayout.RIGHT, 1, 4)).apply {
-                isOpaque = false
-            }
-            if (showInfo) {
-                val infoButton = JButton().apply {
-                    toolTipText = """
-                                  <html>
-                                  <b>Buttons legend:</b><br>
-                                  <b>LPM (in the title area)</b> - increase section width<br>
-                                  <b>RPM (in the title area)</b> - decrease section width<br>
-                                  <b>Lock</b> - prevent resize<br>
-                                  <b>Reset</b> - reset width
-                                  </html>
-                                  """.trimIndent()
+                val buttonPanel = JPanel(FlowLayout(FlowLayout.RIGHT, 1, 2)).apply {
+                    isOpaque = false
+                }
 
-                    icon = infoIcon
+                if (showInfo) {
+                    val infoButton = JButton().apply {
+                        toolTipText = """<html>
+                    <b>Buttons legend:</b><br>
+                    <b>LPM</b> - increase width<br>
+                    <b>RPM</b> - decrease width<br>
+                    <b>Lock</b> - prevent resize<br>
+                    <b>Reset</b> - reset width
+                    </html>""".trimIndent()
+
+                        icon = infoIcon
+                        isFocusPainted = false
+                        isContentAreaFilled = false
+                        border = BorderFactory.createEmptyBorder()
+                    }
+
+                    buttonPanel.add(infoButton)
+                }
+
+                val resetButton = JButton().apply {
+                    toolTipText = "Reset section width"
+                    icon = resetIcon
                     isFocusPainted = false
                     isContentAreaFilled = false
                     border = BorderFactory.createEmptyBorder()
-                    isEnabled = true
-                }
-
-                buttonPanel.add(infoButton)
-            }
-            val resetButton = JButton().apply {
-                toolTipText = "Reset section width"
-                icon = resetIcon
-                isFocusPainted = false
-                isContentAreaFilled = false
-                border = BorderFactory.createEmptyBorder()
-                addActionListener {
-                    expandedWidth = sectionWidth
-                    sectionPanel.preferredSize = Dimension(expandedWidth, sectionPanel.preferredSize.height)
-                    sectionPanel.revalidate()
-                    sectionPanel.repaint()
-                }
-            }
-            var locked = true
-            val lockButton = JButton().apply {
-                toolTipText = "Lock section width"
-                icon = lockIcon
-                isFocusPainted = false
-                isContentAreaFilled = false
-                border = BorderFactory.createEmptyBorder()
-                addActionListener {
-                    locked = !locked
-                    icon =  if (locked) lockIcon else unlockIcon
-                }
-            }
-
-            buttonPanel.add(resetButton)
-            buttonPanel.add(lockButton)
-            add(buttonPanel, BorderLayout.EAST)
-
-            addMouseListener(object : MouseAdapter() {
-                override fun mouseClicked(e: MouseEvent) {
-                    if (!locked) {
-                        expandedWidth = when {
-                            SwingUtilities.isLeftMouseButton(e) -> (expandedWidth + 50).coerceAtMost(maxWidth)
-                            SwingUtilities.isRightMouseButton(e) -> (expandedWidth - 50).coerceAtLeast(minWidth)
-                            else -> expandedWidth
-                        }
-                        sectionPanel.preferredSize = Dimension(expandedWidth, sectionPanel.preferredSize.height)
+                    addActionListener {
+                        expandedWidth = sectionWidth
+                        sectionPanel.preferredSize =
+                            Dimension(expandedWidth, sectionPanel.preferredSize.height)
                         sectionPanel.revalidate()
                         sectionPanel.repaint()
                     }
                 }
-            })
-        }
 
-        sectionPanel.add(titlePanel, BorderLayout.NORTH)
+                var locked = true
+                val lockButton = JButton().apply {
+                    toolTipText = "Lock section width"
+                    icon = lockIcon
+                    isFocusPainted = false
+                    isContentAreaFilled = false
+                    border = BorderFactory.createEmptyBorder()
+                    addActionListener {
+                        locked = !locked
+                        icon = if (locked) lockIcon else unlockIcon
+                    }
+                }
+
+                buttonPanel.add(resetButton)
+                buttonPanel.add(lockButton)
+                add(buttonPanel, BorderLayout.EAST)
+
+                addMouseListener(object : MouseAdapter() {
+                    override fun mouseClicked(e: MouseEvent) {
+                        if (!locked) {
+                            expandedWidth = when {
+                                SwingUtilities.isLeftMouseButton(e) ->
+                                    (expandedWidth + 50).coerceAtMost(maxWidth)
+                                SwingUtilities.isRightMouseButton(e) ->
+                                    (expandedWidth - 50).coerceAtLeast(minWidth)
+                                else -> expandedWidth
+                            }
+                            sectionPanel.preferredSize =
+                                Dimension(expandedWidth, sectionPanel.preferredSize.height)
+                            sectionPanel.revalidate()
+                            sectionPanel.repaint()
+                        }
+                    }
+                })
+            }
+
+            sectionPanel.add(titlePanel, BorderLayout.NORTH)
+        }
 
         val contentPanel = object : JPanel(GridBagLayout()), Scrollable {
             override fun getPreferredScrollableViewportSize(): Dimension = preferredSize
@@ -1055,7 +1116,7 @@ class InterfaceUI : JFrame()
             "Hidden", "Fill", "HasAlpha", "Orthogonal", "Shadow", "HFlip", "VFlip", "Tiling", "NoClickThrough",
             "UnknownProp5", "UnknownProp8", "RightClickAllowed", "CanBeUsedOn", "DragRenderBehavior",
             "HasUnlockedSlots", "UseOnGround", "UseOnNpc", "UseOnObject", "UseOnPlayer", "UseOnSelf",
-            "UseOnComponent", "UnknownBit21", "UnknownBit31"
+            "UseOnIComp", "UnknownBit21", "UnknownBit31"
         ).apply { addAll((1..10).map { "Slot $it" }) }
 
         val enumFields = mapOf(
@@ -1162,8 +1223,8 @@ class InterfaceUI : JFrame()
         }
 
         sectionPanel.add(scrollPane, BorderLayout.CENTER)
-        sectionPanel.maximumSize = Dimension(Int.MAX_VALUE, Consts.SECTION_HEIGHT)
-        sectionPanel.preferredSize = Dimension(sectionWidth, Consts.SECTION_HEIGHT)
+        sectionPanel.maximumSize = Dimension(Int.MAX_VALUE, sectionHeight)
+        sectionPanel.preferredSize = Dimension(sectionWidth, sectionHeight)
 
         return sectionPanel
     }

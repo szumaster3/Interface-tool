@@ -4,22 +4,21 @@ import rs.cache.ComponentType
 import java.awt.Color
 
 object Consts {
-    const val APP_VERSION = "1.0.5"
+    const val APP_VERSION = "1.0.6"
 
-    const val EDITOR_WIDTH = 1440 - 253
-    const val EDITOR_HEIGHT = 900 - 178
+    const val EDITOR_WIDTH = 1024
+    const val EDITOR_HEIGHT = 768
 
-    const val SECTION_WIDTH = 265
-    const val SECTION_HEIGHT = 250 + 22
+    const val SECTION_WIDTH = 250
+    const val SECTION_HEIGHT = 240
 
-    const val LEFT_PANEL_WIDTH = 256
-    const val RIGHT_PANEL_WIDTH = 258 + 158 - 17
+    const val LEFT_PANEL_WIDTH = 190
+    const val RIGHT_PANEL_WIDTH = 302
 
     const val CENTER_PANEL_WIDTH = 512
     const val CENTER_PANEL_HEIGHT = 334
 
     const val BUTTON_HEIGHT_SMALL = 25
-    const val BUTTON_HEIGHT_MEDIUM = BUTTON_HEIGHT_SMALL + 5
 
     private const val ALPHA = 90
 

@@ -9,6 +9,7 @@ import ui.Consts
 import ui.InterfaceUI
 import util.ColorPicker
 import util.GenericPrinter
+import util.InterfaceUtils.loadIcon
 import java.awt.BorderLayout
 import javax.swing.*
 import javax.swing.border.Border
@@ -259,43 +260,115 @@ object InterfaceUIButton {
         }
     }
 
-    fun createButton(name: String, tooltip: String? = null, border: Border? = null, onClick: () -> Unit): JButton {
-        return JButton(name).apply {
-            tooltip?.let { toolTipText = it }
-            border?.let { this.border = it }
-            addActionListener { onClick() }
-        }
+    fun newInterfaceButton(): JButton {
+        val button = JButton(loadIcon("/icons/new.png"))
+        button.toolTipText = "Create a new interface"
+        button.addActionListener { addNewInterface() }
+        return button
     }
 
-    fun newInterfaceButton()    = createButton(name = "New",    tooltip = "Create a new interface") { addNewInterface() }
+    fun deleteButton(): JButton {
+        val button = JButton(loadIcon("/icons/delete_file.png"))
+        button.toolTipText = "Remove selected component"
+        button.addActionListener { deleteComponent() }
+        return button
+    }
 
-    fun deleteButton()          = createButton(name = "Delete", onClick = { deleteComponent() })
+    fun cleanInterfaceButton(): JButton {
+        val button = JButton(loadIcon("/icons/delete.png"))
+        button.toolTipText = "Clean the selected interface (remove all components except 0)"
+        button.addActionListener { deleteInterface() }
+        return button
+    }
 
-    fun cleanInterfaceButton()  = createButton(name = "Clean",  tooltip = "Clean the selected interface (remove all components except 0)") { deleteInterface() }
+    fun addSpriteButton(): JButton {
+        val button = JButton(loadIcon("/icons/sprite.png"))
+        button.toolTipText = "Create a sprite component"
+        button.addActionListener { addSprite() }
+        return button
+    }
 
-    fun addSpriteButton()       = createButton(name = "Sprite", tooltip = "Create a sprite component", LineBorder(Consts.SPRITE_COLOR, 1)) { addSprite() }
+    fun addModelButton(): JButton {
+        val button = JButton(loadIcon("/icons/model.png"))
+        button.toolTipText = "Create a model component"
+        button.addActionListener { addModel() }
+        return button
+    }
 
-    fun addModelButton()        = createButton(name = "Model",  tooltip = "Create a model component", LineBorder(Consts.MODEL_COLOR, 1)) { addModel() }
+    fun addLayerButton(): JButton {
+        val button = JButton(loadIcon("/icons/layer.png"))
+        button.toolTipText = "Create a layer component"
+        button.addActionListener { addLayer() }
+        return button
+    }
 
-    fun addLayerButton()        = createButton(name = "Layer",  tooltip = "Create a layer component", LineBorder(Consts.LAYER_COLOR, 1)) { addLayer() }
+    fun addFigureButton(): JButton {
+        val button = JButton(loadIcon("/icons/figure.png"))
+        button.toolTipText = "Create a figure component"
+        button.addActionListener { addFigure() }
+        return button
+    }
 
-    fun addFigureButton()       = createButton(name = "Figure", tooltip = "Create a figure component", LineBorder(Consts.FIGURE_COLOR, 1)) { addFigure() }
+    fun addTextButton(): JButton {
+        val button = JButton(loadIcon("/icons/text.png"))
+        button.toolTipText = "Create a text component"
+        button.addActionListener { addText() }
+        return button
+    }
 
-    fun addTextButton()         = createButton(name = "Text",   tooltip = "Create a text component", LineBorder(Consts.TEXT_COLOR, 1)) { addText() }
+    fun addLineButton(): JButton {
+        val button = JButton(loadIcon("/icons/line.png"))
+        button.toolTipText = "Create a line component"
+        button.addActionListener { addLine() }
+        return button
+    }
 
-    fun addLineButton()         = createButton(name = "Line",   tooltip = "Create a line component", LineBorder(Consts.LINE_COLOR, 1)) { addLine() }
+    fun saveButton(): JButton {
+        val button = JButton(loadIcon("/icons/save.png"))
+        button.toolTipText = "Save the selected component"
+        button.addActionListener { saveComponent() }
+        return button
+    }
 
-    fun saveButton()            = createButton(name = "Save",   tooltip = "Save the selected component") { saveComponent() }
+    fun copyButton(): JButton {
+        val button = JButton(loadIcon("/icons/copy.png"))
+        button.toolTipText = "Copy the selected component"
+        button.addActionListener { copyComponent() }
+        return button
+    }
 
-    fun copyButton()            = createButton(name = "Copy",   tooltip = "Copy the selected component") { copyComponent() }
+    fun spriteLibraryButton(): JButton {
+        val button = JButton(loadIcon("/icons/sprites_library.png"))
+        button.toolTipText = "Allows you to select any sprite loaded from the cache"
+        button.addActionListener { openSpriteLibrary() }
+        return button
+    }
 
-    fun pasteButton()           = createButton(name = "Paste",  tooltip = "Paste the copied component into the selected interface") { pasteComponent() }
+    fun pasteButton(): JButton {
+        val button = JButton(loadIcon("/icons/paste.png"))
+        button.toolTipText = "Paste the copied component into the selected interface"
+        button.addActionListener { pasteComponent() }
+        return button
+    }
 
-    fun printButton()           = createButton(name = "dumptxt",   tooltip = "Print either the selected component or the entire interface to a text file") { printComponent() }
+    fun printButton(): JButton {
+        val button = JButton(loadIcon("/icons/dump.png"))
+        button.toolTipText = "Print either the selected component or the entire interface to a text file"
+        button.addActionListener { printComponent() }
+        return button
+    }
 
-    fun spriteLibraryButton()   = createButton(name = "sprites", tooltip = "Allows you to select any sprite loaded from the cache") { openSpriteLibrary() }
+    fun colorPickButton(): JButton {
+        val button = JButton("Pick color")
+        button.toolTipText = "Select the color"
+        button.addActionListener { openColorPicker() }
+        return button
+    }
 
-    fun colorPickButton()       = createButton(name = "Pick color", tooltip = "Select the color") { openColorPicker() }
-
-    fun aboutButton()           = createButton(name = "About",  tooltip = "Show credits") { aboutDialogue() }
+    fun aboutButton(): JButton {
+        val button = JButton("About")
+        button.toolTipText = "Show credits"
+        button.addActionListener { aboutDialogue() }
+        return button
+    }
 }

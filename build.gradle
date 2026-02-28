@@ -9,7 +9,7 @@ plugins {
 }
 
 group = 'org.example'
-version = '1.0.5'
+version = '1.0.6'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -57,7 +57,7 @@ jar {
 
 shadowJar {
     archiveBaseName.set('example')
-    archiveVersion.set('1.0.5')
+    archiveVersion.set('1.0.6')
     archiveClassifier.set('')
     manifest {
         attributes(

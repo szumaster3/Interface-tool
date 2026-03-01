@@ -30,7 +30,6 @@ class InterfaceUIMenu : JMenuBar() {
         editMenu.add(InterfaceUIMenuItems.redoItem())
         editMenu.add(InterfaceUIMenuItems.copyItem())
         add(editMenu)
-        editMenu.isEnabled = false
 
         // View Menu
         viewMenu.add(InterfaceUIMenuItems.zoomInItem())

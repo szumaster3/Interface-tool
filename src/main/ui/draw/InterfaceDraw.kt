@@ -17,7 +17,7 @@ object InterfaceDraw {
     var editMode = false
     private const val FIXED_SHIFT = 14
     private val DEFAULT_FONT = Font("Helvetica", Font.PLAIN, 11)
-
+    private const val HANDLE_SIZE = 6
     enum class ViewMode { NONE, BY_TYPE }
     var viewMode: ViewMode = ViewMode.NONE
     var selectedType: Int? = null
@@ -134,7 +134,9 @@ object InterfaceDraw {
             g, comp, x, y, w, h,
             selectedComponent == comp
         )
-
+        if (selectedComponent == comp) {
+            drawResize(g, x, y, w, h)
+        }
         g.clip = oldClip
     }
 
@@ -479,5 +481,51 @@ object InterfaceDraw {
         childrenCache.clear()
         spriteCache.clear()
         textCache.clear()
+    }
+
+    private fun drawResize(g: Graphics2D, x: Int, y: Int, w: Int, h: Int)
+    {
+        g.color = Color.WHITE
+        g.stroke = BasicStroke(1f)
+        val half = HANDLE_SIZE / 2
+
+        fun handle(cx: Int, cy: Int)
+        {
+            g.fillRect(cx - half, cy - half, HANDLE_SIZE, HANDLE_SIZE)
+            g.color = Color.BLACK
+            g.drawRect(cx - half, cy - half, HANDLE_SIZE, HANDLE_SIZE)
+            g.color = Color.WHITE
+        }
+        handle(x, y)
+        handle(x + w / 2, y)
+        handle(x + w, y)
+        handle(x + w, y + h / 2)
+        handle(x + w, y + h)
+        handle(x + w / 2, y + h)
+        handle(x, y + h)
+        handle(x, y + h / 2)
+    }
+
+    fun getCursor(mouseX: Int, mouseY: Int, x: Int, y: Int, w: Int, h: Int): ResizeType?
+    {
+
+        val half = HANDLE_SIZE / 2
+
+        fun click(cx: Int, cy: Int): Boolean = mouseX in
+                (cx - half)..(cx + half) && mouseY in
+                (cy - half)..(cy + half)
+
+        return when
+        {
+            click(x, y) -> ResizeType.TOP_LEFT
+            click(x + w / 2, y) -> ResizeType.TOP
+            click(x + w, y) -> ResizeType.TOP_RIGHT
+            click(x + w, y + h / 2) -> ResizeType.RIGHT
+            click(x + w, y + h) -> ResizeType.BOTTOM_RIGHT
+            click(x + w / 2, y + h) -> ResizeType.BOTTOM
+            click(x, y + h) -> ResizeType.BOTTOM_LEFT
+            click(x, y + h / 2) -> ResizeType.LEFT
+            else -> null
+        }
     }
 }

@@ -1,5 +1,6 @@
 package ui.menu
 
+import ui.InterfaceUI
 import javax.swing.JMenuItem
 
 object InterfaceUIMenuItems {
@@ -20,13 +21,21 @@ object InterfaceUIMenuItems {
     }
 
     fun undoItem() = JMenuItem("Undo").apply {
-        addActionListener { }
+        addActionListener {
+            InterfaceUI.instance?.renderPanel?.undo()
+            InterfaceUI.instance?.renderPanel?.repaint()
+        }
     }
     fun redoItem() = JMenuItem("Redo").apply {
-        addActionListener { }
+        addActionListener {
+            InterfaceUI.instance?.renderPanel?.redo()
+            InterfaceUI.instance?.renderPanel?.repaint()
+        }
     }
     fun copyItem() = JMenuItem("Copy").apply {
-        addActionListener { }
+        addActionListener {
+            InterfaceUIButton.copyComponent()
+        }
     }
 
     fun zoomInItem() = JMenuItem("Zoom In").apply {

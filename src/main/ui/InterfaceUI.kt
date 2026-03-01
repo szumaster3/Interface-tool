@@ -12,6 +12,7 @@ import ui.draw.InterfaceDraw
 import ui.draw.RenderPanel
 import ui.menu.InterfaceUIButton
 import ui.menu.InterfaceUIMenu
+import ui.selection.SelectionModel
 import util.InterfaceUtils
 import util.InterfaceUtils.iconButton
 import java.awt.*
@@ -20,6 +21,7 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
 class InterfaceUI : JFrame()
@@ -92,6 +94,56 @@ class InterfaceUI : JFrame()
         loadTree()
         loadPanels()
         loadInterfaces()
+        setupSelection()
+        setupChange()
+    }
+
+    private fun setupSelection()
+    {
+
+        SelectionModel.addListener { comp ->
+
+            if (comp == null) {
+                componentTree.clearSelection()
+                componentList.clearSelection()
+                return@addListener
+            }
+
+            val path = findTreePathForComponent(comp)
+            if (path != null) {
+                componentTree.selectionPath = path
+                componentTree.scrollPathToVisible(path)
+            }
+
+            componentList.setSelectedValue(comp, false)
+            componentList.ensureIndexIsVisible(componentList.selectedIndex)
+
+            updatePropertyFields(comp)
+
+            selectedComponent = comp
+            renderPanel.repaint()
+        }
+    }
+
+    private fun findTreePathForComponent(comp: ComponentDefinition): TreePath?
+    {
+        fun search(node: DefaultMutableTreeNode): TreePath?
+        {
+            if (node.userObject == comp)
+            {
+                return TreePath(node.path)
+            }
+            for (i in 0 until node.childCount)
+            {
+                val result = search(node.getChildAt(i) as DefaultMutableTreeNode)
+                if (result != null) return result
+            }
+
+            return null
+        }
+
+        val root = treeModel.root as? DefaultMutableTreeNode ?: return null
+        return search(root)
     }
 
     private fun setupInterfaceListListener()
@@ -433,6 +485,22 @@ class InterfaceUI : JFrame()
         updateTabs()
     }
 
+    private fun setupChange()
+    {
+        renderPanel.changeListeners += { updateChanges() }
+
+        undoButton.addActionListener { renderPanel.undo() }
+        redoButton.addActionListener { renderPanel.redo() }
+
+        updateChanges()
+    }
+
+    private fun updateChanges()
+    {
+        undoButton.isEnabled = renderPanel.hasUndo()
+        redoButton.isEnabled = renderPanel.hasRedo()
+    }
+
     private fun updateTabs()
     {
         treeTab.background = if (treeView) Color.LIGHT_GRAY else null
@@ -443,7 +511,7 @@ class InterfaceUI : JFrame()
     fun selectComponent(comp: ComponentDefinition)
     {
         selectedComponent = comp
-        renderPanel.selectedComponent = comp
+        SelectionModel.selected = comp
         buildPropertyPanel(comp)
         renderPanel.repaint()
     }
@@ -451,8 +519,8 @@ class InterfaceUI : JFrame()
     private fun clearSelection()
     {
         InterfaceDraw.clearCache()
+        SelectionModel.selected = null
         selectedComponent = null
-        renderPanel.selectedComponent = null
         componentTree.clearSelection()
         componentList.clearSelection()
     }
@@ -527,7 +595,7 @@ class InterfaceUI : JFrame()
     }
 
 
-    fun initScriptsPanel()
+    private fun initScriptsPanel()
     {
         scriptsPanel.removeAll()
 
@@ -539,6 +607,14 @@ class InterfaceUI : JFrame()
         )
 
         scriptsPanel.add(scriptSection)
+    }
+
+    private fun updatePropertyFields(comp: ComponentDefinition)
+    {
+        (fieldMap["baseWidth"] as? JTextField)?.text = comp.baseWidth.toString()
+        (fieldMap["baseHeight"] as? JTextField)?.text = comp.baseHeight.toString()
+        (fieldMap["baseX"] as? JTextField)?.text = comp.baseX.toString()
+        (fieldMap["baseY"] as? JTextField)?.text = comp.baseY.toString()
     }
 
     private val componentTypes = mapOf(

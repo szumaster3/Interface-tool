@@ -577,7 +577,7 @@ class InterfaceUI : JFrame()
         val optionSection = createSection(
             "Options",
                     (1..10).map { "Option $it" } +
-                    listOf("OptionBase", "OptionCircumfix", "UseOnGround", "UseOnNpc", "UseOnObject", "UseOnPlayer", "UseOnSelf", "UseOnIComp", "Cursor1Index", "Cursor1ID", "Cursor2Index", "Cursor2ID"),
+                    listOf("OptionBase", "OptionCircumfix", "UseOnGround", "UseOnNpc", "UseOnObject", "UseOnPlayer", "UseOnSelf", "UseOnIComp"),
             width = 200,
             labelWidth = 90,
             fieldHeight = 23

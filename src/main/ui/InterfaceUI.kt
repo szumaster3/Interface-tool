@@ -699,36 +699,6 @@ class InterfaceUI : JFrame()
         set("OptionBase", c.optionBase)
         set("OptionCircumfix", c.optionCircumfix)
 
-        // To remove:
-        var c1i = -1
-        var c1v = -1
-        var c2i = -1
-        var c2v = -1
-
-        if (c.opCursors != null) {
-            var found = 0
-            for (i in c.opCursors!!.indices) {
-                val value = c.opCursors!![i]
-                if (value != -1) {
-                    if (found == 0) {
-                        c1i = i
-                        c1v = value
-                    } else if (found == 1) {
-                        c2i = i
-                        c2v = value
-                    }
-                    found++
-                }
-            }
-        }
-
-        set("Cursor1Index", c1i)
-        set("Cursor1ID",    c1v)
-        set("Cursor2Index", c2i)
-        set("Cursor2ID",    c2v)
-
-        // --------------
-
         val s = c.settings
 
         set("RightClickAllowed",        s.rightClickAllowed())
@@ -826,11 +796,9 @@ class InterfaceUI : JFrame()
         val s = c.settings
         var newSettings = s.settings
 
-        fun setBit(bit: Int, enabled: Boolean) {
-            newSettings = if (enabled)
-                newSettings or (1 shl bit)
-            else
-                newSettings and (1 shl bit).inv()
+        fun setBit(bit: Int, enabled: Boolean)
+        {
+            newSettings = if (enabled) newSettings or (1 shl bit) else newSettings and (1 shl bit).inv()
         }
 
         fun getText(name: String): String {
@@ -980,52 +948,6 @@ class InterfaceUI : JFrame()
                 // Figure
                 "Fill"         -> c.filled = text.toBoolean()
             }
-        }
-
-        // Cursors
-
-        val idx1 = getText("Cursor1Index").toIntOrNull() ?: -1
-        val id1  = getText("Cursor1ID").toIntOrNull() ?: -1
-        val idx2 = getText("Cursor2Index").toIntOrNull() ?: -1
-        val id2  = getText("Cursor2ID").toIntOrNull() ?: -1
-
-        val maxIndex = maxOf(idx1, idx2).coerceAtLeast(-1)
-
-        if (maxIndex >= 0)
-        {
-            c.opCursors = IntArray(maxIndex + 1) { -1 }
-
-            if (idx1 >= 0 && id1 >= 0 && idx1 < c.opCursors!!.size)
-                c.opCursors!![idx1] = id1
-
-            if (idx2 >= 0 && id2 >= 0 && idx2 < c.opCursors!!.size)
-                c.opCursors!![idx2] = id2
-        }
-        else
-        {
-            c.opCursors = null
-        }
-
-        // Target mask
-        var targetMask = 0
-
-        if ((fieldMap["UseOnGround"] as? JCheckBox)?.isSelected == true)    targetMask = targetMask or 1
-        if ((fieldMap["UseOnNpc"] as? JCheckBox)?.isSelected == true)       targetMask = targetMask or (1 shl 1)
-        if ((fieldMap["UseOnObject"] as? JCheckBox)?.isSelected == true)    targetMask = targetMask or (1 shl 2)
-        if ((fieldMap["UseOnPlayer"] as? JCheckBox)?.isSelected == true)    targetMask = targetMask or (1 shl 3)
-        if ((fieldMap["UseOnSelf"] as? JCheckBox)?.isSelected == true)      targetMask = targetMask or (1 shl 4)
-        if ((fieldMap["UseOnIComp"] as? JCheckBox)?.isSelected == true) targetMask = targetMask or (1 shl 5)
-
-        if (targetMask == 0)
-        {
-            newSettings = newSettings and (0x7F shl 11).inv()
-            c.mask = -1
-            c.targetOverCursor = -1
-            c.targetLeaveCursor = -1
-        }
-        else
-        {
-            c.mask = targetMask
         }
 
         c.settings.settings = newSettings

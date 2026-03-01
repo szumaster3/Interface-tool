@@ -7,6 +7,7 @@ import ui.InterfaceUI
 import ui.draw.InterfaceDraw.childrenCache
 import ui.draw.InterfaceDraw.getCursor
 import ui.selection.SelectionModel
+import ui.selection.SelectionSource
 import java.awt.*
 import java.awt.event.*
 import java.awt.image.BufferedImage
@@ -60,12 +61,12 @@ class RenderPanel : JPanel() {
 
                 val clicked = hitTestComponent(e.x, e.y)
                 if (clicked == null) {
-                    SelectionModel.selected = null
+                    SelectionModel.setSelection(null, SelectionSource.MOUSE)
                     return
                 }
 
                 if (clicked != selectedComponent) {
-                    SelectionModel.selected = clicked
+                    SelectionModel.setSelection(clicked, SelectionSource.MOUSE)
                 }
 
                 val comp = selectedComponent ?: return

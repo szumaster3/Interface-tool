@@ -6,6 +6,8 @@ import rs.cache.ComponentDefinition.Companion.getInterface
 import rs.cache.ComponentType
 import rs.cache.sprite.SpriteLoader
 import ui.Consts
+import ui.selection.SelectionModel
+import ui.selection.SelectionSource
 import util.ComponentSprites
 import util.ImageUtils
 import util.InterfaceUtils
@@ -134,7 +136,7 @@ object InterfaceDraw {
             g, comp, x, y, w, h,
             selectedComponent == comp
         )
-        if (selectedComponent == comp) {
+        if (selectedComponent == comp && SelectionModel.source == SelectionSource.MOUSE) {
             drawResize(g, x, y, w, h)
         }
         g.clip = oldClip

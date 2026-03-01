@@ -13,6 +13,7 @@ import ui.draw.RenderPanel
 import ui.menu.InterfaceUIButton
 import ui.menu.InterfaceUIMenu
 import ui.selection.SelectionModel
+import ui.selection.SelectionSource
 import util.InterfaceUtils
 import util.InterfaceUtils.iconButton
 import java.awt.*
@@ -511,7 +512,7 @@ class InterfaceUI : JFrame()
     fun selectComponent(comp: ComponentDefinition)
     {
         selectedComponent = comp
-        SelectionModel.selected = comp
+        SelectionModel.setSelection(comp, SelectionSource.DEFAULT)
         buildPropertyPanel(comp)
         renderPanel.repaint()
     }
@@ -519,7 +520,7 @@ class InterfaceUI : JFrame()
     private fun clearSelection()
     {
         InterfaceDraw.clearCache()
-        SelectionModel.selected = null
+        SelectionModel.setSelection(null, SelectionSource.DEFAULT)
         selectedComponent = null
         componentTree.clearSelection()
         componentList.clearSelection()

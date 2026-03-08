@@ -52,8 +52,8 @@ public final class MainFile {
                 tempBuffer.clear().limit(IDX_BLOCK_LEN);
                 index.read(tempBuffer, archiveId * IDX_BLOCK_LEN);
                 tempBuffer.flip();
-                int length = Utils.getMediumInt(tempBuffer);
-                int block = Utils.getMediumInt(tempBuffer);
+                int length = Utils.readMedium(tempBuffer);
+                int block = Utils.readMedium(tempBuffer);
 
                 if (length <= 0 || block <= 0 || block > data.size() / TOTAL_BLOCK_LEN) return null;
 
@@ -75,12 +75,12 @@ public final class MainFile {
                     if (newProtocol && archiveId > 0xFFFF) {
                         currentFile = tempBuffer.getInt();
                         currentChunk = tempBuffer.getShort() & 0xFFFF;
-                        nextBlock = Utils.getMediumInt(tempBuffer);
+                        nextBlock = Utils.readMedium(tempBuffer);
                         currentIndex = tempBuffer.get() & 0xFF;
                     } else {
                         currentFile = tempBuffer.getShort() & 0xFFFF;
                         currentChunk = tempBuffer.getShort() & 0xFFFF;
-                        nextBlock = Utils.getMediumInt(tempBuffer);
+                        nextBlock = Utils.readMedium(tempBuffer);
                         currentIndex = tempBuffer.get() & 0xFF;
                     }
 
@@ -128,7 +128,7 @@ public final class MainFile {
                     tempBuffer.clear().limit(IDX_BLOCK_LEN);
                     index.read(tempBuffer, archiveId * IDX_BLOCK_LEN);
                     tempBuffer.flip().position(3); // skip length
-                    block = Utils.getMediumInt(tempBuffer);
+                    block = Utils.readMedium(tempBuffer);
                     if (block <= 0 || block > data.size() / TOTAL_BLOCK_LEN) return false;
                 } else {
                     block = (int) ((data.size() + TOTAL_BLOCK_LEN - 1) / TOTAL_BLOCK_LEN);
@@ -136,8 +136,8 @@ public final class MainFile {
                 }
 
                 tempBuffer.clear();
-                Utils.putMediumInt(tempBuffer, size);
-                Utils.putMediumInt(tempBuffer, block);
+                Utils.writeMedium(tempBuffer, size);
+                Utils.writeMedium(tempBuffer, block);
                 tempBuffer.flip();
                 index.write(tempBuffer, archiveId * IDX_BLOCK_LEN);
 
@@ -158,12 +158,12 @@ public final class MainFile {
                         if (newProtocol && archiveId > 0xFFFF) {
                             currentFile = tempBuffer.getInt();
                             currentChunk = tempBuffer.getShort() & 0xFFFF;
-                            nextBlock = Utils.getMediumInt(tempBuffer);
+                            nextBlock = Utils.readMedium(tempBuffer);
                             currentIndex = tempBuffer.get() & 0xFF;
                         } else {
                             currentFile = tempBuffer.getShort() & 0xFFFF;
                             currentChunk = tempBuffer.getShort() & 0xFFFF;
-                            nextBlock = Utils.getMediumInt(tempBuffer);
+                            nextBlock = Utils.readMedium(tempBuffer);
                             currentIndex = tempBuffer.get() & 0xFF;
                         }
 
@@ -184,12 +184,12 @@ public final class MainFile {
                     if (newProtocol && archiveId > 0xFFFF) {
                         tempBuffer.putInt(archiveId);
                         tempBuffer.putShort((short) chunk);
-                        Utils.putMediumInt(tempBuffer, nextBlock);
+                        Utils.writeMedium(tempBuffer, nextBlock);
                         tempBuffer.put((byte) id);
                     } else {
                         tempBuffer.putShort((short) archiveId);
                         tempBuffer.putShort((short) chunk);
-                        Utils.putMediumInt(tempBuffer, nextBlock);
+                        Utils.writeMedium(tempBuffer, nextBlock);
                         tempBuffer.put((byte) id);
                     }
 

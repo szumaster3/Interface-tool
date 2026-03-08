@@ -4,9 +4,12 @@ import com.alex.loaders.interfaces.ComponentDefinition
 import com.alex.loaders.interfaces.ComponentDefinition.Companion.getInterface
 import com.alex.loaders.interfaces.ComponentSprites
 import com.alex.loaders.interfaces.ComponentType
+import com.alex.loaders.mesh.Unknown4
+import com.alex.loaders.mesh.Unknown3
 import com.alex.loaders.sprites.util.SpriteLoader
 import com.alex.utils.Utils
 import rs2.editor.ui.Consts
+import rs2.editor.ui.InterfaceUI
 import rs2.editor.ui.selection.SelectionModel
 import rs2.editor.ui.selection.SelectionSource
 import rs2.editor.ui.utils.ImageUtils
@@ -14,6 +17,7 @@ import rs2.editor.ui.utils.InterfaceUtils
 import java.awt.*
 import java.awt.image.BufferedImage
 import kotlin.math.min
+
 
 object InterfaceDraw {
     var editMode = false
@@ -116,7 +120,7 @@ object InterfaceDraw {
                 ComponentType.LAYER  -> drawLayer(g, comp, x, y, w, h, showContainers)
                 ComponentType.SPRITE -> drawSprite(g, comp, x, y, w, h)
                 ComponentType.FIGURE -> drawFigure(g, comp, x, y, w, h)
-                ComponentType.MODEL  -> if (showModels) drawModel(g, comp, x, y, w, h)
+                ComponentType.MODEL  -> drawModel(g, comp, x, y, w, h, showModels)
                 ComponentType.TEXT   -> drawText(g, comp, x, y, w, h)
                 ComponentType.LINE   -> drawLine(g, comp, x, y)
             }
@@ -225,11 +229,34 @@ object InterfaceDraw {
         x: Int,
         y: Int,
         w: Int,
-        h: Int
+        h: Int,
+        drawModel: Boolean
     ) {
+        val drawWidth =
+            if (comp.widthMode.toInt() != 0 && comp.modelObjWidth > 0)
+                comp.modelObjWidth
+            else w
+
+        val drawHeight =
+            if (comp.heightMode.toInt() != 0 && comp.modelObjHeight > 0)
+                comp.modelObjHeight
+            else h
+
+        if (drawModel) {
+            val model = Unknown4.getModel(comp.modelId)
+            if (model != null) {
+                val modelUnknown3 = Unknown3(
+                    drawWidth,
+                    drawHeight,
+                    InterfaceUI.instance?.renderPanel
+                )
+                modelUnknown3.clear()
+                modelUnknown3.updateModel(model, comp)
+                modelUnknown3.updatePreview(x, y, g)
+            }
+        }
+
         g.color = Consts.MODEL_COLOR
-        val drawWidth = if (comp.widthMode.toInt() != 0 && comp.modelObjWidth > 0) comp.modelObjWidth else w
-        val drawHeight = if (comp.heightMode.toInt() != 0 && comp.modelObjHeight > 0) comp.modelObjHeight else h
         g.drawRect(x, y, drawWidth - 1, drawHeight - 1)
     }
 

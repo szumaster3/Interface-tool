@@ -66,11 +66,11 @@ public final class Utils {
         return data;
     }
 
-    public static int getMediumInt(ByteBuffer buffer) {
+    public static int readMedium(ByteBuffer buffer) {
         return ((buffer.get() & 0xFF) << 16) | ((buffer.get() & 0xFF) << 8) | (buffer.get() & 0xFF);
     }
 
-    public static void putMediumInt(ByteBuffer buffer, int value) {
+    public static void writeMedium(ByteBuffer buffer, int value) {
         buffer.put((byte) (value >> 16));
         buffer.put((byte) (value >> 8));
         buffer.put((byte) value);
@@ -224,15 +224,4 @@ public final class Utils {
             default:         return Color.GREEN;
         }
     }
-
-    public static List<ComponentDefinition> getAllComponents(int interfaceId) {
-        List<ComponentDefinition> list = new ArrayList<>();
-        int size = ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId);
-        for (int i = 0; i < size; i++) {
-            ComponentDefinition c = ComponentDefinition.getInterfaceComponent(interfaceId, i);
-            if (c != null) list.add(c);
-        }
-        return list;
-    }
-
 }

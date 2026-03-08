@@ -1,14 +1,16 @@
-## Interface Editor
+<div align="center">
+<h2>Interface Editor</h2>
+<h3>Source: https://github.com/PaoloKa/Interface-tool</h3>
+    
+<a href="#startup">Startup</a> •
+<a href="#tool-properties">Configuration</a> •
+<a href="#editing-interfaces">Edting</a> •
+<a href="#scripts">Scripts overview</a>
 
-<img src="https://imgur.com/8kjbfGm.png"/>
+<img src="https://i.imgur.com/o3xmhit.png"/>
+</div>
 
-Source: https://github.com/PaoloKa/Interface-tool
-
----
-
-## Usage
-
-### Startup
+## Startup
 
 1. Open the **`config.properties`** file.
 2. Update the **`cache_path`** to point to your `cache` directory.
@@ -29,31 +31,22 @@ gradlew.bat run
 **From IDE:**
 -  Import the project as a Gradle project and run the `run` task.
 
----
-
-### Tool Properties
+## Tool Properties
 
 ```properties
-cache_path=D:\\server\\data\\cache\\
+cache_path=data/cache
 dump_path=dump/
 sprite_path=dump/
-version=1
 ```
 
-___
-
-### Editing Interfaces
+## Editing Interfaces
 - Select an interface from the list on the **left**.
 - Once selected, its components will appear on the **right**.
 - Choose a component to edit its properties.
 
----
+## Font IDs
 
-### Additional Information
-
-### Font IDs
-
-Below is a list of font IDs currently identified in the rs.cache:
+Below is a list of font IDs currently identified:
 
 ```
 305, 307, 468, 473, 494, 495, 496, 497, 584, 591,
@@ -62,24 +55,15 @@ Below is a list of font IDs currently identified in the rs.cache:
 13120, 13121
 ```
 
----
+## Scripts
 
-### Script IDs
-
-A full list of discovered script IDs will be added in the future.
-
----
-
-### Script system overview
-
-**How do scripts work in the Script tab?**
+**How do scripts work?**
 
 Example – transparency script:
+
 ```
 1357;-2147483645;100;
 ```
-
-___
 
 The script logic (not editable in this editor) looks like this:
 ```java
@@ -87,9 +71,8 @@ void script_1357(Widget widget0, int arg1) {
     widget0.setTrans(arg1);
 }
 ```
-___
 
-### What do these values mean?
+## What do these values mean?
 
 - **1357** – Script ID  
   The first value is always the script identifier.

@@ -52,7 +52,6 @@ class InterfaceUIMenu : JMenuBar() {
         templateMenu.add(InterfaceUIMenuItems.template1Item())
         templateMenu.add(InterfaceUIMenuItems.template2Item())
         add(templateMenu)
-        templateMenu.isEnabled = false
 
         // Controls Menu
         controlsMenu.add(InterfaceUIMenuItems.control1Item())

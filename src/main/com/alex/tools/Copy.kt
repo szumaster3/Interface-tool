@@ -2,6 +2,7 @@ package com.alex.tools
 
 import com.alex.Cache
 import com.alex.loaders.interfaces.ComponentDefinition
+import rs2.editor.ui.InterfaceUI
 import java.util.function.Consumer
 
 class Copy private constructor(val targetInterface: Int) {
@@ -101,6 +102,28 @@ class Copy private constructor(val targetInterface: Int) {
         return copiedComponents
     }
 
+    fun refresh(highlightLast: Boolean = true): Copy {
+        InterfaceUI.instance?.let { ui ->
+            ui.loadComponents(targetInterface)
+            ui.renderPanel.interfaceId = targetInterface
+            ui.refreshTreeAndList()
+            ui.renderPanel.repaint()
+
+            if (highlightLast) {
+                val lastCompId = copiedComponents.lastOrNull()?.componentId
+                lastCompId?.let { compId ->
+                    val index = (0 until ui.interfacesListModel.size())
+                        .firstOrNull { ui.interfacesListModel.getElementAt(it) == compId }
+                    index?.let {
+                        ui.interfacesList.selectedIndex = it
+                        ui.interfacesList.ensureIndexIsVisible(it)
+                    }
+                }
+            }
+        }
+        return this
+    }
+
     private fun init(targetId: Int) {
         val compDefs = ComponentDefinition.componentDefinition
         if (compDefs == null || compDefs.size <= targetId) {
@@ -117,6 +140,15 @@ class Copy private constructor(val targetInterface: Int) {
             comps?.copyInto(newComps)
             ComponentDefinition.componentDefinition!![targetId] = newComps
         }
+    }
+
+    fun addComponents(vararg modifiers: ComponentDefinition.() -> Unit): Copy {
+        for (mod in modifiers) {
+            val task = CopyTask(this, -1, currentId++)
+            task.modifier = Consumer { c -> c?.mod() }
+            tasks.add(task)
+        }
+        return this
     }
 
     fun getCopiedComponents(): List<ComponentDefinition> = copiedComponents

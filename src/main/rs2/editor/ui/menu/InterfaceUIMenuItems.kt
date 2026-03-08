@@ -1,6 +1,8 @@
 package rs2.editor.ui.menu
 
 import rs2.editor.ui.InterfaceUI
+import rs2.editor.ui.utils.ComponentTemplates
+import javax.swing.JMenu
 import javax.swing.JMenuItem
 
 object InterfaceUIMenuItems {
@@ -65,11 +67,55 @@ object InterfaceUIMenuItems {
         addActionListener { InterfaceUIButton.addLine() }
     }
 
-    fun template1Item() = JMenuItem("Template 1").apply {
-        addActionListener { println("Template 1 clicked") }
+    fun template1Item(): JMenu {
+        val menu = JMenu("Scripts")
+
+        val buttonsSubMenu = JMenu("Buttons")
+
+        val simpleButtonItem = JMenuItem("Simple button").apply {
+            addActionListener {
+                ComponentTemplates.createSimpleButton()
+            }
+        }
+        val tooltipButtonItem = JMenuItem("Tooltip button").apply {
+            addActionListener {
+                ComponentTemplates.createTooltipButton()
+            }
+        }
+        val spellButtonItem = JMenuItem("Spell Button").apply {
+            addActionListener {
+                ComponentTemplates.createSpellButton()
+            }
+        }
+        val highlightButtonItem = JMenuItem("Highlight Button").apply {
+            addActionListener {
+                ComponentTemplates.createHighlightButton()
+            }
+        }
+        val closeButtonItem = JMenuItem("Close Button").apply {
+            addActionListener {
+                ComponentTemplates.createCloseButton()
+            }
+        }
+        val dualColorButton = JMenuItem("Simple dual color Button").apply {
+            addActionListener {
+                ComponentTemplates.createDualColorButton()
+            }
+        }
+
+        buttonsSubMenu.add(simpleButtonItem)
+        buttonsSubMenu.add(closeButtonItem)
+        buttonsSubMenu.add(tooltipButtonItem)
+        buttonsSubMenu.add(spellButtonItem)
+        buttonsSubMenu.add(highlightButtonItem)
+        buttonsSubMenu.add(dualColorButton)
+        menu.add(buttonsSubMenu)
+        return menu
     }
-    fun template2Item() = JMenuItem("Template 2").apply {
-        addActionListener { println("Template 2 clicked") }
+
+    fun template2Item() = JMenuItem("Default").apply {
+        addActionListener { println("Default button clicked") }
+        isEnabled = false
     }
 
     fun control1Item() = JMenuItem("Control 1").apply {

@@ -9,7 +9,7 @@ plugins {
 }
 
 group = 'org.example'
-version = '1.0.8'
+version = '1.0.9'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -57,7 +57,7 @@ jar {
 
 shadowJar {
     archiveBaseName.set('Interface Editor')
-    archiveVersion.set('v1.0.8')
+    archiveVersion.set('v1.0.9')
     archiveClassifier.set('')
     manifest {
         attributes(

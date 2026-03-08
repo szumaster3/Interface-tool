@@ -1,6 +1,7 @@
 <div align="center">
 <h2>Interface Editor</h2>
-<h3>Source: https://github.com/PaoloKa/Interface-tool</h3>
+<h3>Source: <a href="https://github.com/PaoloKa/Interface-tool">https://github.com/PaoloKa/Interface-tool</a></h3>
+<h4>Icons used in this project are provided by <a href="https://www.luckyicon.com">LuckyIcon Art</a> and are used according to their license.</h4>
     
 <a href="#startup">Startup</a> •
 <a href="#tool-properties">Configuration</a> •

@@ -6,7 +6,7 @@ import com.alex.io.OutputStream
 import com.alex.utils.Utils
 
 class ComponentDefinition {
-    private var version: Byte = 0
+    internal var version: Byte = 0
     var type: Int = 0
     var contentType: Int = 0
     var componentHash: Int = 0
@@ -73,7 +73,7 @@ class ComponentDefinition {
     var angle2d: Int = 0
     var widthMode: Byte = 0
     var heightMode: Byte = 0
-    private var modelType: Int = 1
+    var modelType: Int = 1
 
     var rightClickOptions: Array<String?>? = null
     var optionBase: String? = ""

@@ -9,12 +9,12 @@ plugins {
 }
 
 group = 'org.example'
-version = '1.0.7'
+version = '1.0.8'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 
-mainClassName = 'ui.InterfaceUI'
+mainClassName = 'rs2.editor.ui.InterfaceUI'
 
 repositories {
     mavenCentral()
@@ -57,7 +57,7 @@ jar {
 
 shadowJar {
     archiveBaseName.set('Interface Editor')
-    archiveVersion.set('v1.0.7')
+    archiveVersion.set('v1.0.8')
     archiveClassifier.set('')
     manifest {
         attributes(

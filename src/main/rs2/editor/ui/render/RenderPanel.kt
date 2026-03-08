@@ -185,7 +185,7 @@ class RenderPanel : JPanel() {
         }
 
         if (comp.type != ComponentType.LAYER && comp.type != ComponentType.FIGURE && !comp.filled) {
-            if (mouseX in x..(x + w) && mouseY in y..(y + h)) {
+            if (mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h) {
                 return comp
             }
         }
@@ -203,6 +203,8 @@ class RenderPanel : JPanel() {
     fun undo()
     {
         if (undoStack.isEmpty()) return
+        if (undoStack.size > 100)
+            undoStack.removeAt(0)
         val compState = undoStack.pop()
         pushRedo(compState.component)
         compState.restore()
@@ -248,11 +250,6 @@ class RenderPanel : JPanel() {
 
         val g2 = backBuffer!!.createGraphics()
         g2.clearRect(0, 0, width, height)
-
-
-        InterfaceDraw.preparedRoots.forEach { comp ->
-            InterfaceDraw.layoutComponent(comp, width, height)
-        }
 
         InterfaceDraw.drawPreparedInterface(
             g2,

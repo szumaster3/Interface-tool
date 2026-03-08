@@ -20,6 +20,7 @@ object InterfaceDraw {
     private const val FIXED_SHIFT = 14
     private val DEFAULT_FONT = Font("Helvetica", Font.PLAIN, 11)
     private const val HANDLE_SIZE = 6
+    private val TAG_REGEX = Regex("<[^>]+>")
     enum class ViewMode { NONE, BY_TYPE }
     var viewMode: ViewMode = ViewMode.NONE
     var selectedType: Int? = null
@@ -277,12 +278,12 @@ object InterfaceDraw {
         val defaultColor = Color(comp.color)
 
         for ((index, line) in lines.withIndex()) {
-            val cleanLine = line.replace(Regex("<[^>]+>"), "")
+            val cleanLine = line.replace(TAG_REGEX, "")
             val lineWidth = fm.stringWidth(cleanLine)
 
             val drawX = when (comp.textHorizontalAli) {
                 1 -> x + (w - lineWidth) / 2
-                2 -> x + w - lineWidth
+                2 -> x + w - lineWidth - 1
                 else -> x
             }
 
@@ -293,7 +294,7 @@ object InterfaceDraw {
 
             for (frag in fragments) {
                 drawTextFragment(g, frag.text, cursorX, drawY, comp, frag.color, frag.underline, frag.underlineColor)
-                cursorX += fm.stringWidth(frag.text.replace(Regex("<[^>]+>"), ""))
+                cursorX += fm.stringWidth(frag.text.replace(TAG_REGEX, ""))
             }
         }
     }
@@ -310,7 +311,7 @@ object InterfaceDraw {
     ) {
         if (text.isEmpty()) return
         val fm = g.fontMetrics
-        val cleanText = text.replace(Regex("<[^>]+>"), "")
+        val cleanText = text.replace(TAG_REGEX, "")
 
         // Shadow
         if (comp.shadow) {
@@ -360,13 +361,13 @@ object InterfaceDraw {
 
             if (match.value.startsWith("</")) {
                 if (stack.size > 1) stack.removeAt(stack.size - 1)
-                if (tag == "u") underline = stack.any { it.second != null || it.first == Color(0x6266FAA) }
+                if (tag == "u") underline = stack.any { it.second != null || it.first == Color(0x6266FA) }
             } else {
                 when (tag) {
                     "col" -> stack.add(Pair(Color(value.toInt(16)), stack.last().second))
                     "u" -> {
                         underline = true
-                        val linkColor = Color(0x6266FAA)
+                        val linkColor = Color(0x6266FA)
                         val underlineCol = Color(value.toInt(16))
                         stack.add(Pair(linkColor, underlineCol))
                     }
@@ -394,17 +395,17 @@ object InterfaceDraw {
         val lines = mutableListOf<String>()
 
         for (part in raw.split("<br>")) {
-            val clean = part.replace(Regex("<[^>]+>"), "")
+            val clean = part.replace(TAG_REGEX, "")
             if (fm.stringWidth(clean) <= width) {
                 lines.add(part)
                 continue
             }
 
             var current = ""
-            for (word in part.split(" ")) {
+            for (word in part.split(" ", "/")) {
                 val test = if (current.isEmpty()) word else "$current $word"
                 if (
-                    fm.stringWidth(test.replace(Regex("<[^>]+>"), "")) > width &&
+                    fm.stringWidth(test.replace(TAG_REGEX, "")) > width &&
                     current.isNotEmpty()
                 ) {
                     lines.add(current)

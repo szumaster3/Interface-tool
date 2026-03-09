@@ -10,7 +10,7 @@
 <a href="#scripts">Scripts overview</a> •
 [Scripts references](data/REFERENCES.md)
 
-<img src="https://i.imgur.com/o3xmhit.png"/>
+<img src="https://imgur.com/e9dAhKP.png"/>
 
 </div>
 

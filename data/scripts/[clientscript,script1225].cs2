@@ -1,0 +1,4 @@
+// 1225
+[clientscript,script1225]
+if_sethide(true, loginscreen:com_397);
+if_sethide(false, loginscreen:com_398);

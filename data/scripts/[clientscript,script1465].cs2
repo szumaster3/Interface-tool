@@ -1,0 +1,4 @@
+// 1465
+[clientscript,script1465]
+if_settext(tostring(%varcint192), bank_v2_main:com_97);
+if_settext(tostring(~bank_v2_get_size), bank_v2_main:bank_space);

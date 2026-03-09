@@ -1,0 +1,3 @@
+// 398
+[proc,script398]
+if_setcolour(^green, questjournal_v2:com_7);

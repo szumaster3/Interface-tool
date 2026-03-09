@@ -1,0 +1,18 @@
+// 1308
+[proc,script1308]
+if_sethide(true, toplevel_fullscreen:side0);
+if_sethide(true, toplevel_fullscreen:side1);
+if_sethide(true, toplevel_fullscreen:side2);
+if_sethide(true, toplevel_fullscreen:side3);
+if_sethide(true, toplevel_fullscreen:side4);
+if_sethide(true, toplevel_fullscreen:side5);
+if_sethide(true, toplevel_fullscreen:side6);
+if_sethide(true, toplevel_fullscreen:side7);
+if_sethide(true, toplevel_fullscreen:side8);
+if_sethide(true, toplevel_fullscreen:side9);
+if_sethide(true, toplevel_fullscreen:side10);
+if_sethide(true, toplevel_fullscreen:side11);
+if_sethide(true, toplevel_fullscreen:side12);
+if_sethide(true, toplevel_fullscreen:side13);
+if_sethide(true, toplevel_fullscreen:side99);
+if_sethide(true, toplevel_fullscreen:side_border);

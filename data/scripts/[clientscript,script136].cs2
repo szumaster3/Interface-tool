@@ -1,0 +1,20 @@
+// 136
+[clientscript,script136](component $component0)
+def_string $string0 = "";
+if ($component0 = interface_613:com_15) {
+	$string0 = oc_name(%var1068);
+	if (%var1068 = null) {
+		$string0 = "Empty";
+	}
+} else if ($component0 = interface_613:com_16) {
+	$string0 = oc_name(%var1069);
+	if (%var1069 = null) {
+		$string0 = "Empty";
+	}
+} else if ($component0 = interface_613:com_17) {
+	$string0 = oc_name(%var1070);
+	if (%var1070 = null) {
+		$string0 = "Empty";
+	}
+}
+~addtooltip_action($component0, interface_613:tooltip_target, $string0, 25, 199);

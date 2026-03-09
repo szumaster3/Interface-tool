@@ -1,0 +1,46 @@
+// 1186
+[proc,script1186]
+def_int $int0 = 0;
+if (getwindowmode >= ^windowmode_resizable) {
+	if (if_hassub(chattop:chatmodallarge) = true) {
+		if_sethide(false, chattop:chat_graphic);
+		if_setalpha(true, chattop:chat_graphic);
+		if (%varbit542 = 0) {
+			if_setgraphic("chat_window", chattop:chat_graphic);
+			if_sethide(false, chattop:chat_border);
+		} else {
+			if_setgraphic("graphic_1205", chattop:chat_graphic);
+			if_sethide(true, chattop:chat_border);
+		}
+	} else if (if_hassub(chattop:chatmodal) = true) {
+		if_sethide(false, chattop:chat_graphic);
+		if_setalpha(true, chattop:chat_graphic);
+		if (%varbit542 = 0) {
+			if_setgraphic("chat_window", chattop:chat_graphic);
+			if_sethide(false, chattop:chat_border);
+		} else {
+			if_setgraphic("graphic_1205", chattop:chat_graphic);
+			if_sethide(true, chattop:chat_border);
+		}
+	} else if (if_hassub(chattop:chatoverlaylarge) = true) {
+		if_sethide(false, chattop:chat_graphic);
+		if_setalpha(true, chattop:chat_graphic);
+		if (%varbit542 = 0) {
+			if_setgraphic("chat_window", chattop:chat_graphic);
+			if_sethide(false, chattop:chat_border);
+		} else {
+			if_setgraphic("graphic_1205", chattop:chat_graphic);
+			if_sethide(true, chattop:chat_border);
+		}
+	} else if (if_hassub(chattop:chatoverlay) = true) {
+		if_sethide(false, chattop:chat_graphic);
+		if_setalpha(true, chattop:chat_graphic);
+		if (%varbit542 = 0) {
+			if_setgraphic("chat_window", chattop:chat_graphic);
+			if_sethide(false, chattop:chat_border);
+		} else {
+			if_setgraphic("graphic_1205", chattop:chat_graphic);
+			if_sethide(true, chattop:chat_border);
+		}
+	}
+}

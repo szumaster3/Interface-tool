@@ -1,0 +1,4 @@
+// 1123
+[clientscript,script1123]
+%varcstring32 = %varcstring34;
+~loginscreen_setactivemenu(loginscreen:com_241);

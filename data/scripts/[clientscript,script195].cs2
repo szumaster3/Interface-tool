@@ -1,0 +1,7 @@
+// 195
+[clientscript,script195](int $int0)
+%varcint53 = 0;
+if_setonclantransmit("script196(clanjoin:clanlist)", clanjoin:clanlist);
+if_setonfriendtransmit("script196(clanjoin:clanlist)", clanjoin:clanlist);
+~script197(clanjoin:clanlist);
+~scrollbar_vertical(clanjoin:clanlistscrollbar, clanjoin:clanlist, "scrollbar_dragger_v2,3", "scrollbar_dragger_v2,0", "scrollbar_dragger_v2,1", "scrollbar_dragger_v2,2", "scrollbar_v2,0", "scrollbar_v2,1");

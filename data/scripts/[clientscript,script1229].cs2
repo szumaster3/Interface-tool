@@ -1,0 +1,3 @@
+// 1229
+[clientscript,script1229](int $int0)
+%varcint179 = calc(~dropdownbox_getselected($int0, loginscreen:com_383) + 1);

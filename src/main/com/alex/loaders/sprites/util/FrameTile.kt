@@ -30,7 +30,14 @@ class FrameTile(val frameId: Int, image: Image) : JPanel(BorderLayout()) {
     var selected = false
         set(value) {
             field = value
-            border = if (value) LineBorder(Color.WHITE, 1) else LineBorder(Color.DARK_GRAY, 1)
+            if (value) {
+                border = LineBorder(Color.GREEN, 2)
+                background = Color(75, 75, 75)
+            } else {
+                border = LineBorder(Color.DARK_GRAY, 1)
+                background = Color(55, 55, 55)
+            }
+            repaint()
         }
 
     init {
@@ -39,14 +46,28 @@ class FrameTile(val frameId: Int, image: Image) : JPanel(BorderLayout()) {
         maximumSize = preferredSize
         border = LineBorder(Color.DARK_GRAY, 1)
         isOpaque = true
-        background = Color(55, 55, 55)
+        background = Color(45, 45, 45)
 
         val infoPanel = JPanel(GridLayout(2, 1)).apply {
             isOpaque = false
             add(idLabel)
             add(sizeLabel)
         }
+        addMouseListener(object : java.awt.event.MouseAdapter() {
 
+            override fun mouseEntered(e: java.awt.event.MouseEvent?) {
+                if (!selected) {
+                    border = LineBorder(Color.GRAY, 2)
+                }
+            }
+
+            override fun mouseExited(e: java.awt.event.MouseEvent?) {
+                if (!selected) {
+                    border = LineBorder(Color.DARK_GRAY, 1)
+                }
+            }
+
+        })
         add(imgLabel, BorderLayout.CENTER)
         add(infoPanel, BorderLayout.SOUTH)
     }

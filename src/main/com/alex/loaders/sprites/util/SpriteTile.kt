@@ -30,8 +30,14 @@ class SpriteTile(val spriteId: Int, image: Image) : JPanel(BorderLayout()) {
     var selected = false
         set(value) {
             field = value
-            border = if (value) LineBorder(Color.WHITE, 1)
-            else LineBorder(Color.DARK_GRAY, 1)
+            if (value) {
+                border = LineBorder(Color.GREEN, 2)
+                background = Color(70, 70, 70)
+            } else {
+                border = LineBorder(Color.DARK_GRAY, 1)
+                background = Color.DARK_GRAY
+            }
+            repaint()
         }
 
     init {
@@ -47,7 +53,15 @@ class SpriteTile(val spriteId: Int, image: Image) : JPanel(BorderLayout()) {
             add(idLabel)
             add(sizeLabel)
         }
+        addMouseListener(object : java.awt.event.MouseAdapter() {
+            override fun mouseEntered(e: java.awt.event.MouseEvent?) {
+                if (!selected) border = LineBorder(Color.GRAY, 2)
+            }
 
+            override fun mouseExited(e: java.awt.event.MouseEvent?) {
+                if (!selected) border = LineBorder(Color.DARK_GRAY, 1)
+            }
+        })
         add(imgLabel, BorderLayout.CENTER)
         add(infoPanel, BorderLayout.SOUTH)
     }

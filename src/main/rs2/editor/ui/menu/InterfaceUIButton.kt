@@ -120,12 +120,7 @@ object InterfaceUIButton {
 
     fun exportInterface()
     {
-        val comp = InterfaceUI.selectedComponent ?: run {
-            JOptionPane.showMessageDialog(null, "Please select a component first.")
-            return
-        }
-
-        val interfaceId = comp.interfaceId
+        val interfaceId = InterfaceUI.selectedComponent!!.interfaceId
         val components = ComponentDefinition.getInterface(interfaceId, false) ?: return
 
         val confirm = JOptionPane.showConfirmDialog(

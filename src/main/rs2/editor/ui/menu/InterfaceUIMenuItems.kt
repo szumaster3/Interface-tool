@@ -195,9 +195,53 @@ object InterfaceUIMenuItems {
         addActionListener { println("Maximize clicked") }
     }
 
-    fun documentationItem() = JMenuItem("Documentation").apply {
-        addActionListener { println("Documentation clicked") }
+    fun documentationItem(): JMenu {
+        val menu = JMenu("Documentation")
+        val viewSubMenu = JMenu("View Documentation")
+        val releaseNotesItem = JMenuItem("Release Notes").apply {
+            addActionListener {
+                val result = JOptionPane.showConfirmDialog(
+                    null,
+                    "<html>You are leaving this application and will be<br><center>taken to an external website.<br>Continue?",
+                    "Redirected to an external website",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+                )
+                if (result == JOptionPane.YES_OPTION) {
+                    try {
+                        val url = java.net.URI("https://github.com/szumaster3/Interface-tool/commits/master/")
+                        if (java.awt.Desktop.isDesktopSupported()) {
+                            java.awt.Desktop.getDesktop().browse(url)
+                        }
+                    } catch (ex: Exception) {
+                        ex.printStackTrace()
+                        JOptionPane.showMessageDialog(
+                            null,
+                            "Failed to open website.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE
+                        )
+                    }
+                }
+            }
+        }
+        viewSubMenu.add(releaseNotesItem)
+        viewSubMenu.addSeparator()
+
+        val apiReferenceItem = JMenuItem("API").apply {
+            addActionListener { println("API clicked") }
+        }
+        val tutorialsItem = JMenuItem("Templates").apply {
+            addActionListener { println("Tutorials clicked") }
+        }
+        viewSubMenu.add(apiReferenceItem)
+        viewSubMenu.add(tutorialsItem)
+        apiReferenceItem.isEnabled = false
+        tutorialsItem.isEnabled = false
+        menu.add(viewSubMenu)
+        return menu
     }
+
     fun aboutItem() = JMenuItem("About").apply {
         addActionListener { InterfaceUIButton.aboutDialogue() }
     }

@@ -14,6 +14,7 @@ import rs2.editor.ui.util.MultiCopy
 import rs2.editor.ui.utils.InterfaceUtils.iconButton
 import rs2.editor.ui.utils.InterfaceUtils.loadIcon
 import java.awt.BorderLayout
+import java.awt.Component
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -364,17 +365,31 @@ object InterfaceUIButton {
     }
 
     fun aboutDialogue() {
-        JDialog(null as JFrame?, "Credits", true).apply {
-            layout = BorderLayout()
-            val message = JLabel(
-                "<html>" +
-                        "<h2>Interface Editor</h2>" +
-                        "<p>Made by: Shnek<br>Discord: Cara Shnek#6969</p>" +
-                        "<p>Major code refactoring & improvements by: Ceikry</p>"
-            )
-            add(message, BorderLayout.CENTER)
-            setSize(400, 200)
+        val dialog = JDialog(null as JFrame?, "Credits", true).apply {
+            layout = BorderLayout(10, 10)
+
+            val contentPanel = JPanel()
+            contentPanel.layout = BoxLayout(contentPanel, BoxLayout.Y_AXIS)
+            contentPanel.border = BorderFactory.createEmptyBorder(15, 15, 15, 15)
+
+            val titleLabel = JLabel("Interface Editor")
+            titleLabel.alignmentX = Component.CENTER_ALIGNMENT
+
+            val authorLabel = JLabel("<html>Made by: Shnek<br>Discord: Cara Shnek#6969</html>")
+            authorLabel.alignmentX = Component.CENTER_ALIGNMENT
+
+            val refactorLabel = JLabel("<html>Major code refactoring & improvements by: Ceikry</html>")
+            refactorLabel.alignmentX = Component.CENTER_ALIGNMENT
+
+            contentPanel.add(titleLabel)
+            contentPanel.add(Box.createVerticalStrut(10))
+            contentPanel.add(authorLabel)
+            contentPanel.add(Box.createVerticalStrut(5))
+            contentPanel.add(refactorLabel)
+            add(contentPanel, BorderLayout.CENTER)
+            setSize(300, 150)
             setLocationRelativeTo(null)
+            isResizable = false
             isVisible = true
         }
     }

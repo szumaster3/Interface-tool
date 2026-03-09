@@ -250,4 +250,10 @@ public final class InputStream extends Stream {
       int i = 255 & this.buffer[this.offset];
       return i >= 128?-32768 + this.readUnsignedShort():this.readUnsignedByte();
    }
+
+   public int readUnsignedSmart3() {
+      int i = 0xff & getBuffer()[offset];
+      if (i >= 128) return -49152 + readUnsignedShort();
+      return -64 + readUnsignedByte();
+   }
 }

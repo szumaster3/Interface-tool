@@ -58,6 +58,10 @@ public final class Unknown2 extends UnknownField {
     private static int[] field140;
     private static int[] field141;
 
+    public static void load() {
+        properties = new ModelData[1];
+    }
+
     public static void initModel(byte[] data) {
 
         if (properties == null) {

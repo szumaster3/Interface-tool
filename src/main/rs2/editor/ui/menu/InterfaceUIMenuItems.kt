@@ -1,9 +1,19 @@
 package rs2.editor.ui.menu
 
+import com.alex.store.Index
+import com.alex.store.Store
+import rs2.editor.model.ModelViewerFrame
+import rs2.editor.model.MultiModelPacker
+import rs2.editor.properties.PropertyValues
 import rs2.editor.ui.InterfaceUI
 import rs2.editor.ui.utils.ComponentTemplates
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import javax.swing.JFileChooser
 import javax.swing.JMenu
 import javax.swing.JMenuItem
+import javax.swing.JOptionPane
 
 object InterfaceUIMenuItems {
 
@@ -132,11 +142,71 @@ object InterfaceUIMenuItems {
         addActionListener { println("Stop Animation clicked") }
     }
 
-    fun importMediaItem() = JMenuItem("Import Media").apply {
-        addActionListener { println("Import Media clicked") }
+    fun viewMediaItem() = JMenuItem("View media").apply {
+        addActionListener {
+            PropertyValues.cache_path?.let { path ->
+                try {
+                    val store = Store(path)
+
+                    javax.swing.SwingUtilities.invokeLater {
+                        val frame = ModelViewerFrame(store)
+                        frame.isVisible = true
+                    }
+                } catch (ex: IOException) {
+                    ex.printStackTrace()
+                    JOptionPane.showMessageDialog(
+                        null,
+                        "Failed to load cache: ${ex.message}",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                    )
+                }
+            }
+        }
     }
-    fun exportMediaItem() = JMenuItem("Export Media").apply {
-        addActionListener { println("Export Media clicked") }
+
+    fun importMediaItem() = JMenuItem("Import media").apply {
+        addActionListener {
+            val packer = MultiModelPacker()
+            PropertyValues.cache_path?.let { it1 -> packer.showWindow(it1) }
+        }
+    }
+
+    fun exportMediaItem() = JMenuItem("Export media").apply {
+        addActionListener {
+            val cacheChooser = JFileChooser()
+            cacheChooser.fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+            cacheChooser.dialogTitle = "Select Cache Directory"
+            val cacheResult = cacheChooser.showOpenDialog(null)
+            if (cacheResult != JFileChooser.APPROVE_OPTION) return@addActionListener
+            val cacheDir = cacheChooser.selectedFile.absolutePath
+
+            val outputChooser = JFileChooser()
+            outputChooser.fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+            outputChooser.dialogTitle = "Select Output Directory"
+            val outputResult = outputChooser.showSaveDialog(null)
+            if (outputResult != JFileChooser.APPROVE_OPTION) return@addActionListener
+            val outputDir = outputChooser.selectedFile
+
+            try {
+                val store = Store(cacheDir)
+                val index: Index = store.indexes[7]
+                val lastArchive = index.lastArchiveId
+
+                for (i in 0 until lastArchive) {
+                    val data: ByteArray? = index.getFile(i)
+                    if (data != null) {
+                        writeFile(data, File(outputDir, "$i.dat").absolutePath)
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    @Throws(IOException::class)
+    fun writeFile(data: ByteArray, fileName: String) {
+        FileOutputStream(fileName).use { it.write(data) }
     }
 
     fun commitItem() = JMenuItem("Commit").apply {

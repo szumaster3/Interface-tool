@@ -1,7 +1,7 @@
 package com.alex.io;
 
 public abstract class Stream {
-   protected int offset;
+   public int offset;
    protected int length;
    protected byte[] buffer;
    protected int bitPosition;

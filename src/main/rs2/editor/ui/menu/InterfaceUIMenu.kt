@@ -65,9 +65,9 @@ class InterfaceUIMenu : JMenuBar() {
         add(animateMenu)
         animateMenu.isEnabled = false
 
+        // Media Menu
         mediaMenu.add(InterfaceUIMenuItems.viewMediaItem())
-        mediaMenu.add(InterfaceUIMenuItems.importMediaItem())
-        mediaMenu.add(InterfaceUIMenuItems.exportMediaItem())
+        mediaMenu.add(InterfaceUIMenuItems.viewSpriteItem())
         add(mediaMenu)
 
         // Version Control Menu

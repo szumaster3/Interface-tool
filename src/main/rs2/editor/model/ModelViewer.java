@@ -7,10 +7,7 @@ import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.event.ListSelectionEvent;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.*;
 import java.util.Properties;
 
 public class ModelViewer extends JFrame implements Runnable {
@@ -78,19 +75,22 @@ public class ModelViewer extends JFrame implements Runnable {
         var2.setHorizontalGroup(var2.createParallelGroup(Alignment.LEADING).addGap(0, 536, 32767));
         var2.setVerticalGroup(var2.createParallelGroup(Alignment.LEADING).addGap(0, 318, 32767));
 
-        var2 = new GroupLayout(this.getContentPane());
-        this.getContentPane().setLayout(var2);
+        JPanel leftPanel = new JPanel();
+        leftPanel.setLayout(new BorderLayout());
+        leftPanel.add(field48, BorderLayout.CENTER);
+
         var2.setHorizontalGroup(
                 var2.createParallelGroup(Alignment.LEADING)
                         .addGroup(var2.createSequentialGroup()
                                 .addContainerGap()
-                                .addComponent(this.field48, -2, 133, -2)
+                                .addComponent(leftPanel, -2, 133, -2)
                                 .addGap(18, 18, 18)
                                 .addGroup(var2.createParallelGroup(Alignment.LEADING)
                                         .addComponent(this.optimizedRendering)
                                         .addComponent(this.modelViewerPanel, -1, -1, 32767))
                                 .addContainerGap())
         );
+
         var2.setVerticalGroup(
                 var2.createParallelGroup(Alignment.LEADING)
                         .addGroup(Alignment.TRAILING, var2.createSequentialGroup()
@@ -100,7 +100,7 @@ public class ModelViewer extends JFrame implements Runnable {
                                                 .addComponent(this.optimizedRendering)
                                                 .addPreferredGap(ComponentPlacement.RELATED)
                                                 .addComponent(this.modelViewerPanel, -1, -1, 32767))
-                                        .addComponent(this.field48, -1, 343, 32767))
+                                        .addComponent(leftPanel, -1, 343, 32767))
                                 .addContainerGap())
         );
 

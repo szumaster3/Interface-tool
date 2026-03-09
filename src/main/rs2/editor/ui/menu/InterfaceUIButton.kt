@@ -333,14 +333,14 @@ object InterfaceUIButton {
         }
     }
 
-    private fun openSpriteLibrary() {
-        val comp = InterfaceUI.selectedComponent ?: run {
+    fun openSpriteLibrary() {
+        val comp = InterfaceUI.selectedComponent
+        if(comp?.interfaceId == -1) {
             JOptionPane.showMessageDialog(null, "Please select a component first.", "Warning", JOptionPane.WARNING_MESSAGE)
             return
         }
         SpriteManager(null) { spriteId, w, h, _ ->
-            if (comp.interfaceId <= 0) return@SpriteManager
-            comp.spriteId = spriteId
+            comp!!.spriteId = spriteId
             comp.baseWidth = w
             comp.baseHeight = h
             InterfaceUI.instance?.buildPropertyPanel(comp)

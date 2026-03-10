@@ -3,6 +3,7 @@ package rs2.editor.ui.util
 import com.alex.loaders.interfaces.ComponentDefinition
 import com.alex.tools.Copy
 import rs2.editor.ui.InterfaceUI
+import rs2.editor.ui.utils.InterfaceUtils
 import java.awt.*
 import javax.swing.*
 
@@ -42,7 +43,7 @@ class MultiCopy(parent: JFrame) : JDialog(parent, "Copy components", true)
                 JPanel(BorderLayout()).apply {
                     preferredSize = Dimension(0, 25)
                     add(field, BorderLayout.CENTER)
-                    val icon = ImageIcon(javaClass.getResource("/icons/info.png"))
+                    val icon = InterfaceUtils.loadIcon("/icons/info.png")
                     add(
                         JButton(icon).apply {
                             preferredSize = Dimension(25, 25)

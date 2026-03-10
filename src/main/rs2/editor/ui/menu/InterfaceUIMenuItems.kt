@@ -21,6 +21,7 @@ object InterfaceUIMenuItems {
         addActionListener { InterfaceUIButton.addNewInterface() }
     }
     fun openArchiveItem() = JMenuItem("Open").apply {
+        isEnabled = false
         addActionListener { InterfaceUIButton.importInterface() }
     }
     fun exportArchiveItem() = JMenuItem("Save as").apply {

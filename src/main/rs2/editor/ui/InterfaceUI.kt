@@ -939,7 +939,7 @@ class InterfaceUI : JFrame()
                 "UnknownProp5"      -> c.unknownModelProp5 = text.toBoolean()
 
                 // Line
-                "LineWidth"    -> c.lineWidth = text.toIntOrNull()?.toByte() ?: 0
+                "LineWidth"    -> c.lineWidth = text.toIntOrNull() ?: 0
                 "UnknownProp8" -> c.unknownProp_8 = text.toBoolean()
 
                 // Figure

@@ -43,16 +43,53 @@ public final class Unknown3 implements ImageObserver, ImageProducer {
 
     public void updateModel(Unknown2 model, ComponentDefinition comp) {
         if (model == null || comp == null) return;
+
         Unknown1.method1();
         Unknown1.screen = screen;
-        if(comp.getUnknownModelProp4() == 3000)
-            model.setViewPoint(512, 0,0,0,0,0, comp.getModelZoom());
-        else
-            model.setViewPoint(0, 0, 0, 0, 0, 0, comp.getModelZoom());
-        Unknown1.screenPosX = width ;// 2;
-        Unknown1.screenPosY = height ;// 2;
-    }
 
+        int centerX = width / 2;
+        int centerY = height / 2;
+
+        if (comp.isModelOrtho()) {
+            model.setViewPoint(
+                    0,
+                    comp.getModelXAngle(),
+                    comp.getModelYAngle(),
+                    comp.getModelZAngle(),
+                    0, 0,
+                    comp.getModelZoom()
+            );
+            Unknown1.screenPosX = centerX;
+            Unknown1.screenPosY = centerY;
+
+            return;
+        }
+
+        if (comp.getModelType() == 1 && comp.getModelId() >= 0) {
+            model.setViewPoint(
+                    comp.getModelXAngle(),
+                    comp.getModelYAngle(),
+                    comp.getModelZAngle(),
+                    0, 0, 0,
+                    comp.getModelZoom()
+            );
+            Unknown1.screenPosX = centerX;
+            Unknown1.screenPosY = centerY;
+
+            return;
+        }
+
+        model.setViewPoint(
+                0,
+                1,
+                0,
+                0, 0, 0,
+                comp.getModelZoom()
+        );
+        Unknown1.screenPosX = centerX;
+        Unknown1.screenPosY = centerY;
+
+    }
 
     public void updatePreview(int x, int y, Graphics g) {
         flushPixels();

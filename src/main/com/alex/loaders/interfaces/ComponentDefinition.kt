@@ -116,7 +116,7 @@ class ComponentDefinition {
 
     var opCursors: IntArray? = null
 
-    var lineWidth: Byte = 0
+    var lineWidth: Int = 0
     var unknownProp_8: Boolean = false
 
     private var opId: IntArray? = null
@@ -603,7 +603,7 @@ class ComponentDefinition {
                 transparency = stream.readUnsignedByte()
             }
             ComponentType.LINE -> {
-                lineWidth = stream.readUnsignedByte().toByte()
+                lineWidth = stream.readUnsignedByte()
                 color = stream.readInt()
                 unknownProp_8 = stream.readUnsignedByte() == 1
             }
@@ -690,6 +690,9 @@ class ComponentDefinition {
         varcTriggers = decodeTriggers(stream)
         varcstrTriggers = decodeTriggers(stream)
     }
+
+    val isModelOrtho: Boolean
+        get() = modelOrtho
 
     private fun encodeScript(
         script: Array<Any?>?,

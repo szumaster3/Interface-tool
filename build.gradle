@@ -9,7 +9,7 @@ plugins {
 }
 
 group = 'org.example'
-version = '1.0.9'
+version = '1.0.10'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -57,14 +57,35 @@ jar {
 
 shadowJar {
     archiveBaseName.set('Interface Editor')
-    archiveVersion.set('v1.0.9')
+    archiveVersion.set("${version}")
     archiveClassifier.set('')
     manifest {
-        attributes(
-                'Main-Class': mainClassName
-        )
+        attributes('Main-Class': mainClassName)
     }
     preserveFileTimestamps = false
     reproducibleFileOrder = true
+}
+
+task packageZip(type: Zip) {
+    dependsOn shadowJar
+
+    archiveBaseName.set('Interface Editor')
+    archiveVersion.set("v${version}")
+    destinationDirectory.set(layout.buildDirectory.dir('distro'))
+    archiveExtension.set('zip')
+
+    from(shadowJar.archiveFile) {
+        into('/')
+    }
+
+    from('config.properties') {
+        into('/')
+    }
+
+    from('data') {
+        into('data')
+        exclude '**/*cache*/**'
+        exclude '**/*cache*'
+    }
 }
 

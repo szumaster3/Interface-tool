@@ -257,39 +257,22 @@ object InterfaceDraw {
         w: Int,
         h: Int
     ) {
-        val key = "${comp.spriteId}-${w}-${h}-${comp.hFlip}-${comp.vFlip}-${comp.transparency}-${comp.borderThickness}-${comp.shadowColor}"
-
-        val sprite = spriteCache.getOrPut(key) {
-            var img = SpriteLoader.getSprite(comp.spriteId) ?: return
-
-            if (comp.hFlip) img = ImageUtils.horizontalFlip(img)
-            if (comp.vFlip) img = ImageUtils.verticalFlip(img)
-
-            if (comp.borderThickness > 0) {
-                img = outline(img, comp.borderThickness)
-            }
-
-            if (comp.shadowColor != 0) {
-                img = shadow(img, comp.shadowColor)
-            }
-
-            ImageUtils.resize(img, w, h)
-        }
-
         val oldComposite = g.composite
         val alpha = if (comp.hasAlpha) (255 - comp.transparency) else 255
         if (alpha < 255) {
-            g.composite = AlphaComposite.getInstance(
-                AlphaComposite.SRC_OVER,
-                alpha / 255f
-            )
+            g.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha / 255f)
         }
 
         if (comp.spriteTiling) {
+            var sprite = SpriteLoader.getSprite(comp.spriteId) ?: return
+            if (comp.hFlip) sprite = ImageUtils.horizontalFlip(sprite)
+            if (comp.vFlip) sprite = ImageUtils.verticalFlip(sprite)
+            if (comp.borderThickness > 0) sprite = outline(sprite, comp.borderThickness)
+            if (comp.shadowColor != 0) sprite = shadow(sprite, comp.shadowColor)
+
             val sw = sprite.width
             val sh = sprite.height
             var tx = x
-
             while (tx < x + w) {
                 var ty = y
                 while (ty < y + h) {
@@ -301,6 +284,15 @@ object InterfaceDraw {
                 tx += sw
             }
         } else {
+            val key = "${comp.spriteId}-${w}-${h}-${comp.hFlip}-${comp.vFlip}-${comp.transparency}-${comp.borderThickness}-${comp.shadowColor}"
+            val sprite = spriteCache.getOrPut(key) {
+                var img = SpriteLoader.getSprite(comp.spriteId) ?: return
+                if (comp.hFlip) img = ImageUtils.horizontalFlip(img)
+                if (comp.vFlip) img = ImageUtils.verticalFlip(img)
+                if (comp.borderThickness > 0) img = outline(img, comp.borderThickness)
+                if (comp.shadowColor != 0) img = shadow(img, comp.shadowColor)
+                ImageUtils.resize(img, w, h)
+            }
             g.drawImage(sprite, x, y, null)
         }
 

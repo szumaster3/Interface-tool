@@ -130,8 +130,27 @@ class SpriteManager(parent: JFrame?, private val onSelect: (spriteId: Int, width
                                 exportBtn.isEnabled = true
                                 previewBtn.isEnabled = true
 
-                                if (e.clickCount == 2 && archive != null && archive.size() > 1) {
-                                    SpriteFramesDialogue(this@SpriteManager, tile.spriteId, archive)
+                                if (e.clickCount == 2) {
+                                    val raw = SpriteLoader.getRaw(tile.spriteId)
+                                    val currentArchive = raw?.let { SpriteArchive.decode(it) } ?: return@mouseClicked
+
+                                    if (currentArchive.size() > 1) {
+                                        SpriteFramesDialogue(
+                                            this@SpriteManager,
+                                            tile.spriteId,
+                                            currentArchive,
+                                            onSelect = { frameId ->
+                                                onSelect(tile.spriteId, currentArchive.width, currentArchive.height, frameId)
+                                            },
+                                            onArchiveUpdated = { updatedArchive ->
+                                                tile.addFrameIndicator(updatedArchive.size())
+                                                grid.revalidate()
+                                                grid.repaint()
+                                            }
+                                        )
+                                    } else {
+                                        showPreview(tile.spriteId)
+                                    }
                                 }
                                 if (e.clickCount == 2 && (archive == null || archive.size() == 1)) {
                                     showPreview(tile.spriteId)

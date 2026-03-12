@@ -11,7 +11,9 @@ import javax.swing.border.EmptyBorder
 class SpriteFramesDialogue(
     parent: Window?,
     private val spriteId: Int,
-    private var archive: SpriteArchive
+    private var archive: SpriteArchive,
+    private val onSelect: (frameId: Int) -> Unit,
+    private val onArchiveUpdated: ((SpriteArchive) -> Unit)? = null
 ) : JDialog(parent, "Frames of sprite $spriteId", ModalityType.APPLICATION_MODAL) {
 
     private var selectedFrame: FrameTile? = null
@@ -37,7 +39,7 @@ class SpriteFramesDialogue(
         exportBtn.isEnabled = false
         deleteBtn.isEnabled = false
 
-        exportBtn.addActionListener { exportFrame() }
+        exportBtn.addActionListener { exportSelectedFrame() }
         addBtn.addActionListener { importFrame() }
         deleteBtn.addActionListener { deleteFrame() }
 
@@ -63,6 +65,10 @@ class SpriteFramesDialogue(
             grid.add(tile)
         }
 
+        selectedFrame = null
+        exportBtn.isEnabled = false
+        deleteBtn.isEnabled = false
+
         grid.revalidate()
         grid.repaint()
     }
@@ -76,6 +82,11 @@ class SpriteFramesDialogue(
                 exportBtn.isEnabled = true
                 deleteBtn.isEnabled = true
                 grid.repaint()
+
+                if (e.clickCount == 2) {
+                    onSelect(tile.frameId)
+                    dispose()
+                }
             }
         })
     }
@@ -85,6 +96,7 @@ class SpriteFramesDialogue(
         if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return
 
         val img = ImageIO.read(chooser.selectedFile) ?: return
+
         if (img.width != archive.width || img.height != archive.height) {
             JOptionPane.showMessageDialog(
                 this,
@@ -95,12 +107,7 @@ class SpriteFramesDialogue(
             return
         }
 
-        val frames = mutableListOf<BufferedImage>()
-        for (i in 0 until archive.size()) {
-            val frame = archive.getSprite(i) ?: continue
-            frames.add(frame as BufferedImage)
-        }
-
+        val frames = (0 until archive.size()).mapNotNull { archive.getSprite(it) as? BufferedImage }.toMutableList()
         frames.add(img)
 
         val newArchive = SpriteArchive(archive.width, archive.height, frames.size)
@@ -108,6 +115,7 @@ class SpriteFramesDialogue(
 
         saveArchive(newArchive)
         archive = newArchive
+        onArchiveUpdated?.invoke(newArchive)
         loadFrames()
     }
 
@@ -123,12 +131,10 @@ class SpriteFramesDialogue(
             return
         }
 
-        val frames = mutableListOf<BufferedImage>()
-        for (i in 0 until archive.size()) {
-            if (i == frame.frameId) continue
-            val img = archive.getSprite(i) ?: continue
-            frames.add(img as BufferedImage)
-        }
+        val frames = (0 until archive.size())
+            .filter { it != frame.frameId }
+            .mapNotNull { archive.getSprite(it) as? BufferedImage }
+            .toMutableList()
 
         val newArchive = SpriteArchive(archive.width, archive.height, frames.size)
         frames.forEachIndexed { index, img -> newArchive.setFrame(index, img) }
@@ -136,19 +142,12 @@ class SpriteFramesDialogue(
         saveArchive(newArchive)
 
         archive = newArchive
-        selectedFrame = null
-        exportBtn.isEnabled = false
-        deleteBtn.isEnabled = false
+        onArchiveUpdated?.invoke(newArchive)
+
         loadFrames()
     }
 
-    private fun saveArchive(newArchive: SpriteArchive) {
-        val data = newArchive.encode().array()
-        SpriteLoader.put(spriteId, data)
-        println("[SpriteCache] Updated sprite $spriteId (${newArchive.size()} frames)")
-    }
-
-    private fun exportFrame() {
+    private fun exportSelectedFrame() {
         val frame = selectedFrame ?: return
         val img = archive.getSprite(frame.frameId) ?: return
 
@@ -159,5 +158,11 @@ class SpriteFramesDialogue(
         if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             ImageIO.write(img as BufferedImage, "png", chooser.selectedFile)
         }
+    }
+
+    private fun saveArchive(newArchive: SpriteArchive) {
+        val data = newArchive.encode().array()
+        SpriteLoader.put(spriteId, data)
+        println("[SpriteCache] Updated sprite $spriteId (${newArchive.size()} frames)")
     }
 }

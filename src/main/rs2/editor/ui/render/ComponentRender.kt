@@ -80,7 +80,8 @@ class ComponentRender :
         val color = getColorForComponent(comp)
         textLabel.foreground = color
         typeLabel.foreground = color
-        textLabel.text = "${comp.componentId}: $typeName"
+        val componentName = comp.name?.takeIf { it.isNotEmpty() }?.let { it } ?: ""
+        textLabel.text = "${comp.componentId}: ($typeName) - $componentName"
     }
 
     override fun getListCellRendererComponent(
@@ -121,7 +122,8 @@ class ComponentRender :
             if (comp != null) {
                 updatePanel(comp)
                 renderer.icon = typeLabel.icon
-                renderer.text = "${comp.componentId}: $typeName"
+                val componentName = comp.name?.takeIf { it.isNotEmpty() }?.let { it } ?: ""
+                renderer.text = "${comp.componentId}: ($typeName) - $componentName"
                 renderer.foreground = if (selected) Color.WHITE else getColorForComponent(comp)
                 renderer.background = if (selected) Color.DARK_GRAY else Color(30,30,30)
                 renderer.font = uiFont

@@ -6,7 +6,10 @@ import com.alex.io.OutputStream
 import com.alex.loaders.interfaces.ComponentDefinition
 import com.alex.loaders.interfaces.ComponentType
 import com.alex.loaders.sprites.util.SpriteManager
+import com.alex.util.crc32.CRC32HGenerator
+import com.alex.utils.Utils
 import rs2.editor.properties.PropertyValues
+import rs2.editor.ui.Consts
 import rs2.editor.ui.InterfaceUI
 import rs2.editor.ui.render.InterfaceDraw
 import rs2.editor.ui.util.ColorPicker
@@ -16,10 +19,14 @@ import rs2.editor.ui.utils.InterfaceUtils.iconButton
 import rs2.editor.ui.utils.InterfaceUtils.loadIcon
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.Dimension
+import java.awt.FlowLayout
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.util.*
 import javax.swing.*
+import javax.swing.border.EmptyBorder
 
 object InterfaceUIButton {
     fun addSprite() = InterfaceUI.instance?.addComponent(801, 4)
@@ -242,14 +249,86 @@ object InterfaceUIButton {
             JOptionPane.showMessageDialog(null, "Please select a component before saving it.")
             return
         }
+
         if (comp.interfaceId == -1 || comp.componentId == -1) {
             JOptionPane.showMessageDialog(null, "Please select a valid component & interface before saving it.")
             return
         }
-        InterfaceUI.instance?.save(comp)
-        Cache.getStore()?.indexes?.get(3)?.putFile(comp.interfaceId, comp.componentId, comp.encode(true))
+
+        val store = Cache.getStore() ?: run {
+            JOptionPane.showMessageDialog(null, "Cache not loaded.")
+            return
+        }
+
+        var fileNameHash: Int? = null
+        val askForName = InterfaceUI.instance?.componentName ?: true
+
+        if (askForName) {
+            val panel = JPanel().apply {
+                layout = BoxLayout(this, BoxLayout.Y_AXIS)
+                border = EmptyBorder(1, 1, 1, 1)
+            }
+
+            val inputField = JTextField(comp.name?.takeIf { it.isNotEmpty() } ?: "").apply {
+                preferredSize = Dimension(240, Consts.BUTTON_HEIGHT_SMALL)
+                maximumSize = Dimension(240, Consts.BUTTON_HEIGHT_SMALL)
+                alignmentX = Component.LEFT_ALIGNMENT
+            }
+
+            val checkBox = JCheckBox("Don't ask again").apply {
+                alignmentX = Component.LEFT_ALIGNMENT
+            }
+
+            panel.add(inputField)
+            panel.add(Box.createVerticalStrut(5))
+            panel.add(checkBox)
+
+            val result = JOptionPane.showConfirmDialog(
+                null, panel, "Enter component name (optional)",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+            )
+
+            if (result == JOptionPane.OK_OPTION) {
+                val enteredName = inputField.text.trim()
+                if (enteredName.isNotEmpty()) {
+                    comp.name = enteredName
+                    fileNameHash = CRC32HGenerator.getHash(enteredName.uppercase(Locale.getDefault()).toByteArray(Charsets.UTF_8))
+                }
+                if (checkBox.isSelected) {
+                    InterfaceUI.instance?.componentName = false
+                }
+            }
+        } else {
+            comp.name?.takeIf { it.isNotEmpty() }?.let {
+                fileNameHash = CRC32HGenerator.getHash(it.uppercase(Locale.getDefault()).toByteArray(Charsets.UTF_8))
+            }
+        }
+
+        val hashToUse = fileNameHash
+        if (hashToUse != null) {
+            store.indexes[3].putFile(
+                comp.interfaceId,
+                comp.componentId,
+                2,
+                comp.encode(true),
+                null,
+                true,
+                true,
+                -1,
+                hashToUse
+            )
+        } else {
+            store.indexes[3].putFile(
+                comp.interfaceId,
+                comp.componentId,
+                comp.encode(true)
+            )
+        }
+
         InterfaceUI.instance?.loadComponents(comp.interfaceId)
-        ComponentDefinition.getInterfaceComponent(comp.interfaceId, comp.componentId)?.let { InterfaceUI.instance?.selectComponent(it) }
+        ComponentDefinition.getInterfaceComponent(comp.interfaceId, comp.componentId)?.let {
+            InterfaceUI.instance?.selectComponent(it)
+        }
         InterfaceUI.instance?.renderPanel?.interfaceId = comp.interfaceId
         InterfaceUI.instance?.renderPanel?.repaint()
     }

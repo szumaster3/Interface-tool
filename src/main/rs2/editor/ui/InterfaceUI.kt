@@ -57,6 +57,7 @@ class InterfaceUI : JFrame()
     {
         renderPanel.repaint()
     }
+    var componentName: Boolean = true
 
     companion object
     {

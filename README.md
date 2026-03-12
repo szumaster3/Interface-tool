@@ -8,7 +8,8 @@
 <a href="#tool-properties">Configuration</a> •
 <a href="#editing-interfaces">Edting</a> •
 <a href="#scripts">Scripts overview</a> •
-[Scripts references](data/REFERENCES.md)
+[Scripts references](data/REFERENCES.md) •
+<a href="https://github.com/szumaster3/Interface-tool/wiki">Documentation</a>
 
 <img src="https://imgur.com/e9dAhKP.png"/>
 

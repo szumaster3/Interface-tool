@@ -80,11 +80,10 @@ class Copy private constructor(val targetInterface: Int) {
         for (task in tasks) {
             var comp: ComponentDefinition?
 
-            if (task.sourceId >= 0) {
-                comp = ComponentDefinition.getInterfaceComponent(src, task.sourceId)
+            comp = if (task.sourceId >= 0) {
+                ComponentDefinition.getInterfaceComponent(src, task.sourceId)
             } else {
-                comp = createNewComponent(task.targetId)
-                comp!!.parentId = -1
+                createNewComponent(task.targetId)
             }
 
             comp!!.componentHash = (targetInterface shl 16) or task.targetId

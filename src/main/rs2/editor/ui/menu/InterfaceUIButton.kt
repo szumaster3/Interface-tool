@@ -263,42 +263,37 @@ object InterfaceUIButton {
     private fun pasteComponent() {
         val comp = InterfaceUI.selectedComponent
         if (comp == null) {
-            JOptionPane.showMessageDialog(null, "No component was selected to paste.")
+            JOptionPane.showMessageDialog(null, "No component was copied.")
             return
         }
-        if (comp.type == ComponentType.LAYER) {
-            val layer = ComponentDefinition.getInterfaceDefinitionsComponentsSize(comp.interfaceId)
-            comp.parentId = -1
 
-            Cache.getStore()!!.indexes[3].putFile(comp.interfaceId, layer, comp.encode(true))
-            val childs = ComponentDefinition.getChildsByParent(comp.interfaceId, comp.componentHash)
-            for (c in childs) {
-                if (c.type != ComponentType.LAYER) {
-                    Cache.getStore()!!.indexes[3].putFile(comp.interfaceId, ComponentDefinition.getInterfaceDefinitionsComponentsSize(
-                        comp.interfaceId), c.encode(true))
-                }
+        val interfaceId = comp.interfaceId
+
+        val nextId = ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId)
+
+        comp.componentId = nextId
+        comp.componentHash = (interfaceId shl 16) or nextId
+        comp.parentId = -1
+
+        Cache.getStore()!!.indexes[3].putFile(
+            interfaceId,
+            nextId,
+            comp.encode(true)
+        )
+
+        ComponentDefinition.getInterface(interfaceId, true)
+
+        InterfaceUI.instance?.apply {
+
+            loadComponents(interfaceId)
+
+            ComponentDefinition.getInterfaceComponent(interfaceId, nextId)?.let {
+                selectComponent(it)
             }
-            ComponentDefinition.getInterface(comp.interfaceId, true)
-            val size = ComponentDefinition.getInterfaceDefinitionsComponentsSize(comp.interfaceId)
-            val parent = ComponentDefinition.getInterfaceComponent(comp.interfaceId, layer)
-            for (i in size - childs.size - 1 until size) {
-                val component = ComponentDefinition.getInterfaceComponent(comp.interfaceId, i)
-                if (component != null && component.type != 0) {
-                    if (parent != null) {
-                        component.parentId = parent.componentHash
-                    }
-                    Cache.getStore()!!.indexes[3].putFile(comp.interfaceId, i, component.encode(true))
-                }
-            }
-        } else {
-            comp.parentId = -1
-            Cache.getStore()!!.indexes[3].putFile(comp.interfaceId, ComponentDefinition.getInterfaceDefinitionsComponentsSize(comp.interfaceId), comp.encode(true))
+
+            renderPanel?.interfaceId = interfaceId
+            renderPanel?.repaint()
         }
-        ComponentDefinition.getInterface(comp.interfaceId, true)
-        InterfaceUI.instance?.loadComponents(comp.interfaceId)
-        ComponentDefinition.getInterfaceComponent(comp.interfaceId, comp.componentId)?.let { InterfaceUI.instance?.selectComponent(it) }
-        InterfaceUI.instance?.renderPanel?.interfaceId = comp.interfaceId
-        InterfaceUI.instance?.renderPanel?.repaint()
     }
 
     private fun printComponent() {

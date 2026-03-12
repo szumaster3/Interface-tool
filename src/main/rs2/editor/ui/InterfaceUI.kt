@@ -305,8 +305,8 @@ class InterfaceUI : JFrame()
             InterfaceUIButton.addTextButton(),
             InterfaceUIButton.addLineButton(),
             InterfaceUIButton.copyButton(),
-            InterfaceUIButton.multiCopyButton(),
             InterfaceUIButton.pasteButton(),
+            InterfaceUIButton.multiCopyButton(),
             InterfaceUIButton.spriteLibraryButton(),
             InterfaceUIButton.deleteButton(),
             InterfaceUIButton.saveButton()

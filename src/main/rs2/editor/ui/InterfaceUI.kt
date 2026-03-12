@@ -661,9 +661,9 @@ class InterfaceUI : JFrame()
 
     fun buildPropertyPanel(comp: ComponentDefinition)
     {
-        var c = ComponentDefinition.getInterfaceComponent(comp.interfaceId, comp.componentId)!!
+        val c = comp
 
-        set("Hash",             c.componentHash)
+        set("Hash", c.componentHash)
         set("Type", Utils.getComponentFromInt(c.type))
         val typeInt = c.type
         setComponentType(typeInt, componentTypes)
@@ -707,7 +707,10 @@ class InterfaceUI : JFrame()
         set("UnknownBit31",             s.unknownBit31())
         set("HasUnlockedSlots",         s.hasUnlockedSlots())
 
-        for (i in 1..10) set("Slot $i", s.isRightClickOptionAllowed(i))
+        for (i in 1..10) {
+            val enabled = (c.optionMask shr (i - 1) and 1) != 0
+            set("Slot $i", enabled)
+        }
 
         set("UseOnGround",              s.canUseOnGroundItems())
         set("UseOnNpc",                 s.canUseOnNpcs())
@@ -793,10 +796,20 @@ class InterfaceUI : JFrame()
 
         val s = c.settings
         var newSettings = s.settings
+        var newOptionMask = c.optionMask
 
         fun setBit(bit: Int, enabled: Boolean)
         {
-            newSettings = if (enabled) newSettings or (1 shl bit) else newSettings and (1 shl bit).inv()
+            newSettings =
+                if (enabled) newSettings or (1 shl bit)
+                else newSettings and (1 shl bit).inv()
+        }
+
+        fun setSlot(slot: Int, enabled: Boolean)
+        {
+            newOptionMask =
+                if (enabled) newOptionMask or (1 shl (slot - 1))
+                else newOptionMask and (1 shl (slot - 1)).inv()
         }
 
         fun getText(name: String): String {
@@ -809,11 +822,10 @@ class InterfaceUI : JFrame()
             }
         }
 
-        for ((name, component) in fieldMap)
+        for (name in fieldMap.keys)
         {
 
             val text = getText(name)
-
             // Ops
             if (name.startsWith("Option "))
             {
@@ -825,14 +837,13 @@ class InterfaceUI : JFrame()
                 }
                 continue
             }
-
             // Slots
             if (name.startsWith("Slot "))
             {
                 name.removePrefix("Slot ").toIntOrNull()?.let { slot ->
                     if (slot in 1..10)
                     {
-                        setBit(slot, text.toBoolean())
+                        setSlot(slot, text.toBoolean())
                     }
                 }
                 continue
@@ -899,9 +910,10 @@ class InterfaceUI : JFrame()
                 "UseOnSelf"         -> setBit(15, text.toBoolean())
                 "UseOnIComp"        -> setBit(16, text.toBoolean())
 
-                "UnknownBit21" -> setBit(21, text.toBoolean())
-                "CanBeUsedOn"  -> setBit(22, text.toBoolean())
-                "UnknownBit31" -> setBit(31, text.toBoolean())
+                "UnknownBit21"      -> setBit(21, text.toBoolean())
+                "CanBeUsedOn"       -> setBit(22, text.toBoolean())
+                "HasUnlockedSlots"  -> setBit(23, text.toBoolean())
+                "UnknownBit31"      -> setBit(31, text.toBoolean())
 
                 "IEventDepth" -> {
                     newSettings = newSettings and (0x7 shl 18).inv()
@@ -913,13 +925,6 @@ class InterfaceUI : JFrame()
                     newSettings = newSettings and (0x7 shl 28).inv()
                     val value = text.toIntOrNull()?.and(0x7) ?: 0
                     newSettings = newSettings or (value shl 28)
-                }
-
-                "HasUnlockedSlots" -> {
-                    newSettings = if (text.toBoolean())
-                        newSettings or 0x2EAA42
-                    else
-                        newSettings and 0x2EAA42.inv()
                 }
 
                 // Model
@@ -948,7 +953,7 @@ class InterfaceUI : JFrame()
         }
 
         c.settings.settings = newSettings
-        c.optionMask = newSettings
+        c.optionMask = newOptionMask
 
         // Scripts
         c.onLoadScript       = Utils.getScriptArray(getText("Load"))

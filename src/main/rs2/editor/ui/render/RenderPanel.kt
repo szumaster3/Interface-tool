@@ -173,8 +173,13 @@ class RenderPanel : JPanel() {
         })
     }
 
-    private fun hitTestComponentRecursive(comp: ComponentDefinition, mouseX: Int, mouseY: Int, offsetX: Int = 0, offsetY: Int = 0): ComponentDefinition?
-    {
+    private fun hitTestComponentRecursive(
+        comp: ComponentDefinition,
+        mouseX: Int,
+        mouseY: Int,
+        offsetX: Int = 0,
+        offsetY: Int = 0
+    ): ComponentDefinition? {
         val x = offsetX + comp.positionX
         val y = offsetY + comp.positionY
         val w = comp.width
@@ -184,11 +189,23 @@ class RenderPanel : JPanel() {
             hitTestComponentRecursive(child, mouseX, mouseY, x, y)?.let { return it }
         }
 
-        if (comp.type != ComponentType.LAYER && comp.type != ComponentType.FIGURE && !comp.filled) {
-            if (mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h) {
-                return comp
-            }
+        if (mouseX in x until x + w && mouseY in y until y + h) {
+            return comp
         }
+
+        val handleSize = maxOf(InterfaceDraw.HANDLE_SIZE, 6)
+        val margin = 4
+        val half = handleSize / 2
+        val handles = listOf(
+            Pair(x, y), Pair(x + w / 2, y), Pair(x + w, y),
+            Pair(x + w, y + h / 2), Pair(x + w, y + h),
+            Pair(x + w / 2, y + h), Pair(x, y + h), Pair(x, y + h / 2)
+        )
+
+        if (handles.any { (cx, cy) ->
+                mouseX in (cx - half - margin)..(cx + half + margin) &&
+                        mouseY in (cy - half - margin)..(cy + half + margin)
+            }) return comp
 
         return null
     }
@@ -208,6 +225,7 @@ class RenderPanel : JPanel() {
         val compState = undoStack.pop()
         pushRedo(compState.component)
         compState.restore()
+        refresh()
         selectedComponent?.let { InterfaceUI.instance?.buildPropertyPanel(it) }
         notifyChangeListeners()
         repaint()
@@ -219,6 +237,7 @@ class RenderPanel : JPanel() {
         val compState = redoStack.pop()
         pushUndo(compState.component)
         compState.restore()
+        refresh()
         selectedComponent?.let { InterfaceUI.instance?.buildPropertyPanel(it) }
         notifyChangeListeners()
         repaint()
@@ -277,5 +296,12 @@ class RenderPanel : JPanel() {
             component.baseX = x
             component.baseY = y
         }
+    }
+
+    fun refresh() {
+        InterfaceDraw.preparedRoots.forEach { root ->
+            InterfaceDraw.layoutComponent(root, width, height)
+        }
+        repaint()
     }
 }

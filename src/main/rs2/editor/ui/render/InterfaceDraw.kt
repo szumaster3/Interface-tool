@@ -23,7 +23,7 @@ object InterfaceDraw {
     var editMode = false
     private const val FIXED_SHIFT = 14
     private val DEFAULT_FONT = Font("Helvetica", Font.PLAIN, 11)
-    private const val HANDLE_SIZE = 6
+    const val HANDLE_SIZE = 6
     private val TAG_REGEX = Regex("<[^>]+>")
     enum class ViewMode { NONE, BY_TYPE }
     var viewMode: ViewMode = ViewMode.NONE
@@ -629,19 +629,20 @@ object InterfaceDraw {
         textCache.clear()
     }
 
-    private fun drawResize(g: Graphics2D, x: Int, y: Int, w: Int, h: Int)
-    {
+    private fun drawResize(g: Graphics2D, x: Int, y: Int, w: Int, h: Int) {
         g.color = Color.WHITE
         g.stroke = BasicStroke(1f)
-        val half = HANDLE_SIZE / 2
 
-        fun handle(cx: Int, cy: Int)
-        {
-            g.fillRect(cx - half, cy - half, HANDLE_SIZE, HANDLE_SIZE)
+        val drawSize = maxOf(HANDLE_SIZE, 6)
+        val half = drawSize / 2
+
+        fun handle(cx: Int, cy: Int) {
+            g.fillRect(cx - half, cy - half, drawSize, drawSize)
             g.color = Color.BLACK
-            g.drawRect(cx - half, cy - half, HANDLE_SIZE, HANDLE_SIZE)
+            g.drawRect(cx - half, cy - half, drawSize, drawSize)
             g.color = Color.WHITE
         }
+
         handle(x, y)
         handle(x + w / 2, y)
         handle(x + w, y)
@@ -652,17 +653,15 @@ object InterfaceDraw {
         handle(x, y + h / 2)
     }
 
-    fun getCursor(mouseX: Int, mouseY: Int, x: Int, y: Int, w: Int, h: Int): ResizeType?
-    {
+    fun getCursor(mouseX: Int, mouseY: Int, x: Int, y: Int, w: Int, h: Int): ResizeType? {
+        val handleSize = maxOf(HANDLE_SIZE, 6)
+        val margin = 4
 
-        val half = HANDLE_SIZE / 2
+        fun click(cx: Int, cy: Int): Boolean =
+            mouseX in (cx - handleSize/2 - margin)..(cx + handleSize/2 + margin) &&
+                    mouseY in (cy - handleSize/2 - margin)..(cy + handleSize/2 + margin)
 
-        fun click(cx: Int, cy: Int): Boolean = mouseX in
-                (cx - half)..(cx + half) && mouseY in
-                (cy - half)..(cy + half)
-
-        return when
-        {
+        return when {
             click(x, y) -> ResizeType.TOP_LEFT
             click(x + w / 2, y) -> ResizeType.TOP
             click(x + w, y) -> ResizeType.TOP_RIGHT

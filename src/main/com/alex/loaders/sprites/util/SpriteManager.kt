@@ -2,6 +2,7 @@ package com.alex.loaders.sprites.util
 
 import com.alex.loaders.sprites.SpriteArchive
 import rs2.editor.ui.Consts
+import rs2.editor.ui.InterfaceUI
 import rs2.editor.ui.utils.InterfaceUtils
 import java.awt.*
 import java.io.File
@@ -40,7 +41,12 @@ class SpriteManager(parent: JFrame?, private val onSelect: (spriteId: Int, width
         exportBtn.isEnabled = false
         selectBtn.addActionListener {
             selectedTile?.let { tile ->
-                onSelect(tile.spriteId, tile.spriteWidth, tile.spriteHeight, selectedFrameId)
+                val raw = SpriteLoader.getRaw(tile.spriteId)
+                val archive = raw?.let { SpriteArchive.decode(it) }
+                val width = archive?.width ?: tile.spriteWidth
+                val height = archive?.height ?: tile.spriteHeight
+                onSelect(tile.spriteId, width, height, null)
+                InterfaceUI.instance?.renderPanel?.repaint()
                 dispose()
             }
         }
@@ -125,11 +131,7 @@ class SpriteManager(parent: JFrame?, private val onSelect: (spriteId: Int, width
                                 previewBtn.isEnabled = true
 
                                 if (e.clickCount == 2 && archive != null && archive.size() > 1) {
-                                    SpriteFramesDialogue(this@SpriteManager, tile.spriteId, archive) { frameId ->
-                                        selectedFrameId = frameId
-                                        onSelect(tile.spriteId, archive.width, archive.height, frameId)
-                                        dispose()
-                                    }
+                                    SpriteFramesDialogue(this@SpriteManager, tile.spriteId, archive)
                                 }
                                 if (e.clickCount == 2 && (archive == null || archive.size() == 1)) {
                                     showPreview(tile.spriteId)

@@ -8,6 +8,7 @@ import com.alex.loaders.interfaces.ComponentType
 import com.alex.loaders.sprites.util.SpriteManager
 import rs2.editor.properties.PropertyValues
 import rs2.editor.ui.InterfaceUI
+import rs2.editor.ui.render.InterfaceDraw
 import rs2.editor.ui.util.ColorPicker
 import rs2.editor.ui.util.GenericPrinter
 import rs2.editor.ui.util.MultiCopy
@@ -326,7 +327,7 @@ object InterfaceUIButton {
 
     fun openSpriteLibrary() {
         val comp = InterfaceUI.selectedComponent
-        if(comp?.interfaceId == -1) {
+        if (comp?.interfaceId == -1) {
             JOptionPane.showMessageDialog(null, "Please select a component first.", "Warning", JOptionPane.WARNING_MESSAGE)
             return
         }
@@ -334,8 +335,11 @@ object InterfaceUIButton {
             comp!!.spriteId = spriteId
             comp.baseWidth = w
             comp.baseHeight = h
+            InterfaceDraw.preparedRoots.forEach { root ->
+                InterfaceDraw.layoutComponent(root, InterfaceUI.instance!!.renderPanel.width, InterfaceUI.instance!!.renderPanel.height)
+            }
+            InterfaceUI.instance?.renderPanel?.repaint()
             InterfaceUI.instance?.buildPropertyPanel(comp)
-            InterfaceUI.instance?.repaint()
         }
     }
 

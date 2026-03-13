@@ -93,12 +93,22 @@ class ModelViewerRenderer(width: Int, height: Int, component: Component) : Image
     }
 
     fun updateModel(model: Unknown2?, x: Int, axisX: Int, y: Int, axisY: Int, axisZ: Int) {
-        val centerX = this.width / 2
-        val centerY = this.height / 2
-
-        model?.setViewPoint(0, axisY, 0, axisX, 0, axisX * axisZ shr 16, axisZ)
-        Unknown1.screenPosX = centerX
-        Unknown1.screenPosY = centerY
+        var axisX = axisX
+        var axisY = axisY
+        var axisZ = axisZ
+        this.initScreenProperties()
+        Unknown1.screen = this.screen
+        if (axisY < 0) axisY = 0
+        if (axisX < 0) axisX = 0
+        val var7 = Unknown1.field16[axisX] * axisZ shr 16
+        axisZ = Unknown1.field17[axisX] * axisZ shr 16
+        if (model != null) {
+            model.setViewPoint(0, axisY, 0, axisX, 0, var7, axisZ)
+            Unknown1.screenPosX = x
+            Unknown1.screenPosY = y
+        } else {
+            throw NullPointerException("You cant render a null model!")
+        }
     }
 
     fun clear() {

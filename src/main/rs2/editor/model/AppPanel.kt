@@ -14,8 +14,8 @@ import javax.swing.JPanel
 
 class AppPanel : JPanel(), Runnable {
     var loaded: Boolean = false
-    private val oriPosX = 120
-    private val oriPosY = 100
+    private val oriPosX = 300
+    private val oriPosY = 300
     private var posX = oriPosX
     private var posY = oriPosY
     private var axisX = 0

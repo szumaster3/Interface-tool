@@ -9,7 +9,7 @@ class InterfaceUIMenu : JMenuBar() {
     private val editMenu        = JMenu("Edit")
     private val viewMenu        = JMenu("View")
     private val addMenu         = JMenu("Add")
-    private val templateMenu    = JMenu("Template")
+    private val templateMenu    = JMenu("Templates")
     private val controlsMenu    = JMenu("Controls")
     private val animateMenu     = JMenu("Animate")
     private val mediaMenu       = JMenu("Media")
@@ -79,7 +79,6 @@ class InterfaceUIMenu : JMenuBar() {
         toolsMenu.add(InterfaceUIMenuItems.tool1Item())
         toolsMenu.add(InterfaceUIMenuItems.tool2Item())
         add(toolsMenu)
-        toolsMenu.isEnabled = false
 
         // Window Menu
         windowMenu.add(InterfaceUIMenuItems.minimizeItem())

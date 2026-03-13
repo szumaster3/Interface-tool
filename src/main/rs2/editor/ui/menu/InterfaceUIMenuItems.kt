@@ -57,22 +57,22 @@ object InterfaceUIMenuItems {
         addActionListener { }
     }
 
-    fun addLayerItem() = JMenuItem("Add Layer").apply {
+    fun addLayerItem() = JMenuItem("Add Layer component").apply {
         addActionListener { InterfaceUIButton.addLayer() }
     }
-    fun addFigureItem() = JMenuItem("Add Figure").apply {
+    fun addFigureItem() = JMenuItem("Add Figure component").apply {
         addActionListener { InterfaceUIButton.addFigure() }
     }
-    fun addSpriteItem() = JMenuItem("Add Sprite").apply {
+    fun addSpriteItem() = JMenuItem("Add Sprite component").apply {
         addActionListener { InterfaceUIButton.addSprite() }
     }
-    fun addModelItem() = JMenuItem("Add Model").apply {
+    fun addModelItem() = JMenuItem("Add Model component").apply {
         addActionListener { InterfaceUIButton.addModel() }
     }
-    fun addTextItem() = JMenuItem("Add Text").apply {
+    fun addTextItem() = JMenuItem("Add Text component").apply {
         addActionListener { InterfaceUIButton.addText() }
     }
-    fun addLineItem() = JMenuItem("Add Line").apply {
+    fun addLineItem() = JMenuItem("Add Line component").apply {
         addActionListener { InterfaceUIButton.addLine() }
     }
 
@@ -180,10 +180,12 @@ object InterfaceUIMenuItems {
         addActionListener { println("Pull clicked") }
     }
 
-    fun tool1Item() = JMenuItem("Tool 1").apply {
-        addActionListener { println("Tool 1 clicked") }
+    fun tool1Item() = JMenuItem("Backup cache").apply {
+        addActionListener { PropertyValues.backupCache() }
     }
+
     fun tool2Item() = JMenuItem("Tool 2").apply {
+        isEnabled = false
         addActionListener { println("Tool 2 clicked") }
     }
 

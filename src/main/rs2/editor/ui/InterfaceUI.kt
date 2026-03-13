@@ -69,7 +69,7 @@ class InterfaceUI : JFrame()
         {
             EventQueue.invokeLater {
                 try {
-                    UIManager.put("Button.gradient", listOf(0.3f, 0.0f, Color(248,248,248), Color(230,230,230), Color(200,200,200)))
+                    UIManager.put("Button.gradient", listOf(0.3f, 0.0f, Color(248,248,248), Color(240,240,240), Color(210,210,210)))
                     UIManager.put("MenuBar.gradient", listOf(0.25f, 0.0f, Color(180,180,180), Color(145,145,145), Color(105,105,105)))
                     UIManager.put("Label.font", Font("Tahoma", Font.PLAIN, 11))
                     UIManager.put("Spinner.arrowButtonInsets", Insets(2,3,3,3))
@@ -310,7 +310,8 @@ class InterfaceUI : JFrame()
             InterfaceUIButton.multiCopyButton(),
             InterfaceUIButton.spriteLibraryButton(),
             InterfaceUIButton.deleteButton(),
-            InterfaceUIButton.saveButton()
+            InterfaceUIButton.saveButton(),
+            InterfaceUIButton.toggleMouseButton()
         ).forEach {
             it.preferredSize = Dimension(it.preferredSize.width, Consts.BUTTON_HEIGHT_SMALL)
             buttonPanel.add(it)
@@ -392,6 +393,9 @@ class InterfaceUI : JFrame()
         val showModelsCB = JCheckBox("Models", renderPanel.showModels).apply {
             addActionListener { renderPanel.showModels = isSelected; renderPanel.repaint() }
         }
+
+        undoButton.toolTipText = "Undo last change (Ctrl Z)"
+        redoButton.toolTipText = "Undo last change (Ctrl Y)"
 
         showPanel.add(showHiddenCB)
         showPanel.add(showLayersCB)
@@ -561,7 +565,7 @@ class InterfaceUI : JFrame()
     private fun initPropertyLayout() {
         val standardSection = createSection(
             "Standard",
-            listOf("ParentID", "Hash", "Hidden", "Type", "ContentType", "X", "Y", "Width", "Height", "WidthMode", "HeightMode", "XMode", "YMode"),
+            listOf("Name", "ParentID", "Hash", "Hidden", "Type", "ContentType", "X", "Y", "Width", "Height", "WidthMode", "HeightMode", "XMode", "YMode"),
             width = 200,
             labelWidth = 90
         )
@@ -663,7 +667,7 @@ class InterfaceUI : JFrame()
     fun buildPropertyPanel(comp: ComponentDefinition)
     {
         val c = comp
-
+        set("Name", c.name ?: "")
         set("Hash", c.componentHash)
         set("Type", Utils.getComponentFromInt(c.type))
         val typeInt = c.type
@@ -854,6 +858,7 @@ class InterfaceUI : JFrame()
             {
 
                 // Standard
+                "Name"          -> c.name = text.ifEmpty { null }
                 "Hidden"        -> c.hidden = text.toBoolean()
                 "Hash"          -> c.componentHash = text.toIntOrNull() ?: 0
                 "Type"          -> c.type = Utils.getComponentFromString(text)
@@ -1155,7 +1160,7 @@ class InterfaceUI : JFrame()
             }
 
             val textFields = setOf(
-                "ParentID", "Hash",
+                "Name", "ParentID", "Hash",
                 "Text", "Color",
                 "ModelID", "AnimID", "SpriteID",
                 "OptionBase", "OptionCircumfix"

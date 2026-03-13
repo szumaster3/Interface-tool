@@ -5,6 +5,9 @@ import rs2.editor.ui.Consts
 import rs2.editor.ui.InterfaceUI
 import rs2.editor.ui.utils.InterfaceUtils
 import java.awt.*
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionAdapter
 import java.io.File
 import javax.imageio.ImageIO
 import javax.swing.*
@@ -264,49 +267,41 @@ class SpriteManager(parent: JFrame?, private val onSelect: (spriteId: Int, width
         dialog.layout = BorderLayout()
 
         var zoom = 1.0
-
         val imageLabel = JLabel()
+
+        val previewPanel = JPanel(GridBagLayout()).apply {
+            background = Color.DARK_GRAY
+            removeAll()
+            add(imageLabel)
+        }
 
         fun updateImage() {
             val w = (img.width * zoom).toInt()
             val h = (img.height * zoom).toInt()
-
             val scaled = img.getScaledInstance(w, h, Image.SCALE_FAST)
             imageLabel.icon = ImageIcon(scaled)
+            imageLabel.revalidate()
+            imageLabel.repaint()
+            previewPanel.revalidate()
+            previewPanel.repaint()
         }
 
         updateImage()
 
-        val scrollPane = JScrollPane(imageLabel)
+        val scrollPane = JScrollPane(previewPanel)
+
         scrollPane.addMouseWheelListener {
-            if (it.preciseWheelRotation < 0) {
-                zoom *= 1.1
-            } else {
-                zoom /= 1.1
-            }
+            zoom *= if (it.preciseWheelRotation < 0) 1.1 else 1 / 1.1
             updateImage()
         }
-        val controls = JPanel(FlowLayout(FlowLayout.LEFT))
 
+        val controls = JPanel(FlowLayout(FlowLayout.LEFT))
         val zoomIn = JButton("+")
         val zoomOut = JButton("-")
-        val reset = JButton("100%")
-
-        zoomIn.addActionListener {
-            zoom *= 1.25
-            updateImage()
-        }
-
-        zoomOut.addActionListener {
-            zoom /= 1.25
-            updateImage()
-        }
-
-        reset.addActionListener {
-            zoom = 1.0
-            updateImage()
-        }
-
+        val reset = JButton("Reset zoom")
+        zoomIn.addActionListener { zoom *= 1.25; updateImage() }
+        zoomOut.addActionListener { zoom /= 1.25; updateImage() }
+        reset.addActionListener { zoom = 1.0; updateImage() }
         controls.add(JLabel("Zoom:"))
         controls.add(zoomOut)
         controls.add(zoomIn)
@@ -314,7 +309,6 @@ class SpriteManager(parent: JFrame?, private val onSelect: (spriteId: Int, width
 
         dialog.add(controls, BorderLayout.NORTH)
         dialog.add(scrollPane, BorderLayout.CENTER)
-
         dialog.size = Dimension(600, 500)
         dialog.setLocationRelativeTo(this)
         dialog.isVisible = true
@@ -325,50 +319,50 @@ class SpriteManager(parent: JFrame?, private val onSelect: (spriteId: Int, width
         dialog.layout = BorderLayout()
 
         val helpText = """
-SPRITE LIBRARY – DOCS
-
-Browse Sprites
---------------
-The grid displays all sprites from the cache.
-Click a sprite to select it.
-
-Select
-------
-Confirms the selected sprite and returns it to the editor.
-
-Preview
--------
-Opens the selected sprite in its full original size.
-Preview also supports zooming.
-
-Find
-----
-Enter a sprite ID and press Find to jump directly to that sprite.
-
-Import
-------
-Import one or multiple PNG images as a sprite or animation.
-
-Export Selected
----------------
-Export the selected sprite (or frames) as PNG files.
-
-Export All
-----------
-Export every sprite from the cache.
-
-Frames
-------
-If a sprite contains multiple frames,
-double-click it to open the frame selector.
-
-Tips
-----
-- Double click a sprite to preview it quickly.
-- Animated sprites open the frame selector.
-- Use Preview to inspect sprite details.
-
-""".trimIndent()
+            SPRITE LIBRARY – DOCS
+            
+            Browse Sprites
+            --------------
+            The grid displays all sprites from the cache.
+            Click a sprite to select it.
+            
+            Select
+            ------
+            Confirms the selected sprite and returns it to the editor.
+            
+            Preview
+            -------
+            Opens the selected sprite in its full original size.
+            Preview also supports zooming.
+            
+            Find
+            ----
+            Enter a sprite ID and press Find to jump directly to that sprite.
+            
+            Import
+            ------
+            Import one or multiple PNG images as a sprite or animation.
+            
+            Export Selected
+            ---------------
+            Export the selected sprite (or frames) as PNG files.
+            
+            Export All
+            ----------
+            Export every sprite from the cache.
+            
+            Frames
+            ------
+            If a sprite contains multiple frames,
+            double-click it to open the frame selector.
+            
+            Tips
+            ----
+            - Double click a sprite to preview it quickly.
+            - Animated sprites open the frame selector.
+            - Use Preview to inspect sprite details.
+            
+            """.trimIndent()
 
         val textArea = JTextArea(helpText).apply {
             isEditable = false

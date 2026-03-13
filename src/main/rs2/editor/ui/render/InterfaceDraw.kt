@@ -32,7 +32,6 @@ object InterfaceDraw {
     private val spriteCache = mutableMapOf<String, BufferedImage>()
     private val textCache = mutableMapOf<String, List<String>>()
     private val fontMetricsCache = mutableMapOf<Font, FontMetrics>()
-    private val modelRendererCache = mutableMapOf<Int, Unknown3>()
     var preparedRoots: List<ComponentDefinition> = emptyList()
         private set
 
@@ -43,7 +42,6 @@ object InterfaceDraw {
         spriteCache.clear()
         textCache.clear()
         fontMetricsCache.clear()
-        modelRendererCache.clear()
 
         childrenCache.putAll(allComponents.groupBy { it.parentId })
         preparedRoots = childrenCache[-1] ?: emptyList()
@@ -351,9 +349,7 @@ object InterfaceDraw {
         if (drawModel) {
             val model = Unknown4.getModel(comp.modelId)
             if (model != null) {
-                val renderer = modelRendererCache.getOrPut(comp.modelId) {
-                    Unknown3(drawWidth, drawHeight, InterfaceUI.instance?.renderPanel)
-                }
+                val renderer = Unknown3(drawWidth, drawHeight, InterfaceUI.instance?.renderPanel)
                 renderer.clear()
                 renderer.updateModel(model, comp)
                 renderer.updatePreview(x, y, g)
@@ -577,8 +573,8 @@ object InterfaceDraw {
                 4 -> ph * c.baseHeight shr FIXED_SHIFT
                 else -> c.height
             }
-        if (c.modelObjWidth > 0) c.width = c.modelObjWidth
-        if (c.modelObjHeight > 0) c.height = c.modelObjHeight
+            if (c.modelObjWidth > 0) c.baseWidth = c.modelObjWidth
+            if (c.modelObjHeight > 0) c.baseHeight = c.modelObjHeight
     }
 
     private fun realPosition(c: ComponentDefinition, pw: Int, ph: Int) {

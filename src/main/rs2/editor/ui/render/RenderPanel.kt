@@ -16,7 +16,9 @@ import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
 import java.awt.image.BufferedImage
 import java.util.*
+import javax.swing.AbstractAction
 import javax.swing.JPanel
+import javax.swing.KeyStroke
 
 class RenderPanel : JPanel() {
     var interfaceId: Int = -1
@@ -25,7 +27,7 @@ class RenderPanel : JPanel() {
     var showModels = true
     var selectedComponent: ComponentDefinition? = null
     private var backBuffer: BufferedImage? = null
-
+    private var dragging = false
     private var activeHandle: ResizeType? = null
     private var resizing = false
 
@@ -40,11 +42,20 @@ class RenderPanel : JPanel() {
     private val undoStack = Stack<ComponentState>()
     private val redoStack = Stack<ComponentState>()
 
+    @JvmField var interactionEnabled = true
+
+    val undoKey = "undo"
+    val redoKey = "redo"
     val changeListeners = mutableListOf<() -> Unit>()
 
     private fun notifyChangeListeners()
     {
         changeListeners.forEach { it() }
+    }
+
+    fun setInteractionEnabled(enabled: Boolean)
+    {
+        interactionEnabled = enabled
     }
 
     init {
@@ -61,6 +72,7 @@ class RenderPanel : JPanel() {
         {
             override fun mousePressed(e: MouseEvent)
             {
+                if (!interactionEnabled) return
                 if (resizing) return
 
                 val clicked = hitTestComponent(e.x, e.y)
@@ -90,12 +102,24 @@ class RenderPanel : JPanel() {
 
                     pushUndo(comp)
                     redoStack.clear()
+                } else {
+                    dragging = true
+
+                    dragStartX = e.x
+                    dragStartY = e.y
+
+                    startBaseX = comp.baseX
+                    startBaseY = comp.baseY
+
+                    pushUndo(comp)
+                    redoStack.clear()
                 }
             }
 
             override fun mouseReleased(e: MouseEvent)
             {
                 resizing = false
+                dragging = false
                 activeHandle = null
             }
         })
@@ -103,13 +127,26 @@ class RenderPanel : JPanel() {
         addMouseMotionListener(object : MouseMotionAdapter()
         {
             override fun mouseDragged(e: MouseEvent) {
-                if (!resizing) return
-
+                if (!interactionEnabled) return
                 val comp = selectedComponent ?: return
-                val handle = activeHandle ?: return
-
                 val dx = e.x - dragStartX
                 val dy = e.y - dragStartY
+
+                if (dragging) {
+                    comp.baseX = startBaseX + dx
+                    comp.baseY = startBaseY + dy
+
+                    InterfaceDraw.preparedRoots.forEach { root ->
+                        InterfaceDraw.layoutComponent(root, width, height)
+                    }
+                    selectedComponent?.let { InterfaceUI.instance?.buildPropertyPanel(it) }
+                    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+                    repaint()
+                    return
+                }
+
+                if (!resizing) return
+                val handle = activeHandle ?: return
 
                 when (handle) {
                     ResizeType.RIGHT -> comp.baseWidth = startBaseW + dx
@@ -150,7 +187,6 @@ class RenderPanel : JPanel() {
                 InterfaceDraw.preparedRoots.forEach { root ->
                     InterfaceDraw.layoutComponent(root, width, height)
                 }
-
                 selectedComponent?.let { InterfaceUI.instance?.buildPropertyPanel(it) }
 
                 repaint()
@@ -169,6 +205,23 @@ class RenderPanel : JPanel() {
                     ResizeType.TOP_RIGHT, ResizeType.BOTTOM_LEFT -> Cursor.getPredefinedCursor(Cursor.NE_RESIZE_CURSOR)
                     else -> Cursor.getDefaultCursor()
                 }
+            }
+        })
+
+        val inputMap = this.getInputMap(WHEN_IN_FOCUSED_WINDOW)
+        val actionMap = this.actionMap
+
+        inputMap.put(KeyStroke.getKeyStroke("control Z"), undoKey)
+        actionMap.put(undoKey, object : AbstractAction() {
+            override fun actionPerformed(e: java.awt.event.ActionEvent?) {
+                undo()
+            }
+        })
+
+        inputMap.put(KeyStroke.getKeyStroke("control Y"), redoKey)
+        actionMap.put(redoKey, object : AbstractAction() {
+            override fun actionPerformed(e: java.awt.event.ActionEvent?) {
+                redo()
             }
         })
     }
@@ -298,7 +351,7 @@ class RenderPanel : JPanel() {
         }
     }
 
-    fun refresh() {
+    private fun refresh() {
         InterfaceDraw.preparedRoots.forEach { root ->
             InterfaceDraw.layoutComponent(root, width, height)
         }

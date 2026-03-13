@@ -1,19 +1,15 @@
 package rs2.editor.ui.menu
 
-import com.alex.store.Index
 import com.alex.store.Store
 import rs2.editor.model.ModelViewerFrame
 import rs2.editor.properties.PropertyValues
 import rs2.editor.ui.InterfaceUI
 import rs2.editor.ui.menu.InterfaceUIButton.openSpriteLibrary
 import rs2.editor.ui.utils.ComponentTemplates
-import java.io.File
-import java.io.FileOutputStream
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import java.io.IOException
-import javax.swing.JFileChooser
-import javax.swing.JMenu
-import javax.swing.JMenuItem
-import javax.swing.JOptionPane
+import javax.swing.*
 
 object InterfaceUIMenuItems {
 
@@ -36,12 +32,14 @@ object InterfaceUIMenuItems {
             InterfaceUI.instance?.renderPanel?.undo()
             InterfaceUI.instance?.renderPanel?.repaint()
         }
+        accelerator = KeyStroke.getKeyStroke(KeyEvent.VK_Z, InputEvent.CTRL_DOWN_MASK)
     }
     fun redoItem() = JMenuItem("Redo").apply {
         addActionListener {
             InterfaceUI.instance?.renderPanel?.redo()
             InterfaceUI.instance?.renderPanel?.repaint()
         }
+        accelerator = KeyStroke.getKeyStroke(KeyEvent.VK_Y, InputEvent.CTRL_DOWN_MASK)
     }
     fun copyItem() = JMenuItem("Copy").apply {
         addActionListener {
@@ -129,11 +127,11 @@ object InterfaceUIMenuItems {
         isEnabled = false
     }
 
-    fun control1Item() = JMenuItem("Control 1").apply {
-        addActionListener { println("Control 1 clicked") }
-    }
-    fun control2Item() = JMenuItem("Control 2").apply {
-        addActionListener { println("Control 2 clicked") }
+    fun toggleMouseMenuItem(): JMenuItem {
+        InterfaceUIButton.mouseMenuItem = JMenuItem("Mouse: Off").apply {
+            addActionListener { InterfaceUIButton.toggleMouseAction() }
+        }
+        return InterfaceUIButton.mouseMenuItem
     }
 
     fun playAnimationItem() = JMenuItem("Play Animation").apply {
@@ -149,7 +147,7 @@ object InterfaceUIMenuItems {
                 try {
                     val store = Store(path)
 
-                    javax.swing.SwingUtilities.invokeLater {
+                    SwingUtilities.invokeLater {
                         val frame = ModelViewerFrame(store)
                         frame.isVisible = true
                     }

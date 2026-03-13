@@ -54,10 +54,8 @@ class InterfaceUIMenu : JMenuBar() {
         add(templateMenu)
 
         // Controls Menu
-        controlsMenu.add(InterfaceUIMenuItems.control1Item())
-        controlsMenu.add(InterfaceUIMenuItems.control2Item())
+        controlsMenu.add(InterfaceUIMenuItems.toggleMouseMenuItem())
         add(controlsMenu)
-        controlsMenu.isEnabled = false
 
         // Animate Menu
         animateMenu.add(InterfaceUIMenuItems.playAnimationItem())

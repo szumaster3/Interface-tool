@@ -13,6 +13,7 @@ import rs2.editor.ui.render.InterfaceDraw
 import rs2.editor.ui.util.ColorPicker
 import rs2.editor.ui.util.GenericPrinter
 import rs2.editor.ui.util.MultiCopy
+import rs2.editor.ui.utils.ComponentCopy
 import rs2.editor.ui.utils.InterfaceUtils.iconButton
 import rs2.editor.ui.utils.InterfaceUtils.loadIcon
 import java.awt.BorderLayout
@@ -26,6 +27,8 @@ import javax.swing.*
 object InterfaceUIButton {
     private lateinit var mouseButton: JButton
     lateinit var mouseMenuItem: JMenuItem
+    private var copiedComponent: ComponentCopy? = null
+    private val hashMap = mutableMapOf<Int, Int>()
 
     fun addSprite() = InterfaceUI.instance?.addComponent(801, 4)
     fun addModel()  = InterfaceUI.instance?.addComponent(205, 90) { it.baseX = 0; it.baseY = 0 }
@@ -292,47 +295,70 @@ object InterfaceUIButton {
         InterfaceUI.instance?.renderPanel?.repaint()
     }
 
+    fun buildCopyTree(comp: ComponentDefinition): ComponentCopy {
+        val children = InterfaceDraw.childrenCache[comp.componentHash]
+            ?.map { buildCopyTree(it) }
+            ?: emptyList()
+
+        return ComponentCopy(ComponentDefinition.copy(comp), children)
+    }
+
     fun copyComponent() {
-        val comp = InterfaceUI.selectedComponent
-        if (comp != null) {
-            ComponentDefinition.getInterfaceComponent(comp.interfaceId, comp.componentId)
-        }
+        val comp = InterfaceUI.selectedComponent ?: return
+        copiedComponent = buildCopyTree(comp)
     }
 
     private fun pasteComponent() {
-        val comp = InterfaceUI.selectedComponent
-        if (comp == null) {
-            JOptionPane.showMessageDialog(null, "No component was copied.")
-            return
-        }
+        val root = copiedComponent ?: return
 
-        val interfaceId = comp.interfaceId
+        val targetInterfaceId = InterfaceUI.instance!!.interfacesList.selectedValue
+            ?: return
 
-        val nextId = ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId)
+        hashMap.clear()
 
-        comp.componentId = nextId
-        comp.componentHash = (interfaceId shl 16) or nextId
-        comp.parentId = -1
-
-        Cache.getStore()!!.indexes[3].putFile(
-            interfaceId,
-            nextId,
-            comp.encode(true)
-        )
-
-        ComponentDefinition.getInterface(interfaceId, true)
+        val newRoot = pasteRecursive(root, targetInterfaceId, null)
+        ComponentDefinition.getInterface(targetInterfaceId, true)
 
         InterfaceUI.instance?.apply {
+            loadComponents(targetInterfaceId)
 
-            loadComponents(interfaceId)
-
-            ComponentDefinition.getInterfaceComponent(interfaceId, nextId)?.let {
+            ComponentDefinition.getInterfaceComponent(
+                targetInterfaceId,
+                newRoot.componentId
+            )?.let {
                 selectComponent(it)
             }
 
-            renderPanel?.interfaceId = interfaceId
+            renderPanel?.interfaceId = targetInterfaceId
             renderPanel?.repaint()
         }
+    }
+
+    private fun pasteRecursive(
+        node: ComponentCopy,
+        targetInterfaceId: Int,
+        newParentHash: Int?
+    ): ComponentDefinition {
+
+        val nextId = ComponentDefinition.getInterfaceDefinitionsComponentsSize(targetInterfaceId)
+
+        val newComp = ComponentDefinition.copy(node.component)
+
+
+        newComp.interfaceId = targetInterfaceId
+        newComp.componentHash = (targetInterfaceId shl 16) or nextId
+
+        newComp.parentId = newParentHash ?: -1
+        Cache.getStore()!!.indexes[3].putFile(
+            targetInterfaceId,
+            nextId,
+            newComp.encode(true)
+        )
+        hashMap[node.component.componentHash] = newComp.componentHash
+        node.children.forEach {
+            pasteRecursive(it, targetInterfaceId, newComp.componentHash)
+        }
+        return newComp
     }
 
     private fun printComponent() {

@@ -3,12 +3,15 @@ package rs2.editor.ui.menu
 import com.alex.store.Store
 import rs2.editor.model.ModelViewerFrame
 import rs2.editor.properties.PropertyValues
+import rs2.editor.ui.Consts
 import rs2.editor.ui.InterfaceUI
 import rs2.editor.ui.menu.InterfaceUIButton.openSpriteLibrary
 import rs2.editor.ui.utils.ComponentTemplates
+import java.awt.Desktop
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.io.IOException
+import java.net.URL
 import javax.swing.*
 
 object InterfaceUIMenuItems {
@@ -170,14 +173,81 @@ object InterfaceUIMenuItems {
         }
     }
 
-    fun commitItem() = JMenuItem("Commit").apply {
-        addActionListener { println("Commit clicked") }
+    fun isNewerVersion(remote: String, local: String): Boolean {
+        val r = remote.split(".").map { it.toInt() }
+        val l = local.split(".").map { it.toInt() }
+
+        val size = maxOf(r.size, l.size)
+
+        for (i in 0 until size) {
+            val rv = r.getOrElse(i) { 0 }
+            val lv = l.getOrElse(i) { 0 }
+
+            if (rv > lv) return true
+            if (rv < lv) return false
+        }
+
+        return false
     }
-    fun pushItem() = JMenuItem("Push").apply {
-        addActionListener { println("Push clicked") }
-    }
-    fun pullItem() = JMenuItem("Pull").apply {
-        addActionListener { println("Pull clicked") }
+
+    fun checkVersion(): JMenuItem = JMenuItem("Check for updates").apply {
+        addActionListener {
+            Thread {
+                try {
+                    val localVersion = Consts.APP_VERSION
+
+                    val url = URL("https://raw.githubusercontent.com/szumaster3/Interface-tool/main/version.txt")
+                    val remoteVersion = url.readText().trim()
+
+                    if (isNewerVersion(remoteVersion, localVersion)) {
+
+                        SwingUtilities.invokeLater {
+                            val result = JOptionPane.showOptionDialog(
+                                null,
+                                "A new version is available!\n\nCurrent: $localVersion\nLatest: $remoteVersion",
+                                "Update Available",
+                                JOptionPane.DEFAULT_OPTION,
+                                JOptionPane.INFORMATION_MESSAGE,
+                                null,
+                                arrayOf("Go to Source", "Download", "Cancel"),
+                                "Download"
+                            )
+
+                            when (result) {
+                                0 -> Desktop.getDesktop().browse(
+                                    URL("https://github.com/szumaster3/Interface-tool/").toURI()
+                                )
+
+                                1 -> Desktop.getDesktop().browse(
+                                    URL("https://szumaster.com/data/upload/dl_iface_editor/Interface%20Editor-v$remoteVersion.zip").toURI()
+                                )
+                            }
+                        }
+
+                    } else {
+                        SwingUtilities.invokeLater {
+                            JOptionPane.showMessageDialog(
+                                null,
+                                "You are using the latest version.",
+                                "Up to date",
+                                JOptionPane.INFORMATION_MESSAGE
+                            )
+                        }
+                    }
+
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    SwingUtilities.invokeLater {
+                        JOptionPane.showMessageDialog(
+                            null,
+                            "Failed to check for updates.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE
+                        )
+                    }
+                }
+            }.start()
+        }
     }
 
     fun tool1Item() = JMenuItem("Backup cache").apply {

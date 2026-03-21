@@ -4,6 +4,7 @@ import com.alex.Cache
 import com.alex.io.InputStream
 import com.alex.io.OutputStream
 import com.alex.utils.Utils
+import java.io.ByteArrayInputStream
 
 class ComponentDefinition {
     internal var version: Byte = 0
@@ -960,6 +961,18 @@ class ComponentDefinition {
                 }
             }
             return containers
+        }
+
+        fun copy(source: ComponentDefinition): ComponentDefinition {
+            val bytes = source.encode(true)
+
+            return ComponentDefinition().apply {
+                decodeIf3(
+                    InputStream(bytes),
+                    source.componentId,
+                    source.interfaceId
+                )
+            }
         }
     }
 }

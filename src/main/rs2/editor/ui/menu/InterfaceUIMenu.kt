@@ -69,11 +69,8 @@ class InterfaceUIMenu : JMenuBar() {
         add(mediaMenu)
 
         // Version Control Menu
-        versionControlMenu.add(InterfaceUIMenuItems.commitItem())
-        versionControlMenu.add(InterfaceUIMenuItems.pushItem())
-        versionControlMenu.add(InterfaceUIMenuItems.pullItem())
+        versionControlMenu.add(InterfaceUIMenuItems.checkVersion())
         add(versionControlMenu)
-        versionControlMenu.isEnabled = false
 
         // Tools Menu
         toolsMenu.add(InterfaceUIMenuItems.tool1Item())

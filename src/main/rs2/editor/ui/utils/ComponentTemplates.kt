@@ -64,7 +64,6 @@ object ComponentTemplates {
                 comp.baseHeight = 35
                 comp.spriteId = 1431
                 comp.optionMask = 2
-                comp.settings = IComponentSettings(2, -1)
                 comp.rightClickOptions  = arrayOf("OP_NAME")
                 comp.onMouseHoverScript = arrayOf(1357, -2147483645, 100)
                 comp.onMouseLeaveScript = arrayOf(1501, -2147483645, "PARENT_ID")
@@ -118,7 +117,6 @@ object ComponentTemplates {
                     comp.baseHeight = 24
                     comp.spriteId = 572
                     comp.optionMask = 2
-                    comp.settings = IComponentSettings(2, -1)
                     comp.rightClickOptions = arrayOf("OP_NAME")
                     comp.onLoadScript = arrayOf(
                         6,
@@ -247,7 +245,7 @@ object ComponentTemplates {
                 comp.baseY = 140
                 comp.baseWidth = 50
                 comp.baseHeight = 50
-                comp.settings = IComponentSettings(0, -1)
+                comp.optionMask = 0
                 comp.onLoadScript = arrayOf(92, -2147483645)
                 comp.onMouseHoverScript = arrayOf(94, -2147483645)
                 comp.onMouseLeaveScript = arrayOf(92, -2147483645)
@@ -299,7 +297,6 @@ object ComponentTemplates {
                 comp.baseHeight = 16
                 comp.spriteId = 831
                 comp.optionMask = 2
-                comp.settings = IComponentSettings(2, -1)
                 comp.rightClickOptions = arrayOf("Close")
                 comp.onMouseHoverScript = arrayOf(44, -2147483645, 832)
                 comp.onMouseLeaveScript = arrayOf(44, -2147483645, 831)
@@ -351,7 +348,7 @@ object ComponentTemplates {
                 comp.baseY = 200
                 comp.baseWidth = 100
                 comp.baseHeight = 50
-                comp.settings = IComponentSettings(0, -1)
+                comp.optionMask = 0
                 comp.onLoadScript = arrayOf(92, -2147483645)
                 comp.onMouseHoverScript = arrayOf(94, -2147483645)
                 comp.onMouseLeaveScript = arrayOf(92, -2147483645)
@@ -374,7 +371,7 @@ object ComponentTemplates {
                 comp.textHorizontalAli = 1
                 comp.fontId = 495
                 comp.color = 52224
-                comp.settings = IComponentSettings(0, -1)
+                comp.optionMask = 0
                 comp.onMouseHoverScript = arrayOf(45, -2147483645, "COLOR_OFF")
                 comp.onMouseLeaveScript = arrayOf(45, -2147483645, "COLOR_ON")
             })

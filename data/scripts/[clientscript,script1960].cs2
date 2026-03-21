@@ -1,5 +1,0 @@
-// 1960
-[clientscript,script1960]
-if (%varbit5641 = 1) {
-	if_sethide(false, emotes:emote_thanksgiving);
-}

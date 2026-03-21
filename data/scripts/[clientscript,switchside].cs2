@@ -1,3 +1,0 @@
-// 115
-[clientscript,switchside](int $int0)
-~if_switchside($int0);

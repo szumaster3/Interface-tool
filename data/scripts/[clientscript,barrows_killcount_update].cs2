@@ -1,3 +1,0 @@
-// 1394
-[clientscript,barrows_killcount_update]
-if_settext("Kill Count : <tostring(%varbit464)>", barrows_overlay:com_0);

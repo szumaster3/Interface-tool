@@ -2,11 +2,10 @@
 <h2>Interface Editor</h2>
 <h3>Source: <a href="https://github.com/PaoloKa/Interface-tool">https://github.com/PaoloKa/Interface-tool</a></h3>
 <h4>Icons used in this project are provided by <a href="https://www.luckyicon.com">LuckyIcon Art</a> and are used according to their license.</h4>
-<h4>Scripts references source: <a href="https://github.com/Joshua-F/cs2-scripts/tree/rs2-530">https://github.com/Joshua-F/cs2-scripts/tree/rs2-530</a></h4>
 
 <a href="#startup">Startup</a> •
 <a href="#tool-properties">Configuration</a> •
-<a href="#editing-interfaces">Edting</a> •
+<a href="#editing-interfaces">Editing</a> •
 <a href="#scripts">Scripts overview</a> •
 [Scripts references](data/REFERENCES.md) •
 <a href="https://github.com/szumaster3/Interface-tool/wiki">Documentation</a>

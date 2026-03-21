@@ -1,6 +1,0 @@
-// 1524
-[clientscript,script1524]
-if (cc_find(questjournal_scroll:back_layer, 0) = ^true) {
-	cc_deleteall(questjournal_scroll:back_layer);
-	if_setop(1, "null", questjournal_scroll:back_layer);
-}

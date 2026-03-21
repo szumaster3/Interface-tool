@@ -1,3 +1,0 @@
-// 564
-[clientscript,script564](component $component0)
-if_settext(tostring(%var1105), $component0);

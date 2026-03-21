@@ -1,3 +1,0 @@
-// 1031
-[clientscript,script1031]
-openurl("www", "kbase/viewcategory.ws?cat_id=827", false);

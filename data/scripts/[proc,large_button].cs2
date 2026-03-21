@@ -1,3 +1,0 @@
-// 191
-[proc,large_button](component $component0)
-if_setgraphic("large_button", $component0);

@@ -1,3 +1,0 @@
-// 1499
-[clientscript,tab_9_click](int $int0)
-~bank_v2_tab_click($int0, 9);

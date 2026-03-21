@@ -1,3 +1,0 @@
-// 1985
-[proc,script1985]()(int)
-return(11);

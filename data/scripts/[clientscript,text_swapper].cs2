@@ -1,3 +1,0 @@
-// 68
-[clientscript,text_swapper](component $component0, string $text0)
-if_settext($text0, $component0);

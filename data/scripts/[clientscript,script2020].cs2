@@ -1,3 +1,0 @@
-// 2020
-[clientscript,script2020](component $component0)
-if_setcolour(^white, $component0);

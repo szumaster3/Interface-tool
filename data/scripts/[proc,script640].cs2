@@ -1,3 +1,0 @@
-// 640
-[proc,script640](component $component0)
-if_setgraphic("graphic_1169", $component0);

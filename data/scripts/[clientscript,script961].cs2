@@ -1,3 +1,0 @@
-// 961
-[clientscript,script961](component $component0)
-if_settrans(0, $component0);

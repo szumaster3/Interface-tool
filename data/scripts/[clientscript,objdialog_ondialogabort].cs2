@@ -1,3 +1,0 @@
-// 572
-[clientscript,objdialog_ondialogabort]
-~objdialog_close;

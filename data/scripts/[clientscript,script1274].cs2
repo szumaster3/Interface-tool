@@ -1,3 +1,0 @@
-// 1274
-[clientscript,script1274]
-if_settext(tostring(%var353), boardgames_runelink_overlay:rank);

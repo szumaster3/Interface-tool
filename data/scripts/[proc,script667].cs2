@@ -1,3 +1,0 @@
-// 667
-[proc,script667](int $int0)(component)
-return(enum(int, component, enum_1085, $int0));

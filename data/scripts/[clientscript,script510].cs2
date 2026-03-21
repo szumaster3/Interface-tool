@@ -1,3 +1,0 @@
-// 510
-[clientscript,script510]
-%varcint51 = if_getmodelzoom(interface_605:hatch);

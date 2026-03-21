@@ -1,7 +1,0 @@
-// 1094
-[clientscript,script1094]
-if (%var1241 = 1) {
-	~cutscene_overlay_clamp;
-} else {
-	~cutscene_overlay_resize;
-}

@@ -1,3 +1,0 @@
-// 119
-[clientscript,component_pulse_start](component $component0)
-~component_pulse_start($component0);

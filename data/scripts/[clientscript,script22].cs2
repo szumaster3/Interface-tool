@@ -1,3 +1,0 @@
-// 22
-[clientscript,script22]
-if_settext(tostring(%var143), gnomeball:gnomeball_score_if);

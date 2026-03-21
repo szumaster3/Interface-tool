@@ -1,7 +1,0 @@
-// 1328
-[clientscript,script1328]
-if (worldlist_fetch = false) {
-	return;
-}
-if_setontimer(null, loginscreen:com_224);
-~script1879;

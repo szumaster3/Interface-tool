@@ -1,3 +1,0 @@
-// 660
-[proc,script660](int $int0)(component)
-return(enum(int, component, enum_1081, $int0));

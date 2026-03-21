@@ -1,3 +1,0 @@
-// 1922
-[clientscript,script1922]
-if_setonvarctransmit("script1923{varcint550, varcint554, varcint555}", interface_804:com_11);

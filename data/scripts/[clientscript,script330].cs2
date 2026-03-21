@@ -1,4 +1,0 @@
-// 330
-[clientscript,script330]
-~script365;
-if_setgraphic("miscgraphics,11", interface_592:com_47);

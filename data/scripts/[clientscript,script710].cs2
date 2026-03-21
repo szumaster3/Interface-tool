@@ -1,5 +1,0 @@
-// 710
-[clientscript,script710]
-if (%varcint41 = 5) {
-	~rebuildchatbox;
-}

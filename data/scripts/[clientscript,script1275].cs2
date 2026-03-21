@@ -1,3 +1,0 @@
-// 1275
-[clientscript,script1275]
-if_settext(tostring(%var648), boardgames_runesquares_overlay:rank);

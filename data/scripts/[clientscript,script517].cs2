@@ -1,4 +1,0 @@
-// 517
-[clientscript,script517]
-if_close;
-anim(null, 0);

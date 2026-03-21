@@ -1,3 +1,0 @@
-// 1302
-[clientscript,switchside_varc]
-~if_switchside(%varcint168);

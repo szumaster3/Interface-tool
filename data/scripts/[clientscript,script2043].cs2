@@ -1,3 +1,0 @@
-// 2043
-[clientscript,script2043](component $component0)
-if_settext(tostring(%var157), $component0);

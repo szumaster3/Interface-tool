@@ -1,3 +1,0 @@
-// 611
-[clientscript,script611](component $component0)
-if_setgraphic("graphic_1160", $component0);

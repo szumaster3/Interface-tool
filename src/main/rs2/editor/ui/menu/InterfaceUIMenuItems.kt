@@ -196,7 +196,7 @@ object InterfaceUIMenuItems {
                 try {
                     val localVersion = Consts.APP_VERSION
 
-                    val url = URL("https://raw.githubusercontent.com/szumaster3/Interface-tool/main/version.txt")
+                    val url = URL("https://raw.githubusercontent.com/szumaster3/Interface-tool/master/version.txt")
                     val remoteVersion = url.readText().trim()
 
                     if (isNewerVersion(remoteVersion, localVersion)) {

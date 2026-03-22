@@ -202,7 +202,6 @@ class SpriteManager(parent: JFrame?, private val onSelect: (spriteId: Int, width
         if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return
         exportSprite(archive, tile.spriteId, chooser.selectedFile)
     }
-
     private fun exportAll() {
         val chooser = JFileChooser().apply { fileSelectionMode = JFileChooser.DIRECTORIES_ONLY }
         if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return
@@ -211,22 +210,30 @@ class SpriteManager(parent: JFrame?, private val onSelect: (spriteId: Int, width
         for (id in 0 until SpriteLoader.numSprites) {
             val raw = SpriteLoader.getRaw(id) ?: continue
             val archive = SpriteArchive.decode(raw) ?: continue
-            exportSprite(archive, id, File(dir, "sprite_$id"))
+            exportSprite(archive, id, dir)
         }
 
         JOptionPane.showMessageDialog(this, "All sprites exported.")
     }
 
-    private fun exportSprite(archive: SpriteArchive, spriteId: Int, directory: File) {
-        directory.mkdirs()
+    private fun exportSprite(archive: SpriteArchive, spriteId: Int, baseDir: File) {
+        val frameCount = archive.size()
 
-        for (i in 0 until archive.size()) {
-            val img = archive.getSprite(i) ?: continue
-            val file = File(directory, "${spriteId}_$i.png")
+        if (frameCount <= 1) {
+            val img = archive.getSprite(0) ?: return
+            val file = File(baseDir, "sprite_$spriteId.png")
             ImageIO.write(img, "png", file)
-        }
 
-        println("[SpriteExport] Exported sprite $spriteId to ${directory.absolutePath}")
+        } else {
+            val directory = File(baseDir, "sprite_$spriteId")
+            directory.mkdirs()
+
+            for (i in 0 until frameCount) {
+                val img = archive.getSprite(i) ?: continue
+                val file = File(directory, "${spriteId}_$i.png")
+                ImageIO.write(img, "png", file)
+            }
+        }
     }
 
     fun import(files: List<File>): SpriteArchive {

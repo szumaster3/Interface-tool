@@ -11,19 +11,32 @@ object PropertyValues {
     private var sprite_path: String? = null
     private var input: InputStream? = null
 
+    private fun getJarDir(): File {
+        val jarPath = PropertyValues::class.java
+            .protectionDomain
+            .codeSource
+            .location
+            .toURI()
+
+        val file = File(jarPath)
+        return if (file.isFile) file.parentFile else file
+    }
+
     @JvmStatic
     fun loadValues() {
         val prop = Properties()
         val propFileName = "config.properties"
-        val propFile = File(propFileName)
+
+        val jarDir = getJarDir()
+        val propFile = File(jarDir, propFileName)
 
         try {
             if (propFile.exists()) {
                 input = FileInputStream(propFile)
                 prop.load(input)
-                println("Loaded config from $propFileName")
+                println("Loaded config from ${propFile.absolutePath}")
             } else {
-                println("Config file not found. Creating default config at $propFileName")
+                println("Config not found. Creating at ${propFile.absolutePath}")
 
                 prop.setProperty("cache_path", cache_path ?: "data/cache/")
                 prop.setProperty("dump_path", dump_path)
@@ -40,7 +53,7 @@ object PropertyValues {
             sprite_path = prop.getProperty("sprite_path") ?: sprite_path
 
         } catch (e: Exception) {
-            println("Exception while loading or creating config: $e")
+            println("Exception while loading config: $e")
         } finally {
             input?.close()
         }

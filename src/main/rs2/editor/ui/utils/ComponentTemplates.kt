@@ -3,7 +3,6 @@ package rs2.editor.ui.utils
 import com.alex.loaders.interfaces.ComponentDefinition
 import com.alex.loaders.interfaces.ComponentDefinition.Companion.getInterface
 import com.alex.loaders.interfaces.ComponentType
-import com.alex.loaders.interfaces.IComponentSettings
 import com.alex.tools.Copy
 import rs2.editor.ui.InterfaceUI
 import java.util.function.Consumer
@@ -202,6 +201,64 @@ object ComponentTemplates {
                 comp.onMouseRepeat = arrayOf(38, -2147483645, firstCompId, "OP_TEXT", 25, 80)
             })
         .save()
+        getInterface(c.interfaceId, true)
+        refreshUI(c.interfaceId)
+    }
+
+    @JvmStatic
+    fun createScrollBarButton() {
+        val c = InterfaceUI.selectedComponent
+        if (c == null || c.interfaceId == -1) {
+            JOptionPane.showMessageDialog(
+                InterfaceUI.instance,
+                "Please select an interface from the list first",
+                "Warning",
+                JOptionPane.WARNING_MESSAGE
+            )
+            return
+        }
+
+        val defaultId = ComponentDefinition.getInterfaceDefinitionsComponentsSize(c.interfaceId)
+        val input = JOptionPane.showInputDialog(
+            InterfaceUI.instance,
+            "Save as? (Component ID)",
+            defaultId
+        )
+
+        val firstCompId = input?.toIntOrNull() ?: run {
+            JOptionPane.showMessageDialog(
+                InterfaceUI.instance,
+                "Invalid Component ID",
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            )
+            return
+        }
+
+        Copy.to(c.interfaceId)
+            .startAt(firstCompId)
+            .addComponents(Consumer { comp ->
+                comp.baseX = 470;
+                comp.baseY = 75;
+                comp.baseWidth = 16;
+                comp.baseHeight = 230;
+            })
+            .save()
+        val secondCompId = firstCompId + 1
+        val layer = ComponentDefinition.getInterfaceComponent(c.interfaceId, firstCompId)?.componentHash
+        Copy.to(c.interfaceId)
+            .startAt(secondCompId)
+            .addComponents(Consumer { comp ->
+                comp.parentId = -1
+                comp.baseX = 30;
+                comp.baseY = 75;
+                comp.baseWidth = 440;
+                comp.baseHeight = 230;
+                comp.scrollHeight = 500;
+                comp.rightClickOptions = arrayOf("", "", "", "", "", "", "", "", "", "")
+                comp.onLoadScript = arrayOf(30, -2147483645, layer)
+            })
+            .save()
         getInterface(c.interfaceId, true)
         refreshUI(c.interfaceId)
     }

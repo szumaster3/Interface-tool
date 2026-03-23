@@ -114,13 +114,18 @@ object InterfaceUIMenuItems {
                 ComponentTemplates.createDualColorButton()
             }
         }
-
+        val scrollbarButton = JMenuItem("Layer with scrollbar").apply {
+            addActionListener {
+                ComponentTemplates.createScrollBarButton()
+            }
+        }
         buttonsSubMenu.add(simpleButtonItem)
         buttonsSubMenu.add(closeButtonItem)
         buttonsSubMenu.add(tooltipButtonItem)
         buttonsSubMenu.add(spellButtonItem)
         buttonsSubMenu.add(highlightButtonItem)
         buttonsSubMenu.add(dualColorButton)
+        buttonsSubMenu.add(scrollbarButton)
         menu.add(buttonsSubMenu)
         return menu
     }

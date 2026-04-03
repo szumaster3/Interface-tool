@@ -83,19 +83,30 @@ jobs:
           git tag v${{ steps.version.outputs.version }}
           git push origin v${{ steps.version.outputs.version }}
 
-      - name: Prepare release files
+      - name: Prepare ZIP release
         run: |
           mkdir -p release
 
-          # JAR → root release folder
-          cp "${{ steps.jar.outputs.jar }}" \
-             "release/Interface Editor v${{ steps.version.outputs.version }}.jar"
+          JAR_NAME="Interface Editor v${{ steps.version.outputs.version }}.jar"
+          ZIP_NAME="Interface Editor v${{ steps.version.outputs.version }}.zip"
 
-          # config.properties from ROOT (as requested)
+          # Copy JAR
+          cp "${{ steps.jar.outputs.jar }}" "release/$JAR_NAME"
+
+          # Copy config from ROOT
           if [ -f config.properties ]; then
             cp config.properties release/config.properties
           else
             echo "WARNING: config.properties not found in root"
+          fi
+
+          # Create ZIP
+          cd release
+
+          if [ -f config.properties ]; then
+            zip -r "$ZIP_NAME" "$JAR_NAME" config.properties
+          else
+            zip -r "$ZIP_NAME" "$JAR_NAME"
           fi
 
       - name: Create GitHub Release
@@ -105,7 +116,6 @@ jobs:
           tag_name: v${{ steps.version.outputs.version }}
           name: Interface Editor v${{ steps.version.outputs.version }}
           files: |
-            release/Interface Editor v${{ steps.version.outputs.version }}.jar
-            release/config.properties
+            release/Interface Editor v${{ steps.version.outputs.version }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -2,6 +2,7 @@ package rs2.editor.ui.render
 
 import com.alex.loaders.interfaces.ComponentDefinition
 import com.alex.loaders.interfaces.ComponentType
+import com.alex.utils.Utils
 import rs2.editor.ui.Consts
 import rs2.editor.ui.InterfaceUI
 import rs2.editor.ui.render.InterfaceDraw.childrenCache
@@ -11,9 +12,8 @@ import rs2.editor.ui.selection.SelectionSource
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.Graphics
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
-import java.awt.event.MouseMotionAdapter
+import java.awt.Toolkit
+import java.awt.event.*
 import java.awt.image.BufferedImage
 import java.util.*
 import javax.swing.AbstractAction
@@ -195,7 +195,12 @@ class RenderPanel : JPanel() {
             override fun mouseMoved(e: MouseEvent)
             {
                 val comp = hitTestComponent(e.x, e.y)
-                val handle = comp?.let { getCursor(e.x, e.y, it.positionX, it.positionY, it.width, it.height) }
+
+                val handle = if (SelectionModel.source == SelectionSource.MOUSE) {
+                    selectedComponent?.let {
+                        getCursor(e.x, e.y, it.positionX, it.positionY, it.width, it.height)
+                    }
+                } else null
 
                 cursor = when (handle)
                 {
@@ -211,14 +216,24 @@ class RenderPanel : JPanel() {
         val inputMap = this.getInputMap(WHEN_IN_FOCUSED_WINDOW)
         val actionMap = this.actionMap
 
-        inputMap.put(KeyStroke.getKeyStroke("control Z"), undoKey)
+        val shortcut = Toolkit.getDefaultToolkit().menuShortcutKeyMaskEx
+
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_Z, shortcut or InputEvent.SHIFT_DOWN_MASK),
+            redoKey
+        )
+
         actionMap.put(undoKey, object : AbstractAction() {
             override fun actionPerformed(e: java.awt.event.ActionEvent?) {
                 undo()
             }
         })
 
-        inputMap.put(KeyStroke.getKeyStroke("control Y"), redoKey)
+        inputMap.put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_Y, shortcut),
+            redoKey
+        )
+
         actionMap.put(redoKey, object : AbstractAction() {
             override fun actionPerformed(e: java.awt.event.ActionEvent?) {
                 redo()
@@ -233,22 +248,37 @@ class RenderPanel : JPanel() {
         offsetX: Int = 0,
         offsetY: Int = 0
     ): ComponentDefinition? {
+
+        val hidden = Utils.isHidden(comp)
+
+        if (SelectionModel.source == SelectionSource.MOUSE && hidden && !showHidden) {
+            return null
+        }
+
         val x = offsetX + comp.positionX
         val y = offsetY + comp.positionY
         val w = comp.width
         val h = comp.height
 
-        childrenCache[comp.componentHash]?.asReversed()?.forEach { child ->
-            hitTestComponentRecursive(child, mouseX, mouseY, x, y)?.let { return it }
+        if (mouseX !in x until x + w || mouseY !in y until y + h) {
+            return null
         }
 
-        if (mouseX in x until x + w && mouseY in y until y + h) {
-            return comp
+        childrenCache[comp.componentHash]
+            ?.asReversed()
+            ?.forEach { child ->
+                hitTestComponentRecursive(child, mouseX, mouseY, x, y)
+                    ?.let { return it }
+            }
+
+        if (comp.type == ComponentType.LAYER) {
+            return null
         }
 
         val handleSize = maxOf(InterfaceDraw.HANDLE_SIZE, 6)
         val margin = 4
         val half = handleSize / 2
+
         val handles = listOf(
             Pair(x, y), Pair(x + w / 2, y), Pair(x + w, y),
             Pair(x + w, y + h / 2), Pair(x + w, y + h),
@@ -258,9 +288,11 @@ class RenderPanel : JPanel() {
         if (handles.any { (cx, cy) ->
                 mouseX in (cx - half - margin)..(cx + half + margin) &&
                         mouseY in (cy - half - margin)..(cy + half + margin)
-            }) return comp
+            }) {
+            return comp
+        }
 
-        return null
+        return comp
     }
 
     private fun hitTestComponent(mouseX: Int, mouseY: Int): ComponentDefinition?

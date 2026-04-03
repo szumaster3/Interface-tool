@@ -18,10 +18,12 @@ import rs2.editor.ui.utils.InterfaceUtils.iconButton
 import rs2.editor.ui.utils.InterfaceUtils.loadIcon
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.Dimension
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.*
+import javax.imageio.ImageIO
 import javax.swing.*
 
 object InterfaceUIButton {
@@ -580,6 +582,43 @@ object InterfaceUIButton {
         val button = JButton("Pick color")
         button.toolTipText = "Select the color"
         button.addActionListener { openColorPicker() }
+        return button
+    }
+
+    fun fontPreviewButton(): JButton {
+        val button = JButton("Font preview")
+        button.toolTipText = "Show font examples preview image"
+
+        button.addActionListener {
+            val imgStream = InterfaceUIButton::class.java.getResourceAsStream(
+                "/misc/interface_font_preview.png"
+            )
+
+            if (imgStream == null) {
+                JOptionPane.showMessageDialog(
+                    null,
+                    "Font preview not found in resources, please re-download the application.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+                )
+                return@addActionListener
+            }
+
+            val image = ImageIO.read(imgStream)
+
+            val label = JLabel(ImageIcon(image))
+            val scroll = JScrollPane(label)
+
+            scroll.preferredSize = Dimension(550, 400)
+
+            JOptionPane.showMessageDialog(
+                null,
+                scroll,
+                "Font Preview",
+                JOptionPane.PLAIN_MESSAGE
+            )
+        }
+
         return button
     }
 

@@ -4,7 +4,7 @@ import com.alex.loaders.interfaces.ComponentType
 import java.awt.Color
 
 object Consts {
-    const val APP_VERSION = "1.0.14"
+    const val APP_VERSION = "1.0.15"
 
     const val EDITOR_WIDTH = 1024
     const val EDITOR_HEIGHT = 768

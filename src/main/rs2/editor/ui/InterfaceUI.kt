@@ -1146,6 +1146,8 @@ class InterfaceUI : JFrame()
 
             val labelPanel: JComponent = (if (name == "Color") {
                 InterfaceUIButton.colorPickButton()
+            } else if (name == "FontID") {
+                InterfaceUIButton.fontPreviewButton()
             } else {
                 JPanel(BorderLayout()).apply {
                     border = BorderFactory.createRaisedSoftBevelBorder()

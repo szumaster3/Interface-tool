@@ -10,8 +10,6 @@
 [Scripts references](data/REFERENCES.md) •
 <a href="https://github.com/szumaster3/Interface-tool/wiki">Documentation</a>
 
-<img src="https://imgur.com/e9dAhKP.png"/>
-
 </div>
 
 ## Startup

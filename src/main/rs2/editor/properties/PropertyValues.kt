@@ -8,7 +8,8 @@ import java.util.zip.ZipOutputStream
 object PropertyValues {
     var cache_path: String? = "data/cache/"
     private var dump_path: String = "dump/"
-    private var sprite_path: String? = null
+    private var model_dump_path: String = "dump/models/"
+    private var sprite_path: String? = "dump/sprites/"
     private var input: InputStream? = null
 
     private fun getJarDir(): File {
@@ -40,6 +41,7 @@ object PropertyValues {
 
                 prop.setProperty("cache_path", cache_path ?: "data/cache/")
                 prop.setProperty("dump_path", dump_path)
+                prop.setProperty("model_dump_path", model_dump_path)
                 prop.setProperty("sprite_path", sprite_path ?: "")
 
                 propFile.parentFile?.mkdirs()
@@ -50,6 +52,7 @@ object PropertyValues {
 
             cache_path = prop.getProperty("cache_path") ?: cache_path
             dump_path = prop.getProperty("dump_path") ?: dump_path
+            model_dump_path = prop.getProperty("model_dump_path") ?: model_dump_path
             sprite_path = prop.getProperty("sprite_path") ?: sprite_path
 
         } catch (e: Exception) {
@@ -66,7 +69,23 @@ object PropertyValues {
 
         cache_path = fixedPath
         dump_path = cache_path + "IFToolDumps" + File.separator
+        model_dump_path = dump_path + "models" + File.separator
         sprite_path = cache_path
+    }
+
+    @JvmStatic
+    fun getDumpPath(): String {
+        return dump_path
+    }
+
+    @JvmStatic
+    fun getModelDumpPath(): String {
+        return model_dump_path
+    }
+
+    @JvmStatic
+    fun getSpritePath(): String? {
+        return sprite_path
     }
 
     @JvmStatic

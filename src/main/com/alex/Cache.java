@@ -18,8 +18,4 @@ public final class Cache {
     public static Store getStore() {
         return store;
     }
-
-    public static boolean isInitialized() {
-        return store != null;
-    }
 }

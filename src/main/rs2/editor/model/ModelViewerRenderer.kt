@@ -16,6 +16,9 @@ class ModelViewerRenderer(width: Int, height: Int, component: Component) : Image
     private val screen: IntArray
     private val pixels: IntArray
     private var imageProducer: ImageConsumer? = null
+    var lastAxisX = 0
+    var lastAxisY = 0
+    var lastAxisZ = 0
 
     init {
         Unknown1.setLighting(0.8)
@@ -96,12 +99,20 @@ class ModelViewerRenderer(width: Int, height: Int, component: Component) : Image
         var axisX = axisX
         var axisY = axisY
         var axisZ = axisZ
+
         this.initScreenProperties()
         Unknown1.screen = this.screen
+
         if (axisY < 0) axisY = 0
         if (axisX < 0) axisX = 0
+
         val var7 = Unknown1.field16[axisX] * axisZ shr 16
         axisZ = Unknown1.field17[axisX] * axisZ shr 16
+
+        lastAxisX = axisX
+        lastAxisY = axisY
+        lastAxisZ = axisZ
+
         if (model != null) {
             model.setViewPoint(0, axisY, 0, axisX, 0, var7, axisZ)
             Unknown1.screenPosX = x
@@ -116,7 +127,7 @@ class ModelViewerRenderer(width: Int, height: Int, component: Component) : Image
         val screen = Unknown1.width * Unknown1.height
 
         for (i in 0 until screen) {
-            Unknown1.pixels!![i] = 31928
+            Unknown1.pixels!![i] = 0xB0B0B0
         }
     }
 }

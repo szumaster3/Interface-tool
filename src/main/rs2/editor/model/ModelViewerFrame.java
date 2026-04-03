@@ -6,6 +6,7 @@ import com.alex.loaders.mesh.Unknown4;
 import com.alex.store.Index;
 import com.alex.store.Store;
 import org.jetbrains.annotations.NotNull;
+import rs2.editor.ui.utils.PlaceholderTextField;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,16 +20,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ModelViewerFrame extends JFrame {
-
     public static Store cache;
-
     private JTextField txtModel;
     private final DefaultListModel<Integer> listModelM = new DefaultListModel<>();
     private JList<Integer> listModel = new JList<>(listModelM);
-    private AppPanel appPanel;
+    private ModelPanel appPanel;
     private Thread modelViewThread;
-
-    private final JTabbedPane tabbedPane;
     private final List<Integer> allModelIds = new ArrayList<>();
 
     public ModelViewerFrame(Store store) throws IOException {
@@ -40,13 +37,10 @@ public class ModelViewerFrame extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
 
-        tabbedPane = new JTabbedPane();
-        add(tabbedPane, BorderLayout.CENTER);
-
         loadCache(store);
 
         JPanel cachePanel = createCachePanel();
-        tabbedPane.addTab("Model ids", cachePanel);
+        add(cachePanel, BorderLayout.CENTER);
     }
 
     private void loadCache(Store store) {
@@ -76,7 +70,7 @@ public class ModelViewerFrame extends JFrame {
         JScrollPane scrollPaneModel = new JScrollPane(listModel);
         scrollPaneModel.setPreferredSize(new Dimension(200, 400));
         controlPanel.add(scrollPaneModel);
-        txtModel = new JTextField();
+        txtModel = new PlaceholderTextField("Search by id...");
         txtModel.setPreferredSize(new Dimension(200, 25));
         txtModel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
         txtModel.addKeyListener(new KeyAdapter() {
@@ -96,7 +90,7 @@ public class ModelViewerFrame extends JFrame {
         JPanel buttonPanel = getjPanel();
         controlPanel.add(buttonPanel);
 
-        appPanel = new AppPanel();
+        appPanel = new ModelPanel();
         JScrollPane modelScrollPane = new JScrollPane(appPanel);
         modelScrollPane.setPreferredSize(new Dimension(350, 400));
         mainPanel.add(modelScrollPane, BorderLayout.CENTER);
@@ -170,30 +164,35 @@ public class ModelViewerFrame extends JFrame {
         exportButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
         exportButton.addActionListener(e -> {
             int[] selectedIndices = listModel.getSelectedIndices();
+
             if (selectedIndices.length == 0) {
                 JOptionPane.showMessageDialog(this, "No IDs selected to export!", "Warning", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            JFileChooser fc = new JFileChooser();
-            fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-                File folder = fc.getSelectedFile();
-                for (int idx : selectedIndices) {
-                    Integer id = listModel.getModel().getElementAt(idx);
-                    File out = new File(folder, id + ".dat");
-                    try {
-                        byte[] data = cache.getIndexes()[7].getFile(id, 0);
-                        if (data != null) {
-                            try (FileOutputStream fos = new FileOutputStream(out)) {
-                                fos.write(data);
-                            }
-                        }
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                    }
-                }
-                JOptionPane.showMessageDialog(this, "Export completed!");
+            String dumpPath = rs2.editor.properties.PropertyValues.getDumpPath();
+            File folder = new File(dumpPath);
+
+            if (!folder.exists()) {
+                folder.mkdirs();
             }
+
+            for (int idx : selectedIndices) {
+                Integer id = listModel.getModel().getElementAt(idx);
+                File out = new File(folder, id + ".dat");
+
+                try {
+                    byte[] data = cache.getIndexes()[7].getFile(id, 0);
+                    if (data != null) {
+                        try (FileOutputStream fos = new FileOutputStream(out)) {
+                            fos.write(data);
+                        }
+                    }
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+
+            JOptionPane.showMessageDialog(this, "Exported to:\n" + folder.getAbsolutePath());
         });
 
         buttonPanel.add(importButton);

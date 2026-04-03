@@ -1,4 +1,4 @@
-package org.apache.tools.bzip2;
+package com.alex.util.bzip2;
 
 public interface BZip2Constants {
    int baseBlockSize = 100000;

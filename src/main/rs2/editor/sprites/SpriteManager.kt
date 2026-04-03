@@ -1,13 +1,10 @@
-package com.alex.loaders.sprites.util
+package rs2.editor.sprites
 
 import com.alex.loaders.sprites.SpriteArchive
 import rs2.editor.ui.Consts
 import rs2.editor.ui.InterfaceUI
 import rs2.editor.ui.utils.InterfaceUtils
 import java.awt.*
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
-import java.awt.event.MouseMotionAdapter
 import java.io.File
 import javax.imageio.ImageIO
 import javax.swing.*
@@ -28,7 +25,7 @@ class SpriteManager(parent: JFrame?, private val onSelect: (spriteId: Int, width
 
     val grid = JPanel(WrapLayout(FlowLayout.LEFT, 8, 8))
     private val scroll = JScrollPane(grid)
-    private val searchField = JTextField(8)
+    private val searchField = JTextField(10)
 
     private val tileMap = HashMap<Int, SpriteTile>()
 
@@ -154,9 +151,6 @@ class SpriteManager(parent: JFrame?, private val onSelect: (spriteId: Int, width
                                     } else {
                                         showPreview(tile.spriteId)
                                     }
-                                }
-                                if (e.clickCount == 2 && (archive == null || archive.size() == 1)) {
-                                    showPreview(tile.spriteId)
                                 }
                             }
                         },

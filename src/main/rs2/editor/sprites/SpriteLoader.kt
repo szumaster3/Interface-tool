@@ -1,4 +1,4 @@
-package com.alex.loaders.sprites.util
+package rs2.editor.sprites
 
 import com.alex.Cache
 import com.alex.loaders.sprites.SpriteArchive

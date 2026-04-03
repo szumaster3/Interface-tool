@@ -1,8 +1,8 @@
 package rs2.editor.model
 
 import com.alex.loaders.mesh.Unknown2
-import com.alex.loaders.mesh.Unknown3
 import java.awt.Color
+import java.awt.Font
 import java.awt.Graphics
 import java.awt.event.*
 import java.io.BufferedInputStream
@@ -10,12 +10,14 @@ import java.io.DataInputStream
 import java.io.File
 import java.io.FileInputStream
 import javax.swing.GroupLayout
+import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.SwingConstants
 
-class AppPanel : JPanel(), Runnable {
+class ModelPanel : JPanel(), Runnable {
     var loaded: Boolean = false
-    private val oriPosX = 300
-    private val oriPosY = 300
+    private val oriPosX = 270
+    private val oriPosY = 280
     private var posX = oriPosX
     private var posY = oriPosY
     private var axisX = 0
@@ -28,47 +30,71 @@ class AppPanel : JPanel(), Runnable {
 
     init {
         background = Color(0, 0, 0)
+
         addMouseWheelListener { e -> mouseWheelMovedCallback(e) }
+
         addMouseListener(object : MouseAdapter() {
             override fun mouseReleased(e: MouseEvent) {
                 mouseReleasedCallback(e)
             }
         })
+
         addComponentListener(object : ComponentAdapter() {
             override fun componentResized(c: ComponentEvent) {
                 componentResizedCallback(c)
             }
         })
+
         addMouseMotionListener(object : MouseMotionAdapter() {
             override fun mouseDragged(e: MouseEvent) {
                 mouseDraggedCallback(e)
             }
         })
+
+        val infoLabel = JLabel("Choose a model ID from the list on the left")
+        infoLabel.foreground = Color(180, 180, 180)
+        infoLabel.font = Font("Arial", Font.PLAIN, 16)
+        infoLabel.horizontalAlignment = SwingConstants.CENTER
+        infoLabel.verticalAlignment = SwingConstants.CENTER
+
         val layout = GroupLayout(this)
+        layout.autoCreateGaps = true
+        layout.autoCreateContainerGaps = true
+
         setLayout(layout)
-        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGap(0, 536, 32767))
-        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGap(0, 318, 32767))
+
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addComponent(infoLabel, GroupLayout.DEFAULT_SIZE, 536, Int.MAX_VALUE)
+                .addGap(0, 536, Int.MAX_VALUE)
+        )
+
+        layout.setVerticalGroup(
+            layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                .addComponent(infoLabel, GroupLayout.DEFAULT_SIZE, 318, Int.MAX_VALUE)
+                .addGap(0, 318, Int.MAX_VALUE)
+        )
     }
 
     override fun run() {
-        var g: Graphics? = null
         while (true) {
-            g = graphics
+
+            val g: Graphics? = graphics
+
             if (model != null && g != null) {
                 try {
-                    renderer!!.updateModel(model, posX, axisY, posY, axisX, axisZ)
-                    renderer!!.updatePreview(0, 0, g)
-                    renderer!!.clear()
+                    renderer?.updateModel(model, posX, axisY, posY, axisX, axisZ)
+                    renderer?.updatePreview(0, 0, g)
+                    renderer?.clear()
+
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
             }
 
-
             try {
                 Thread.sleep(10L)
-            } catch (e: InterruptedException) {
-            }
+            } catch (_: InterruptedException) {}
 
             if (System.currentTimeMillis() - gcDelay > 60000L) {
                 System.gc()
@@ -109,11 +135,11 @@ class AppPanel : JPanel(), Runnable {
         this.model = model
     }
 
-    fun render() {
+    private fun render() {
         renderer = ModelViewerRenderer(width, height, this)
     }
 
-    fun mouseWheelMovedCallback(var1: MouseWheelEvent) {
+    private fun mouseWheelMovedCallback(var1: MouseWheelEvent) {
         val rotation = var1.wheelRotation
         axisZ += rotation * 50
     }
@@ -181,7 +207,6 @@ class AppPanel : JPanel(), Runnable {
     }
 
     companion object {
-        var isOptimizedSelected: Boolean = false
         private var gcDelay = 0L
     }
 }

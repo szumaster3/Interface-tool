@@ -81,7 +81,7 @@ class ComponentDefinition {
     var optionCircumfix: String? = ""
     var optionMask: Int = 0
     var Option: Int = 0
-    private var mask = -1
+    var mask = -1
 
     var dragDeadtime: Int = 0
     var dragDeadzone: Int = 0
@@ -120,9 +120,9 @@ class ComponentDefinition {
     var lineWidth: Int = 0
     var unknownProp_8: Boolean = false
 
-    private var opId: IntArray? = null
-    private var repeatCount: ByteArray? = null
-    private var modifier: ByteArray? = null
+    var opId: IntArray? = null
+    var repeatCount: ByteArray? = null
+    var modifier: ByteArray? = null
 
     private var buttonType = 0
     private var cs1ComparisonOpcodes: IntArray? = null

@@ -1,4 +1,4 @@
-package com.alex.loaders.sprites.util
+package rs2.editor.sprites
 
 import com.alex.loaders.sprites.SpriteArchive
 import java.awt.*
@@ -15,7 +15,6 @@ class SpriteFramesDialogue(
     private val onSelect: (frameId: Int) -> Unit,
     private val onArchiveUpdated: ((SpriteArchive) -> Unit)? = null
 ) : JDialog(parent, "Frames of sprite $spriteId", ModalityType.APPLICATION_MODAL) {
-
     private var selectedFrame: FrameTile? = null
     private val grid = JPanel(GridLayout(0, 6, 8, 8))
 

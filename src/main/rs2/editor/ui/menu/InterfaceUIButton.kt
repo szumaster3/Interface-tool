@@ -5,7 +5,7 @@ import com.alex.io.InputStream
 import com.alex.io.OutputStream
 import com.alex.loaders.interfaces.ComponentDefinition
 import com.alex.loaders.interfaces.ComponentType
-import com.alex.loaders.sprites.util.SpriteManager
+import rs2.editor.sprites.SpriteManager
 import com.alex.util.crc32.CRC32HGenerator
 import rs2.editor.properties.PropertyValues
 import rs2.editor.ui.InterfaceUI

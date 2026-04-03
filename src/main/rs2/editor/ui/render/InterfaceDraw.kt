@@ -6,7 +6,7 @@ import com.alex.loaders.interfaces.ComponentSprites
 import com.alex.loaders.interfaces.ComponentType
 import com.alex.loaders.mesh.Unknown4
 import com.alex.loaders.mesh.Unknown3
-import com.alex.loaders.sprites.util.SpriteLoader
+import rs2.editor.sprites.SpriteLoader
 import com.alex.utils.Utils
 import rs2.editor.ui.Consts
 import rs2.editor.ui.InterfaceUI
@@ -351,8 +351,10 @@ object InterfaceDraw {
             if (model != null) {
                 val renderer = Unknown3(drawWidth, drawHeight, InterfaceUI.instance?.renderPanel)
                 renderer.clear()
+                val mox = comp.modelOriginX
+                val moy = comp.modelOriginY
                 renderer.updateModel(model, comp)
-                renderer.updatePreview(x, y, g)
+                renderer.updatePreview(x+mox, y+moy, g)
             }
         }
 

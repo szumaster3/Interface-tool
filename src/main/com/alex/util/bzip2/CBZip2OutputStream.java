@@ -1,4 +1,4 @@
-package org.apache.tools.bzip2;
+package com.alex.util.bzip2;
 
 import java.io.IOException;
 import java.io.OutputStream;

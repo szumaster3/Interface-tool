@@ -308,7 +308,7 @@ class RenderPanel : JPanel() {
         if (undoStack.size > 100)
             undoStack.removeAt(0)
         val compState = undoStack.pop()
-        pushRedo(compState.component)
+        pushRedo(compState.c)
         compState.restore()
         refresh()
         selectedComponent?.let { InterfaceUI.instance?.buildPropertyPanel(it) }
@@ -320,7 +320,7 @@ class RenderPanel : JPanel() {
     {
         if (redoStack.isEmpty()) return
         val compState = redoStack.pop()
-        pushUndo(compState.component)
+        pushUndo(compState.c)
         compState.restore()
         refresh()
         selectedComponent?.let { InterfaceUI.instance?.buildPropertyPanel(it) }
@@ -369,17 +369,215 @@ class RenderPanel : JPanel() {
         g.drawImage(backBuffer, 0, 0, width, height, null)
     }
 
-    private class ComponentState(val component: ComponentDefinition) {
-        private val w = component.baseWidth
-        private val h = component.baseHeight
-        private val x = component.baseX
-        private val y = component.baseY
+    private class ComponentState(val c: ComponentDefinition) {
+        private val baseX = c.baseX
+        private val baseY = c.baseY
+        private val baseW = c.baseWidth
+        private val baseH = c.baseHeight
+
+        private val widthMode = c.widthMode
+        private val heightMode = c.heightMode
+        private val xMode = c.xMode
+        private val yMode = c.yMode
+
+        private val name = c.name
+        private val hidden = c.hidden
+        private val type = c.type
+        private val contentType = c.contentType
+        private val parentId = c.parentId
+
+        private val spriteId = c.spriteId
+        private val angle2d = c.angle2d
+        private val spriteTiling = c.spriteTiling
+        private val hasAlpha = c.hasAlpha
+        private val transparency = c.transparency
+        private val borderThickness = c.borderThickness
+        private val shadowColor = c.shadowColor
+        private val vFlip = c.vFlip
+        private val hFlip = c.hFlip
+
+        private val modelType = c.modelType
+        private val modelId = c.modelId
+        private val modelOriginX = c.modelOriginX
+        private val modelOriginY = c.modelOriginY
+        private val modelXAngle = c.modelXAngle
+        private val modelYAngle = c.modelYAngle
+        private val modelZAngle = c.modelZAngle
+        private val modelZoom = c.modelZoom
+        private val modelAnimId = c.modelAnimId
+        private val modelOrtho = c.modelOrtho
+        private val modelObjWidth = c.modelObjWidth
+        private val modelObjHeight = c.modelObjHeight
+
+        private val unknownModelProp3 = c.unknownModelProp3
+        private val unknownModelProp4 = c.unknownModelProp4
+        private val unknownModelProp5 = c.unknownModelProp5
+
+        private val fontId = c.fontId
+        private val text = c.text
+        private val textLineHeight = c.textLineHeight
+        private val textHorizontalAli = c.textHorizontalAli
+        private val textVerticalAli = c.textVerticalAli
+        private val shadow = c.shadow
+        private val color = c.color
+
+        private val filled = c.filled
+        private val lineWidth = c.lineWidth
+        private val unknownProp8 = c.unknownProp_8
+
+        private val optionMask = c.optionMask
+        private val optionBase = c.optionBase
+        private val rightClickOptions = c.rightClickOptions?.clone()
+        private val opId = c.opId?.clone()
+        private val repeatCount = c.repeatCount?.clone()
+        private val modifier = c.modifier?.clone()
+
+        private val opCursors = c.opCursors?.clone()
+
+        private val dragDeadzone = c.dragDeadzone
+        private val dragDeadtime = c.dragDeadtime
+        private val dragRenderBehavior = c.dragRenderBehavior
+        private val optionCircumfix = c.optionCircumfix
+
+        private val mask = c.mask
+        private val targetOverCursor = c.targetOverCursor
+        private val targetLeaveCursor = c.targetLeaveCursor
+
+        private val onLoadScript = c.onLoadScript?.clone()
+        private val onMouseHoverScript = c.onMouseHoverScript?.clone()
+        private val onMouseLeaveScript = c.onMouseLeaveScript?.clone()
+        private val onUseWith = c.onUseWith?.clone()
+        private val onUse = c.onUse?.clone()
+
+        private val onVarpTransmit = c.onVarpTransmit?.clone()
+        private val onInvTransmit = c.onInvTransmit?.clone()
+        private val onStatTransmit = c.onStatTransmit?.clone()
+        private val onTimer = c.onTimer?.clone()
+
+        private val onOptionClick = c.onOptionClick?.clone()
+        private val onMouseRepeat = c.onMouseRepeat?.clone()
+        private val onClickRepeat = c.onClickRepeat?.clone()
+
+        private val onDrag = c.onDrag?.clone()
+        private val onRelease = c.onRelease?.clone()
+        private val onHold = c.onHold?.clone()
+
+        private val onDragStart = c.onDragStart?.clone()
+        private val onDragRelease = c.onDragRelease?.clone()
+        private val onScroll = c.onScroll?.clone()
+
+        private val onVarcTransmit = c.onVarcTransmit?.clone()
+        private val onVarcStrTransmit = c.onVarcStrTransmit?.clone()
+
+        private val varpTriggers = c.varpTriggers?.clone()
+        private val inventoryTriggers = c.inventoryTriggers?.clone()
+        private val statTriggers = c.statTriggers?.clone()
+        private val varcTriggers = c.varcTriggers?.clone()
+        private val varcstrTriggers = c.varcstrTriggers?.clone()
 
         fun restore() {
-            component.baseWidth = w
-            component.baseHeight = h
-            component.baseX = x
-            component.baseY = y
+            val c = this.c
+
+            c.baseX = baseX
+            c.baseY = baseY
+            c.baseWidth = baseW
+            c.baseHeight = baseH
+
+            c.widthMode = widthMode
+            c.heightMode = heightMode
+            c.xMode = xMode
+            c.yMode = yMode
+
+            c.name = name
+            c.hidden = hidden
+            c.type = type
+            c.contentType = contentType
+            c.parentId = parentId
+
+            c.spriteId = spriteId
+            c.angle2d = angle2d
+            c.spriteTiling = spriteTiling
+            c.hasAlpha = hasAlpha
+            c.transparency = transparency
+            c.borderThickness = borderThickness
+            c.shadowColor = shadowColor
+            c.vFlip = vFlip
+            c.hFlip = hFlip
+
+            c.modelType = modelType
+            c.modelId = modelId
+            c.modelOriginX = modelOriginX
+            c.modelOriginY = modelOriginY
+            c.modelXAngle = modelXAngle
+            c.modelYAngle = modelYAngle
+            c.modelZAngle = modelZAngle
+            c.modelZoom = modelZoom
+            c.modelAnimId = modelAnimId
+            c.modelOrtho = modelOrtho
+            c.modelObjWidth = modelObjWidth
+            c.modelObjHeight = modelObjHeight
+
+            c.fontId = fontId
+            c.text = text
+            c.textLineHeight = textLineHeight
+            c.textHorizontalAli = textHorizontalAli
+            c.textVerticalAli = textVerticalAli
+            c.shadow = shadow
+            c.color = color
+
+            c.filled = filled
+            c.lineWidth = lineWidth
+            c.unknownProp_8 = unknownProp8
+
+            c.optionMask = optionMask
+            c.optionBase = optionBase
+            c.rightClickOptions = rightClickOptions?.clone()
+            c.opId = opId?.clone()
+            c.repeatCount = repeatCount?.clone()
+            c.modifier = modifier?.clone()
+
+            c.opCursors = opCursors?.clone()
+
+            c.dragDeadzone = dragDeadzone
+            c.dragDeadtime = dragDeadtime
+            c.dragRenderBehavior = dragRenderBehavior
+            c.optionCircumfix = optionCircumfix
+
+            c.mask = mask
+            c.targetOverCursor = targetOverCursor
+            c.targetLeaveCursor = targetLeaveCursor
+
+            c.onLoadScript = onLoadScript?.clone()
+            c.onMouseHoverScript = onMouseHoverScript?.clone()
+            c.onMouseLeaveScript = onMouseLeaveScript?.clone()
+            c.onUseWith = onUseWith?.clone()
+            c.onUse = onUse?.clone()
+
+            c.onVarpTransmit = onVarpTransmit?.clone()
+            c.onInvTransmit = onInvTransmit?.clone()
+            c.onStatTransmit = onStatTransmit?.clone()
+            c.onTimer = onTimer?.clone()
+
+            c.onOptionClick = onOptionClick?.clone()
+            c.onMouseRepeat = onMouseRepeat?.clone()
+            c.onClickRepeat = onClickRepeat?.clone()
+
+            c.onDrag = onDrag?.clone()
+            c.onRelease = onRelease?.clone()
+            c.onHold = onHold?.clone()
+
+            c.onDragStart = onDragStart?.clone()
+            c.onDragRelease = onDragRelease?.clone()
+            c.onScroll = onScroll?.clone()
+
+            c.onVarcTransmit = onVarcTransmit?.clone()
+            c.onVarcStrTransmit = onVarcStrTransmit?.clone()
+
+            c.varpTriggers = varpTriggers?.clone()
+            c.inventoryTriggers = inventoryTriggers?.clone()
+            c.statTriggers = statTriggers?.clone()
+            c.varcTriggers = varcTriggers?.clone()
+            c.varcstrTriggers = varcstrTriggers?.clone()
         }
     }
 

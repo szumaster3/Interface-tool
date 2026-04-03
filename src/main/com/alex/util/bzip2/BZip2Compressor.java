@@ -1,7 +1,5 @@
 package com.alex.util.bzip2;
 
-import org.apache.tools.bzip2.CBZip2OutputStream;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 

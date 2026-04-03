@@ -1,4 +1,4 @@
-package com.alex.loaders.sprites.util
+package rs2.editor.sprites
 
 import java.awt.*
 import javax.swing.BorderFactory

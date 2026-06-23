@@ -9,12 +9,12 @@ plugins {
 }
 
 group = 'org.example'
-version = '1.0.16'
+version = '1.0.17'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 
-mainClassName = 'rs2.editor.ui.InterfaceUI'
+mainClassName = 'com.editor.EditorGUI'
 
 repositories {
     mavenCentral()
@@ -28,15 +28,15 @@ dependencies {
 sourceSets {
     main {
         java {
-            srcDirs = ['src/main/', 'src/main/']
+            srcDirs = ['src/']
         }
         resources {
-            srcDirs = ['src/main/resources']
+            srcDirs = ['src/resources']
         }
     }
     test {
         java {
-            srcDirs = ['src/test/', 'src/test/']
+            srcDirs = ['src/test/']
         }
         resources {
             srcDirs = ['src/test/resources']

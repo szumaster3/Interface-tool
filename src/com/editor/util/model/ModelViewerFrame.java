@@ -1,8 +1,7 @@
 package com.editor.util.model;
 
-import com.alex.loaders.mesh.ModelData;
-import com.alex.loaders.mesh.Unknown2;
-import com.alex.loaders.mesh.Unknown4;
+import com.alex.loaders.mesh.Model;
+import com.alex.loaders.mesh.ModelLoader;
 import com.alex.store.Index;
 import com.alex.store.Store;
 import org.jetbrains.annotations.NotNull;
@@ -104,14 +103,10 @@ public class ModelViewerFrame extends JFrame {
                     appPanel.setLoaded(true);
                     modelViewThread = new Thread(appPanel);
                     modelViewThread.start();
-                    Unknown2.load();
                 }
-                Unknown2 model = Unknown4.getModel(selectedId);
-                if (model != null && Unknown2.properties != null && Unknown2.properties.length > 0) {
-                    ModelData prop = Unknown2.properties[0];
-                    if (prop.data != null) {
-                        appPanel.loadModelFromBytes(prop.data);
-                    }
+                Model model = ModelLoader.getModel(selectedId);
+                if (model != null) {
+                    appPanel.setModel(model);
                 }
             }
         });

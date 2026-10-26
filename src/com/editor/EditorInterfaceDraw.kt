@@ -4,8 +4,8 @@ import com.alex.loaders.interfaces.ComponentDefinition
 import com.alex.loaders.interfaces.ComponentDefinition.Companion.getInterface
 import com.alex.loaders.interfaces.ComponentSprites
 import com.alex.loaders.interfaces.ComponentType
-import com.alex.loaders.mesh.Unknown4
-import com.alex.loaders.mesh.Unknown3
+import com.alex.loaders.mesh.ModelLoader
+import com.alex.loaders.mesh.ModelRenderer
 import com.editor.util.sprites.SpriteLoader
 import com.alex.utils.Utils
 import com.editor.utils.*
@@ -27,6 +27,7 @@ object EditorInterfaceDraw {
     private val spriteCache = mutableMapOf<String, BufferedImage>()
     private val textCache = mutableMapOf<String, List<String>>()
     private val fontMetricsCache = mutableMapOf<Font, FontMetrics>()
+    private val modelRenderers = mutableMapOf<Long, ModelRenderer>()
     var preparedRoots: List<ComponentDefinition> = emptyList()
         private set
 
@@ -37,6 +38,7 @@ object EditorInterfaceDraw {
         spriteCache.clear()
         textCache.clear()
         fontMetricsCache.clear()
+        modelRenderers.clear()
 
         childrenCache.putAll(allComponents.groupBy { it.parentId })
         preparedRoots = childrenCache[-1] ?: emptyList()
@@ -341,15 +343,23 @@ object EditorInterfaceDraw {
                 comp.modelObjHeight
             else h
 
-        if (drawModel) {
-            val model = Unknown4.getModel(comp.modelId)
+        if (drawModel && drawWidth > 0 && drawHeight > 0) {
+            val model = ModelLoader.getModel(comp.modelId)
             if (model != null) {
-                val renderer = Unknown3(drawWidth, drawHeight, EditorGUI.instance?.compontentRenderPanel)
-                renderer.clear()
-                val mox = comp.modelOriginX
-                val moy = comp.modelOriginY
-                renderer.updateModel(model, comp)
-                renderer.updatePreview(x+mox, y+moy, g)
+                val key = (drawWidth.toLong() shl 32) or drawHeight.toLong()
+                if (modelRenderers.size > 64) modelRenderers.clear()
+                val renderer = modelRenderers.getOrPut(key) { ModelRenderer(drawWidth, drawHeight) }
+                renderer.clear(0)
+                renderer.render(
+                    model,
+                    drawWidth / 2, drawHeight / 2,
+                    comp.modelXAngle, comp.modelYAngle, comp.modelZAngle,
+                    comp.modelZoom,
+                    comp.modelOriginX, comp.modelOriginY,
+                    comp.modelOrtho
+                )
+                // the image is exactly the component bounds, so the model is clipped to it like in the client
+                g.drawImage(renderer.image, x, y, null)
             }
         }
 

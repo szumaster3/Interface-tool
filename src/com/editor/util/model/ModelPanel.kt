@@ -1,6 +1,6 @@
 package com.editor.util.model
 
-import com.alex.loaders.mesh.Unknown2
+import com.alex.loaders.mesh.Model
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics
@@ -25,7 +25,8 @@ class ModelPanel : JPanel(), Runnable {
     private var axisZ = 500
     private var screenX = -1
     private var screenY = -1
-    private var model: Unknown2? = null
+    @Volatile
+    private var model: Model? = null
     private var renderer: ModelViewerRenderer? = null
 
     init {
@@ -81,12 +82,12 @@ class ModelPanel : JPanel(), Runnable {
 
             val g: Graphics? = graphics
 
-            if (model != null && g != null) {
+            val currentModel = model
+            val currentRenderer = renderer
+            if (currentModel != null && currentRenderer != null && g != null) {
                 try {
-                    renderer?.updateModel(model, posX, axisY, posY, axisX, axisZ)
-                    renderer?.updatePreview(0, 0, g)
-                    renderer?.clear()
-
+                    currentRenderer.render(currentModel, posX, posY, axisY, axisX, axisZ)
+                    currentRenderer.draw(g)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -122,21 +123,15 @@ class ModelPanel : JPanel(), Runnable {
     }
 
     fun loadModelFromBytes(bytes: ByteArray?) {
-        var model: Unknown2?
-        if (bytes != null && bytes[bytes.size - 1].toInt() == -1 && bytes[bytes.size - 2].toInt() == -1) {
-            if ((Unknown2.loadModel(bytes).also { model = it }).isNewHeader) {
-                model!!.downScaleModel(4)
-            }
-        } else {
-            Unknown2.initModel(bytes)
-            model = Unknown2.createEmptyModel()
-        }
-        model!!.method38(64, 768, -50, -10, -50, true)
+        this.model = if (bytes != null) Model.decode(bytes, -1) else null
+    }
+
+    fun setModel(model: Model?) {
         this.model = model
     }
 
     private fun render() {
-        renderer = ModelViewerRenderer(width, height, this)
+        renderer = ModelViewerRenderer(width, height)
     }
 
     private fun mouseWheelMovedCallback(var1: MouseWheelEvent) {

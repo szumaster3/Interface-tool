@@ -144,6 +144,8 @@ object EditorInterfaceDraw {
                 ComponentType.MODEL  -> drawModel(g, comp, x, y, w, h, showModels)
                 ComponentType.TEXT   -> drawText(g, comp, x, y, w, h)
                 ComponentType.LINE   -> drawLine(g, comp, x, y)
+                ComponentType.INVENTORY,
+                ComponentType.INVENTORY_TEXT -> drawInventory(g, comp, x, y)
             }
         }
 
@@ -333,38 +335,50 @@ object EditorInterfaceDraw {
         h: Int,
         drawModel: Boolean
     ) {
-        val drawWidth =
-            if (comp.widthMode.toInt() != 0 && comp.modelObjWidth > 0)
-                comp.modelObjWidth
-            else w
-
-        val drawHeight =
-            if (comp.heightMode.toInt() != 0 && comp.modelObjHeight > 0)
-                comp.modelObjHeight
-            else h
-
-        if (drawModel && drawWidth > 0 && drawHeight > 0) {
+        if (drawModel && w > 0 && h > 0 && w <= 4096 && h <= 4096) {
             val model = ModelLoader.getModel(comp.modelId)
             if (model != null) {
-                val key = (drawWidth.toLong() shl 32) or drawHeight.toLong()
+                val key = (w.toLong() shl 32) or h.toLong()
                 if (modelRenderers.size > 64) modelRenderers.clear()
-                val renderer = modelRenderers.getOrPut(key) { ModelRenderer(drawWidth, drawHeight) }
+                val renderer = modelRenderers.getOrPut(key) { ModelRenderer(w, h) }
                 renderer.clear(0)
+                // client: the origin offsets are scaled by (width << 8) / modelObjWidth when that value is set
+                val scaleX = if (comp.modelObjWidth > 0) (w shl 8) / comp.modelObjWidth else 256
+                val scaleY = if (comp.modelObjHeight > 0) (h shl 8) / comp.modelObjHeight else 256
                 renderer.render(
                     model,
-                    drawWidth / 2, drawHeight / 2,
+                    w / 2, h / 2,
                     comp.modelXAngle, comp.modelYAngle, comp.modelZAngle,
                     comp.modelZoom,
-                    comp.modelOriginX, comp.modelOriginY,
+                    scaleX * comp.modelOriginX shr 8, scaleY * comp.modelOriginY shr 8,
                     comp.modelOrtho
                 )
-                // the image is exactly the component bounds, so the model is clipped to it like in the client
+                // the image has the size of the component, so the model is clipped to it like in the client
                 g.drawImage(renderer.image, x, y, null)
             }
         }
 
         g.color = Consts.MODEL_COLOR
-        g.drawRect(x, y, drawWidth - 1, drawHeight - 1)
+        g.drawRect(x, y, w - 1, h - 1)
+    }
+
+    /**
+     * Draws the slot grid
+     * TODO item sprites need the item definitions.
+     */
+    private fun drawInventory(g: Graphics2D, comp: ComponentDefinition, x: Int, y: Int) {
+        val slotW = if (comp.type == ComponentType.INVENTORY) 32 else 115
+        val slotH = if (comp.type == ComponentType.INVENTORY) 32 else 12
+        val cols = comp.baseWidth.coerceIn(0, 64)
+        val rows = comp.baseHeight.coerceIn(0, 64)
+        g.color = Color(255, 255, 255, 110)
+        for (row in 0 until rows) {
+            for (col in 0 until cols) {
+                val sx = x + col * (slotW + comp.invMarginX)
+                val sy = y + row * (slotH + comp.invMarginY)
+                g.drawRect(sx, sy, slotW - 1, slotH - 1)
+            }
+        }
     }
 
     private fun drawLine(g: Graphics2D, comp: ComponentDefinition, x: Int, y: Int) {
@@ -564,24 +578,38 @@ object EditorInterfaceDraw {
     }
 
     private fun realSize(c: ComponentDefinition, pw: Int, ph: Int) {
+        /*
+         * size modes of the client (InterfaceList):
+         * 0 absolute,
+         * 1 parent minus base,
+         * 2 fraction of the parent,
+         * 3 inventory (computed from slots),
+         * 4 aspect ratio (needs values set by scripts, falls back to base)
+         */
         c.width =
             when (c.widthMode.toInt()) {
                 0 -> c.baseWidth
                 1 -> pw - c.baseWidth
-                2,
-                4 -> pw * c.baseWidth shr FIXED_SHIFT
-                else -> c.width
+                2 -> pw * c.baseWidth shr FIXED_SHIFT
+                3 -> when (c.type) {
+                    ComponentType.INVENTORY -> c.baseWidth * 32 + (c.baseWidth - 1) * c.invMarginX
+                    ComponentType.INVENTORY_TEXT -> c.baseWidth * 115 + c.invMarginX * (c.baseWidth - 1)
+                    else -> c.baseWidth
+                }
+                else -> c.baseWidth
             }
         c.height =
             when (c.heightMode.toInt()) {
                 0 -> c.baseHeight
                 1 -> ph - c.baseHeight
-                2,
-                4 -> ph * c.baseHeight shr FIXED_SHIFT
-                else -> c.height
+                2 -> ph * c.baseHeight shr FIXED_SHIFT
+                3 -> when (c.type) {
+                    ComponentType.INVENTORY -> (c.baseHeight - 1) * c.invMarginY + c.baseHeight * 32
+                    ComponentType.INVENTORY_TEXT -> c.baseHeight * 12 + (c.baseHeight - 1) * c.invMarginY
+                    else -> c.baseHeight
+                }
+                else -> c.baseHeight
             }
-            if (c.modelObjWidth > 0) c.baseWidth = c.modelObjWidth
-            if (c.modelObjHeight > 0) c.baseHeight = c.modelObjHeight
     }
 
     private fun realPosition(c: ComponentDefinition, pw: Int, ph: Int) {
@@ -656,7 +684,7 @@ object EditorInterfaceDraw {
         handle(x, y + h / 2)
     }
 
-    fun getCursor(mouseX: Int, mouseY: Int, x: Int, y: Int, w: Int, h: Int): com.editor.ComponentResizeType? {
+    fun getCursor(mouseX: Int, mouseY: Int, x: Int, y: Int, w: Int, h: Int): ComponentResizeType? {
         val handleSize = maxOf(HANDLE_SIZE, 6)
         val margin = 4
 
@@ -665,14 +693,14 @@ object EditorInterfaceDraw {
                     mouseY in (cy - handleSize/2 - margin)..(cy + handleSize/2 + margin)
 
         return when {
-            click(x, y) -> com.editor.ComponentResizeType.TOP_LEFT
-            click(x + w / 2, y) -> com.editor.ComponentResizeType.TOP
-            click(x + w, y) -> com.editor.ComponentResizeType.TOP_RIGHT
-            click(x + w, y + h / 2) -> com.editor.ComponentResizeType.RIGHT
-            click(x + w, y + h) -> com.editor.ComponentResizeType.BOTTOM_RIGHT
-            click(x + w / 2, y + h) -> com.editor.ComponentResizeType.BOTTOM
-            click(x, y + h) -> com.editor.ComponentResizeType.BOTTOM_LEFT
-            click(x, y + h / 2) -> com.editor.ComponentResizeType.LEFT
+            click(x, y) -> ComponentResizeType.TOP_LEFT
+            click(x + w / 2, y) -> ComponentResizeType.TOP
+            click(x + w, y) -> ComponentResizeType.TOP_RIGHT
+            click(x + w, y + h / 2) -> ComponentResizeType.RIGHT
+            click(x + w, y + h) -> ComponentResizeType.BOTTOM_RIGHT
+            click(x + w / 2, y + h) -> ComponentResizeType.BOTTOM
+            click(x, y + h) -> ComponentResizeType.BOTTOM_LEFT
+            click(x, y + h / 2) -> ComponentResizeType.LEFT
             else -> null
         }
     }

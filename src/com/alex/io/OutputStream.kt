@@ -74,7 +74,7 @@ class OutputStream @JvmOverloads constructor(
     }
 
     fun writeString(value: String) {
-        val bytes = value.toByteArray()
+        val bytes = value.toByteArray(Charsets.ISO_8859_1)
 
         checkCapacityPosition(offset + bytes.size + 1)
 

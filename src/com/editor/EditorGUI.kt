@@ -1297,7 +1297,7 @@ class EditorGUI : JFrame()
     {
         val parentId = compontentRenderPanel.interfaceId ?: return
         val index = Cache.store?.indexes?.get(3) ?: return
-        val newId = index.getValidFilesCount(parentId)
+        val newId = index.getLastFileId(parentId) + 1
         val templateComp = ComponentDefinition.getInterfaceComponent(templateInterface, templateComponentId) ?: return
         templateComp.parentId = -1
         setup(templateComp)

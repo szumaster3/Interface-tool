@@ -95,16 +95,36 @@ object EditorGUIButtons {
         if (confirm != JOptionPane.YES_OPTION) return null
 
         val data = FileInputStream(file).use { it.readBytes() }
-        val components: Array<ComponentDefinition?> =
-            arrayOfNulls(ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId))
         val stream = InputStream(data)
 
-        var offset = 0
-        while (offset < data.size) {
-            val comp = ComponentDefinition()
-            comp.decodeIf3(stream, offset, interfaceId)
-            components[offset] = comp
-            offset++
+        /*
+         * Decode everything first, so a broken file never touches the cache.
+         */
+        val decoded = ArrayList<ComponentDefinition>()
+        try {
+            while (stream.offset < data.size) {
+                val index = decoded.size
+                val comp = ComponentDefinition()
+                comp.componentHash = index + (interfaceId shl 16)
+                comp.decode(stream, index, interfaceId)
+                decoded.add(comp)
+            }
+        } catch (e: Exception) {
+            JOptionPane.showMessageDialog(
+                null,
+                "Failed to import ${file.name}: the file is not a valid interface (${e.javaClass.simpleName}).",
+                "Import failed",
+                JOptionPane.ERROR_MESSAGE
+            )
+            return null
+        }
+        val components: Array<ComponentDefinition?> = arrayOfNulls(decoded.size)
+        for (i in decoded.indices) components[i] = decoded[i]
+
+        val oldCount = try {
+            ComponentDefinition.getInterfaceDefinitionsComponentsSize(interfaceId)
+        } catch (e: Exception) {
+            0
         }
 
         if (ComponentDefinition.componentDefinition == null) {
@@ -117,6 +137,9 @@ object EditorGUIButtons {
                 val bytes = comp.encode(comp.hasScripts)
                 Cache.store!!.indexes[3].putFile(interfaceId, componentId, bytes)
             }
+        }
+        for (componentId in components.size until oldCount) {
+            Cache.store!!.indexes[3].removeFile(interfaceId, componentId)
         }
 
         EditorGUI.instance?.compontentRenderPanel?.interfaceId = interfaceId
@@ -197,7 +220,15 @@ object EditorGUIButtons {
         if (confirm != JOptionPane.YES_OPTION) return
 
         try {
-            Cache.store!!.indexes[3].removeFile(comp.interfaceId, comp.componentId)
+            val toRemove = LinkedHashSet<ComponentDefinition>()
+            fun collect(c: ComponentDefinition) {
+                if (!toRemove.add(c)) return
+                ComponentDefinition.getChildsByParent(c.interfaceId, c.componentHash).forEach { collect(it) }
+            }
+            collect(comp)
+            for (c in toRemove) {
+                Cache.store!!.indexes[3].removeFile(c.interfaceId, c.componentId)
+            }
             Cache.store!!.indexes[3].resetCachedFiles()
             Cache.store!!.indexes[3].rewriteTable()
 

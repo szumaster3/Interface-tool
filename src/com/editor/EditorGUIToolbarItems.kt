@@ -223,7 +223,7 @@ object EditorGUIToolbarItems {
                                 )
 
                                 1 -> Desktop.getDesktop().browse(
-                                    URL("https://szumaster.com/data/upload/dl_iface_editor/Interface%20Editor-v$remoteVersion.zip").toURI()
+                                    URL("https://github.com/szumaster3/Interface-tool/releases").toURI()
                                 )
                             }
                         }

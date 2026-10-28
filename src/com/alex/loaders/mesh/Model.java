@@ -392,14 +392,6 @@ public final class Model {
             }
             if (faceMaterial != null) {
                 faceMaterial[face] = (short) (sixth.unsignedShort() - 1);
-                if (faceMaterial[face] >= 0 && triangleInfo != null
-                        && triangleInfo[face] < 2
-                        && triangleColors[face] != 127
-                        && triangleColors[face] != -27075
-                        && triangleColors[face] != 8128
-                        && triangleColors[face] != 7510) {
-                    faceMaterial[face] = -1;
-                }
                 if (faceMaterial[face] != -1) {
                     seventh.unsignedByte(); // texture coordinate index, not needed for the preview
                 }

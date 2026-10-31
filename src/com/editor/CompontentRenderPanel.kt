@@ -193,8 +193,6 @@ class CompontentRenderPanel : JPanel() {
 
             override fun mouseMoved(e: MouseEvent)
             {
-                val comp = hitTestComponent(e.x, e.y)
-
                 val handle = if (SelectionModel.source == SelectionSource.MOUSE) {
                     selectedComponent?.let {
                         getCursor(e.x, e.y, it.positionX, it.positionY, it.width, it.height)

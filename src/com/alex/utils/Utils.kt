@@ -10,6 +10,16 @@ import java.nio.ByteBuffer
 import java.util.*
 
 object Utils {
+    /**
+     * Number of items in the cache.
+     */
+    @JvmStatic
+    fun getItemDefinitionsSize(store: com.alex.store.Store): Int {
+        val index = store.indexes[19]
+        val last = index.lastArchiveId
+        return last * 256 + index.getValidFilesCount(last)
+    }
+
     @JvmStatic
     fun cryptRSA(data: ByteArray?, exponent: BigInteger?, modulus: BigInteger?): ByteArray {
         return BigInteger(data).modPow(exponent, modulus).toByteArray()
@@ -133,37 +143,7 @@ object Utils {
         return result
     }
 
-    fun getComponentFromInt(type: Int): String {
-        return when (type) {
-            ComponentType.LAYER -> "layer"
-            ComponentType.TEXT -> "text"
-            ComponentType.SPRITE -> "sprite"
-            ComponentType.FIGURE -> "figure"
-            ComponentType.MODEL -> "model"
-            ComponentType.LINE -> "line"
-            ComponentType.MODEL_LIST -> "model list"
-            ComponentType.INVENTORY -> "inventory"
-            else -> type.toString()
-        }
-    }
+    fun getComponentFromInt(type: Int): String = ComponentType.nameOf(type)
 
-    fun getComponentFromString(name: String?): Int {
-        if (name == null) return -1
-
-        return when (name) {
-            "layer" -> ComponentType.LAYER
-            "text" -> ComponentType.TEXT
-            "sprite" -> ComponentType.SPRITE
-            "figure" -> ComponentType.FIGURE
-            "model" -> ComponentType.MODEL
-            "line" -> ComponentType.LINE
-            "model list" -> ComponentType.MODEL_LIST
-            "inventory" -> ComponentType.INVENTORY
-            else -> try {
-                name.toInt()
-            } catch (e: NumberFormatException) {
-                -1
-            }
-        }
-    }
+    fun getComponentFromString(name: String?): Int = ComponentType.fromName(name)
 }

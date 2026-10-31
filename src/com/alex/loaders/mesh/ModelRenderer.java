@@ -123,22 +123,51 @@ public final class ModelRenderer {
      * @param ortho   orthographic projection
      */
     public void render(Model model, int centerX, int centerY, int pitch, int yaw, int roll, int zoom, int offsetX, int offsetY, boolean ortho) {
-        if (model == null || model.vertices == 0 || model.triangleCount == 0) {
-            return;
-        }
         if (zoom < 1) {
             zoom = 1;
+        }
+        // the model origin is placed 'zoom' units in front of the camera; the camera pitch is applied
+        // around that origin. modelOriginX/Y are 2D screen offsets in pixels (verified against the cache:
+        // they re-centre models whose bounding box is not centred on the origin).
+        double moveY = zoom * SIN[pitch & 2047];
+        double moveZ = zoom * COS[pitch & 2047];
+        draw(model, centerX, centerY, pitch, yaw, roll, 0, moveY, moveZ, zoom, offsetX, offsetY, ortho);
+    }
+
+    /**
+     * Draws an item icon like the client does: the offsets are in model units, not in pixels, and the model is
+     * moved down by half of its height.
+     *
+     * @param pitch   item xAngle2D
+     * @param yaw     item yAngle2D
+     * @param roll    item zAngle2D
+     * @param zoom    item zoom2d
+     * @param offsetX item xOffset2D
+     * @param offsetY item yOffset2D
+     */
+    public void renderItem(Model model, int centerX, int centerY, int pitch, int yaw, int roll, int zoom, int offsetX, int offsetY) {
+        if (model == null) {
+            return;
+        }
+        double moveY = zoom * SIN[pitch & 2047] + offsetY - model.minY / 2;
+        double moveZ = zoom * COS[pitch & 2047] + offsetY;
+        draw(model, centerX, centerY, pitch, yaw, roll, offsetX, moveY, moveZ, zoom, 0, 0, false);
+    }
+
+    /**
+     * @param moveX translation in model units after the rotation around the Y axis
+     * @param moveY translation in model units, before the camera pitch is applied
+     * @param moveZ translation in model units, before the camera pitch is applied
+     */
+    private void draw(Model model, int centerX, int centerY, int pitch, int yaw, int roll, double moveX, double moveY, double moveZ,
+                      int zoom, int offsetX, int offsetY, boolean ortho) {
+        if (model == null || model.vertices == 0 || model.triangleCount == 0) {
+            return;
         }
 
         double sinP = SIN[pitch & 2047], cosP = COS[pitch & 2047];
         double sinY = SIN[yaw & 2047], cosY = COS[yaw & 2047];
         double sinR = SIN[roll & 2047], cosR = COS[roll & 2047];
-
-        // the model origin is placed 'zoom' units in front of the camera; the camera pitch is applied
-        // around that origin. modelOriginX/Y are 2D screen offsets in pixels (verified against the cache:
-        // they re-centre models whose bounding box is not centred on the origin).
-        double moveY = zoom * sinP;
-        double moveZ = zoom * cosP;
 
         int n = model.vertices;
         double[] vx = new double[n];
@@ -163,6 +192,7 @@ public final class ModelRenderer {
                 z = z * cosY - x * sinY;
                 x = t;
             }
+            x += moveX;
             y += moveY;
             z += moveZ;
             t = y * cosP - z * sinP;

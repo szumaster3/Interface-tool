@@ -134,7 +134,7 @@ object EditorGUIButtons {
 
         for ((componentId, comp) in components.withIndex()) {
             if (comp != null) {
-                val bytes = comp.encode(comp.hasScripts)
+                val bytes = comp.encode()
                 Cache.store!!.indexes[3].putFile(interfaceId, componentId, bytes)
             }
         }
@@ -175,7 +175,7 @@ object EditorGUIButtons {
         val outStream = OutputStream()
         for (c in components) {
             if (c != null) {
-                val bytes = c.encode(c.hasScripts)
+                val bytes = c.encode()
                 outStream.writeBytes(bytes)
             }
         }
@@ -198,8 +198,9 @@ object EditorGUIButtons {
             return
         }
 
-        if (comp.interfaceId <= 0 || comp.componentId <= 0) {
-            JOptionPane.showMessageDialog(null, "Please select a valid component first.")
+        // component 0 is the base of an IF3 interface, in the old IF1 format it is a normal component
+        if (comp.interfaceId < 0 || comp.componentId < 0 || (!comp.isIf1 && comp.componentId == 0)) {
+            JOptionPane.showMessageDialog(null, "The base component (0) of an interface cannot be removed.")
             return
         }
 
@@ -306,7 +307,7 @@ object EditorGUIButtons {
                 comp.interfaceId,
                 comp.componentId,
                 2,
-                comp.encode(true),
+                comp.encode(),
                 null,
                 true,
                 true,
@@ -317,7 +318,7 @@ object EditorGUIButtons {
             store.indexes[3].putFile(
                 comp.interfaceId,
                 comp.componentId,
-                comp.encode(true)
+                comp.encode()
             )
         }
         EditorGUI.instance?.loadComponents(comp.interfaceId)
@@ -360,8 +361,8 @@ object EditorGUIButtons {
                 selectComponent(it)
             }
 
-            compontentRenderPanel?.interfaceId = targetInterfaceId
-            compontentRenderPanel?.repaint()
+            compontentRenderPanel.interfaceId = targetInterfaceId
+            compontentRenderPanel.repaint()
         }
     }
 
@@ -383,7 +384,7 @@ object EditorGUIButtons {
         Cache.store!!.indexes[3].putFile(
             targetInterfaceId,
             nextId,
-            newComp.encode(true)
+            newComp.encode()
         )
         hashMap[node.component.componentHash] = newComp.componentHash
         node.children.forEach {
@@ -464,7 +465,7 @@ object EditorGUIButtons {
             val titleLabel = JLabel("Interface Editor")
             titleLabel.alignmentX = Component.CENTER_ALIGNMENT
 
-            val authorLabel = JLabel("<html>Made by: Shnek<br>Discord: Cara Shnek#6969</html>")
+            val authorLabel = JLabel("<html>Made by: Shnek<br>Discord: Cara Shnek#6969<br>Edit by: Szu</html>")
             authorLabel.alignmentX = Component.CENTER_ALIGNMENT
 
             val refactorLabel = JLabel("<html>Major code refactoring & improvements by: Ceikry</html>")

@@ -91,7 +91,7 @@ class Copy private constructor(val targetInterface: Int) {
             modifier?.accept(comp)
             task.modifier?.accept(comp)
 
-            Cache.store!!.indexes[3].putFile(targetInterface, task.targetId, comp.encode(comp.hasScripts))
+            Cache.store!!.indexes[3].putFile(targetInterface, task.targetId, comp.encode())
 
             copiedComponents.add(comp)
         }
@@ -144,7 +144,7 @@ class Copy private constructor(val targetInterface: Int) {
     fun addComponents(vararg modifiers: ComponentDefinition.() -> Unit): Copy {
         for (mod in modifiers) {
             val task = CopyTask(this, -1, currentId++)
-            task.modifier = Consumer { c -> c?.mod() }
+            task.modifier = Consumer { c -> c.mod() }
             tasks.add(task)
         }
         return this
@@ -177,7 +177,7 @@ class Copy private constructor(val targetInterface: Int) {
                 base.baseX = 0
                 base.baseY = 0
                 base.parentId = -1
-                Cache.store!!.indexes[3].putFile(newId, 0, base.encode(base.hasScripts))
+                Cache.store!!.indexes[3].putFile(newId, 0, base.encode())
             }
             ComponentDefinition.componentDefinition = arrayOfNulls(newId + 1)
             return newId

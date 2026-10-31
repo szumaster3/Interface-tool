@@ -26,6 +26,17 @@ class InputStream(data: ByteArray) : Stream() {
         }
     }
 
+    /** Reads a string which ends with a zero byte (one byte per character). */
+    fun readString(): String {
+        val builder = StringBuilder()
+        while (true) {
+            val b = readUnsignedByte()
+            if (b == 0) break
+            builder.append(b.toChar())
+        }
+        return builder.toString()
+    }
+
     fun readUnsignedByte(): Int =
         readByte() and 0xFF
 

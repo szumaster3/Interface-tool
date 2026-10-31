@@ -106,6 +106,14 @@ Package a distributable zip (written to `build/distro`):
 <br>
 
 <p align="center">
+    <img src="https://imgur.com/Anc7REA.png" alt="Interface Editor Screenshot"/>
+</p>
+
+<p align="center">
+    <img src="https://imgur.com/EkNXBws.png" alt="Interface Editor Screenshot"/>
+</p>
+
+<p align="center">
     <img src="https://imgur.com/S9UVpYz.png" alt="Interface Editor Screenshot"/>
 </p>
 

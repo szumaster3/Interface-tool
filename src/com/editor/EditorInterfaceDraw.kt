@@ -1,5 +1,6 @@
 package com.editor
 
+import com.alex.loaders.ItemIcons
 import com.alex.loaders.interfaces.ComponentDefinition
 import com.alex.loaders.interfaces.ComponentDefinition.Companion.getInterface
 import com.alex.loaders.interfaces.ComponentSprites
@@ -16,6 +17,12 @@ import kotlin.math.min
 
 object EditorInterfaceDraw {
     var editMode = false
+
+    /** Fills the inventory components with preview items (the cache only stores the empty inventories). */
+    var showItems = false
+
+    /** Item ids used for the preview, a default selection of items is used when it is empty. */
+    var previewItems: List<Int> = emptyList()
     private const val FIXED_SHIFT = 14
     private val DEFAULT_FONT = Font("Helvetica", Font.PLAIN, 11)
     const val HANDLE_SIZE = 6
@@ -363,20 +370,42 @@ object EditorInterfaceDraw {
     }
 
     /**
-     * Draws the slot grid
-     * TODO item sprites need the item definitions.
+     * Inventories (IF1 types 2 and 7). The client fills them with the items of the player; the cache only has the
+     * slot layout and, for inventories, a sprite which is drawn in a slot while it is empty. With [showItems] the
+     * slots are filled with the preview items (the icon for the inventory, the name for the inventory text).
      */
     private fun drawInventory(g: Graphics2D, comp: ComponentDefinition, x: Int, y: Int) {
-        val slotW = if (comp.type == ComponentType.INVENTORY) 32 else 115
-        val slotH = if (comp.type == ComponentType.INVENTORY) 32 else 12
+        val isText = comp.type == ComponentType.INVENTORY_TEXT
+        val slotW = if (isText) 115 else 32
+        val slotH = if (isText) 12 else 32
         val cols = comp.baseWidth.coerceIn(0, 64)
         val rows = comp.baseHeight.coerceIn(0, 64)
-        g.color = Color(255, 255, 255, 110)
+        val items = if (showItems) previewItems.ifEmpty { ItemIcons.sampleItems() } else emptyList()
+
         for (row in 0 until rows) {
             for (col in 0 until cols) {
+                val slot = col + row * cols
                 val sx = x + col * (slotW + comp.invMarginX)
                 val sy = y + row * (slotH + comp.invMarginY)
-                g.drawRect(sx, sy, slotW - 1, slotH - 1)
+
+                if (items.isNotEmpty()) {
+                    val itemId = items[slot % items.size]
+                    if (isText) {
+                        drawText(g, comp, sx, sy, slotW, slotH, ItemIcons.name(itemId))
+                    } else {
+                        ItemIcons.icon(itemId)?.let { g.drawImage(it, sx, sy, null) }
+                    }
+                } else if (!isText && slot < 20 && comp.invSlotPresent[slot]) {
+                    // sprite of an empty slot
+                    SpriteLoader.getSprite(comp.invSprite?.get(slot) ?: -1)?.let {
+                        g.drawImage(it, sx + (comp.invOffsetX?.get(slot) ?: 0), sy + (comp.invOffsetY?.get(slot) ?: 0), null)
+                    }
+                }
+
+                if (editMode) {
+                    g.color = Color(255, 255, 255, 90)
+                    g.drawRect(sx, sy, slotW - 1, slotH - 1)
+                }
             }
         }
     }
@@ -403,9 +432,10 @@ object EditorInterfaceDraw {
         x: Int,
         y: Int,
         w: Int,
-        h: Int
+        h: Int,
+        text: String? = comp.text
     ) {
-        val rawText = comp.text ?: return
+        val rawText = text ?: return
         if (rawText.isEmpty()) return
 
         g.font = DEFAULT_FONT

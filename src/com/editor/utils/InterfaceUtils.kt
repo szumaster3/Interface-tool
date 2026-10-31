@@ -24,13 +24,10 @@ object InterfaceUtils {
     }
 
     @JvmStatic
-    fun updateRightClickOption(c: ComponentDefinition, index: Int, value: String) {
-        if (c.rightClickOptions == null) {
-            c.rightClickOptions = arrayOfNulls(10)
-        }
-        if (index in c.rightClickOptions!!.indices) {
-            c.rightClickOptions!![index] = value
-        }
+    fun setRightClickOptions(c: ComponentDefinition, texts: List<String>) {
+        // like in the cache, the array only goes up to the last option which has a text
+        val count = texts.indexOfLast { it.isNotEmpty() } + 1
+        c.rightClickOptions = if (count == 0) null else Array(count) { texts[it] }
     }
 
     @JvmStatic

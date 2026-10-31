@@ -36,24 +36,19 @@ class ComponentTreeRenderer :
     private val showIcon    = ImageIcon(javaClass.getResource("/icons/hide.png"))
     private val defaultIcon = ImageIcon(javaClass.getResource("/icons/default.png"))
 
-    private val componentIcons = mapOf(
-        ComponentType.LAYER      to ImageIcon(javaClass.getResource("/icons/layer.png")),
-        ComponentType.TEXT       to ImageIcon(javaClass.getResource("/icons/text.png")),
-        ComponentType.SPRITE     to ImageIcon(javaClass.getResource("/icons/sprite.png")),
-        ComponentType.FIGURE     to ImageIcon(javaClass.getResource("/icons/figure.png")),
-        ComponentType.MODEL      to ImageIcon(javaClass.getResource("/icons/model.png")),
-        ComponentType.LINE       to ImageIcon(javaClass.getResource("/icons/line.png")),
-        ComponentType.MODEL_LIST to ImageIcon(javaClass.getResource("/icons/model_list.png")),
-        ComponentType.INVENTORY  to ImageIcon(javaClass.getResource("/icons/inventory.png"))
-    )
+    private fun icon(name: String) = ImageIcon(javaClass.getResource("/icons/$name.png"))
 
-    private val typeColors = mapOf(
-        ComponentType.SPRITE to Consts.SPRITE_COLOR,
-        ComponentType.FIGURE to Consts.FIGURE_COLOR,
-        ComponentType.TEXT   to Consts.TEXT_COLOR,
-        ComponentType.MODEL  to Consts.MODEL_COLOR,
-        ComponentType.LAYER  to Consts.LAYER_COLOR,
-        ComponentType.LINE   to Consts.LINE_COLOR
+    private val componentIcons = mapOf(
+        ComponentType.LAYER          to icon("layer"),
+        ComponentType.TEXT           to icon("text"),
+        ComponentType.SPRITE         to icon("sprite"),
+        ComponentType.FIGURE         to icon("figure"),
+        ComponentType.MODEL          to icon("model"),
+        ComponentType.LINE           to icon("line"),
+        ComponentType.MODEL_LIST     to icon("model_list"),
+        ComponentType.INVENTORY      to icon("inventory"),
+        ComponentType.INVENTORY_TEXT to icon("inventory"),
+        ComponentType.TOOLTIP        to icon("text")
     )
 
     private var currentComp: ComponentDefinition? = null
@@ -64,13 +59,12 @@ class ComponentTreeRenderer :
         textLabel.font = uiFont
     }
 
-    private fun getColorForComponent(comp: ComponentDefinition?): Color {
-        return comp?.let { typeColors[it.type] } ?: Color.GREEN
-    }
+    private fun getColorForComponent(comp: ComponentDefinition?): Color =
+        comp?.let { Consts.colorOf(it.type) } ?: Color.GREEN
 
     private fun updatePanel(comp: ComponentDefinition) {
         currentComp = comp
-        val typeName = Utils.getComponentFromInt(comp.type)?.replaceFirstChar { it.uppercaseChar() }
+        val typeName = Utils.getComponentFromInt(comp.type).replaceFirstChar { it.uppercaseChar() }
 
         hideLabel.icon = if (comp.hidden) hideIcon else showIcon
         hideLabel.text = ""
@@ -117,7 +111,7 @@ class ComponentTreeRenderer :
 
         if (value is DefaultMutableTreeNode) {
             val comp = value.userObject as? ComponentDefinition
-            val typeName = comp?.let { it -> Utils.getComponentFromInt(it.type)?.replaceFirstChar { it.uppercaseChar() } }
+            val typeName = comp?.let { it -> Utils.getComponentFromInt(it.type).replaceFirstChar { it.uppercaseChar() } }
 
             if (comp != null) {
                 updatePanel(comp)

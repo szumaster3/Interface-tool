@@ -28,7 +28,11 @@ object Consts {
         ComponentType.TEXT   to Color(255, 255, 0, 50),
         ComponentType.MODEL  to Color(230, 230, 230, ALPHA),
         ComponentType.LAYER  to Color(0, 250, 0, 50),
-        ComponentType.LINE   to Color(255, 255, 255, ALPHA)
+        ComponentType.LINE   to Color(255, 255, 255, ALPHA),
+        ComponentType.MODEL_LIST     to Color(230, 230, 230, ALPHA),
+        ComponentType.INVENTORY      to Color(0, 200, 200, ALPHA),
+        ComponentType.INVENTORY_TEXT to Color(0, 200, 200, ALPHA),
+        ComponentType.TOOLTIP        to Color(255, 255, 0, 50)
     )
 
     val outlineColors = mapOf(
@@ -37,7 +41,11 @@ object Consts {
         ComponentType.TEXT   to Color(255, 250, 0),
         ComponentType.MODEL  to Color(230, 230, 230),
         ComponentType.LAYER  to Color(0, 255, 0),
-        ComponentType.LINE   to Color(255, 255, 255)
+        ComponentType.LINE   to Color(255, 255, 255),
+        ComponentType.MODEL_LIST     to Color(230, 230, 230),
+        ComponentType.INVENTORY      to Color(0, 215, 215),
+        ComponentType.INVENTORY_TEXT to Color(0, 215, 215),
+        ComponentType.TOOLTIP        to Color(255, 250, 0)
     )
 
     @JvmField val SPRITE_COLOR = outlineColors[ComponentType.SPRITE]
@@ -46,5 +54,10 @@ object Consts {
     @JvmField val MODEL_COLOR  = outlineColors[ComponentType.MODEL]
     @JvmField val LAYER_COLOR  = outlineColors[ComponentType.LAYER]
     @JvmField val LINE_COLOR   = outlineColors[ComponentType.LINE]
+
+    /**
+     * Colour of a component type in the tree and list.
+     */
+    fun colorOf(type: Int): Color = outlineColors[type] ?: Color.GREEN
 
 }

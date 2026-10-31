@@ -7,7 +7,6 @@ import com.editor.EditorGUI
 import java.util.function.Consumer
 import javax.swing.JOptionPane
 
-
 object ComponentTemplates {
 
     @JvmStatic
@@ -20,192 +19,11 @@ object ComponentTemplates {
         }
     }
 
-    @JvmStatic
-    fun createTooltipButton() {
-        val c = EditorGUI.selectedComponent
-        if (c == null || c.interfaceId == -1) {
-            JOptionPane.showMessageDialog(
-                EditorGUI.instance,
-                "Please select an interface from the list first",
-                "Warning",
-                JOptionPane.WARNING_MESSAGE
-            )
-            return
-        }
-
-        val defaultId = ComponentDefinition.getInterfaceDefinitionsComponentsSize(c.interfaceId)
-        val input = JOptionPane.showInputDialog(
-            EditorGUI.instance,
-            "Save as? (Component ID)",
-            defaultId
-        )
-
-        val compId = input?.toIntOrNull() ?: run {
-            JOptionPane.showMessageDialog(
-                EditorGUI.instance,
-                "Invalid Component ID",
-                "Error",
-                JOptionPane.ERROR_MESSAGE
-            )
-            return
-        }
-
-        Copy.to(c.interfaceId)
-            .startAt(compId)
-            .addComponents(Consumer { comp ->
-                comp.version = 3
-                comp.parentId = -1
-                comp.type = ComponentType.SPRITE
-                comp.baseX = 70
-                comp.baseY = 70
-                comp.baseWidth = 35
-                comp.baseHeight = 35
-                comp.spriteId = 1431
-                comp.optionMask = 2
-                comp.rightClickOptions  = arrayOf("OP_NAME")
-                comp.onMouseHoverScript = arrayOf(1357, -2147483645, 100)
-                comp.onMouseLeaveScript = arrayOf(1501, -2147483645, "PARENT_ID")
-                comp.onMouseRepeat      = arrayOf(38, -2147483645, 49938533, "TOOLTIP_TEXT", 25, 100)
-            })
-            .save()
-
-        getInterface(c.interfaceId, true)
-        refreshUI(c.interfaceId)
-    }
-
-    @JvmStatic
-    fun createSpellButton() {
-            val c = EditorGUI.selectedComponent
-            if (c == null || c.interfaceId == -1) {
-                JOptionPane.showMessageDialog(
-                    EditorGUI.instance,
-                    "Please select an interface from the list first",
-                    "Warning",
-                    JOptionPane.WARNING_MESSAGE
-                )
-                return
-            }
-
-            val defaultId = ComponentDefinition.getInterfaceDefinitionsComponentsSize(c.interfaceId)
-            val input = JOptionPane.showInputDialog(
-                EditorGUI.instance,
-                "Save as? (Component ID)",
-                defaultId
-            )
-
-            val compId = input?.toIntOrNull() ?: run {
-                JOptionPane.showMessageDialog(
-                    EditorGUI.instance,
-                    "Invalid Component ID",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE
-                )
-                return
-            }
-
-            Copy.to(c.interfaceId)
-                .startAt(compId)
-                .addComponents(Consumer { comp ->
-                    comp.parentId = -1
-                    comp.version = 3
-                    comp.type = ComponentType.SPRITE
-                    comp.baseX = 52
-                    comp.baseY = 42
-                    comp.baseWidth = 24
-                    comp.baseHeight = 24
-                    comp.spriteId = 572
-                    comp.optionMask = 2
-                    comp.rightClickOptions = arrayOf("OP_NAME")
-                    comp.onLoadScript = arrayOf(
-                        6,
-                        -2147483645,
-                        "LAYER_COMPONENT_HASH",
-                        "ICON_ON",
-                        "ICON_OFF_ID",
-                        "MAGIC_LEVEL_REQ",
-                        "SPELL_NAME",
-                        "SPELL_TOOLTIP",
-                        "RUNE_ITEM_ID1",
-                        "RUNE_ID1_AMOUNT_REQ",
-                        "RUNE_ITEM_ID2",
-                        "RUNE_ID2_AMOUNT_REQ",
-                        "RUNE_ITEM_ID3",
-                        "RUNE_ID3_AMOUNT_REQ",
-                        -1,
-                        0
-                    )
-                })
-                .save()
-            getInterface(c.interfaceId, true)
-            refreshUI(c.interfaceId)
-        }
-
-    @JvmStatic
-    fun createHighlightButton() {
-        val c = EditorGUI.selectedComponent
-        if (c == null || c.interfaceId == -1) {
-            JOptionPane.showMessageDialog(
-                EditorGUI.instance,
-                "Please select an interface from the list first",
-                "Warning",
-                JOptionPane.WARNING_MESSAGE
-            )
-            return
-        }
-
-        val defaultId = ComponentDefinition.getInterfaceDefinitionsComponentsSize(c.interfaceId)
-        val input = JOptionPane.showInputDialog(
-            EditorGUI.instance,
-            "Save as? (Component ID)",
-            defaultId
-        )
-
-        val firstCompId = input?.toIntOrNull() ?: run {
-            JOptionPane.showMessageDialog(
-                EditorGUI.instance,
-                "Invalid Component ID",
-                "Error",
-                JOptionPane.ERROR_MESSAGE
-            )
-            return
-        }
-        Copy.to(c.interfaceId)
-            .startAt(firstCompId)
-            .addComponents(Consumer { comp ->
-                comp.version = 3
-                comp.parentId = -1
-                comp.type = ComponentType.LAYER
-                comp.baseX = 309
-                comp.baseY = 57
-                comp.baseWidth = 200
-                comp.baseHeight = 200
-                comp.onMouseLeaveScript = arrayOf(40, -2147483645, comp.parentId)
-            })
-            .save()
-        val secondCompId = firstCompId + 1
-        Copy.to(c.interfaceId)
-            .startAt(secondCompId)
-            .addComponents(Consumer { comp ->
-                comp.version = 3
-                comp.parentId = firstCompId
-                comp.type = ComponentType.SPRITE
-                comp.baseX = 150
-                comp.baseY = 150
-                comp.baseWidth = 42
-                comp.baseHeight = 42
-                comp.spriteId = 1058
-                comp.rightClickOptions = arrayOf("OP_TEXT")
-                comp.onMouseHoverScript = arrayOf(44, comp.parentId, "SPRITE_ID")
-                comp.onMouseLeaveScript = arrayOf(299, firstCompId, -2147483645, "SPRITE_ID")
-                comp.onMouseRepeat = arrayOf(38, -2147483645, firstCompId, "OP_TEXT", 25, 80)
-            })
-        .save()
-        getInterface(c.interfaceId, true)
-        refreshUI(c.interfaceId)
-    }
-
-    @JvmStatic
-    fun createScrollBarButton() {
+    /**
+     * Asks for the id of the first new component of the selected interface, runs [create] with it and refreshes
+     * the editor afterwards. The templates with more than one component use the ids behind it.
+     */
+    private fun createTemplate(create: (interfaceId: Int, firstCompId: Int) -> Unit) {
         val c = EditorGUI.selectedComponent
         if (c == null || c.interfaceId == -1) {
             JOptionPane.showMessageDialog(
@@ -234,205 +52,188 @@ object ComponentTemplates {
             return
         }
 
-        Copy.to(c.interfaceId)
-            .startAt(firstCompId)
-            .addComponents(Consumer { comp ->
-                comp.baseX = 470;
-                comp.baseY = 75;
-                comp.baseWidth = 16;
-                comp.baseHeight = 230;
-            })
-            .save()
-        val secondCompId = firstCompId + 1
-        val layer = ComponentDefinition.getInterfaceComponent(c.interfaceId, firstCompId)?.componentHash
-        Copy.to(c.interfaceId)
-            .startAt(secondCompId)
-            .addComponents(Consumer { comp ->
-                comp.parentId = -1
-                comp.baseX = 30;
-                comp.baseY = 75;
-                comp.baseWidth = 440;
-                comp.baseHeight = 230;
-                comp.scrollHeight = 500;
-                comp.rightClickOptions = arrayOf("", "", "", "", "", "", "", "", "", "")
-                comp.onLoadScript = arrayOf(30, -2147483645, layer)
-            })
-            .save()
+        create(c.interfaceId, firstCompId)
         getInterface(c.interfaceId, true)
         refreshUI(c.interfaceId)
     }
 
-    @JvmStatic
-    fun createSimpleButton() {
-        val c = EditorGUI.selectedComponent
-        if (c == null || c.interfaceId == -1) {
-            JOptionPane.showMessageDialog(
-                EditorGUI.instance,
-                "Please select an interface from the list first",
-                "Warning",
-                JOptionPane.WARNING_MESSAGE
-            )
-            return
-        }
-
-        val defaultId = ComponentDefinition.getInterfaceDefinitionsComponentsSize(c.interfaceId)
-        val input = JOptionPane.showInputDialog(
-            EditorGUI.instance,
-            "Save as? (Component ID)",
-            defaultId
-        )
-
-        val compId = input?.toIntOrNull() ?: run {
-            JOptionPane.showMessageDialog(
-                EditorGUI.instance,
-                "Invalid Component ID",
-                "Error",
-                JOptionPane.ERROR_MESSAGE
-            )
-            return
-        }
-
-        Copy.to(c.interfaceId)
+    private fun addComponent(interfaceId: Int, compId: Int, configure: (ComponentDefinition) -> Unit) {
+        Copy.to(interfaceId)
             .startAt(compId)
-            .addComponents(Consumer { comp ->
-                comp.version = 3
-                comp.type = ComponentType.LAYER
-                comp.baseX = 140
-                comp.baseY = 140
-                comp.baseWidth = 50
-                comp.baseHeight = 50
-                comp.optionMask = 0
-                comp.onLoadScript = arrayOf(92, -2147483645)
-                comp.onMouseHoverScript = arrayOf(94, -2147483645)
-                comp.onMouseLeaveScript = arrayOf(92, -2147483645)
-            })
+            .addComponents(Consumer { configure(it) })
             .save()
-
-        getInterface(c.interfaceId, true)
-        refreshUI(c.interfaceId)
     }
 
     @JvmStatic
-    fun createCloseButton() {
-        val c = EditorGUI.selectedComponent
-        if (c == null || c.interfaceId == -1) {
-            JOptionPane.showMessageDialog(
-                EditorGUI.instance,
-                "Please select an interface from the list first",
-                "Warning",
-                JOptionPane.WARNING_MESSAGE
-            )
-            return
+    fun createTooltipButton() = createTemplate { interfaceId, firstCompId ->
+        addComponent(interfaceId, firstCompId) { comp ->
+            comp.version = 3
+            comp.parentId = -1
+            comp.type = ComponentType.SPRITE
+            comp.baseX = 70
+            comp.baseY = 70
+            comp.baseWidth = 35
+            comp.baseHeight = 35
+            comp.spriteId = 1431
+            comp.optionMask = 2
+            comp.rightClickOptions  = arrayOf("OP_NAME")
+            comp.onMouseHoverScript = arrayOf(1357, -2147483645, 100)
+            comp.onMouseLeaveScript = arrayOf(1501, -2147483645, "PARENT_ID")
+            comp.onMouseRepeat      = arrayOf(38, -2147483645, 49938533, "TOOLTIP_TEXT", 25, 100)
         }
-
-        val defaultId = ComponentDefinition.getInterfaceDefinitionsComponentsSize(c.interfaceId)
-        val input = JOptionPane.showInputDialog(
-            EditorGUI.instance,
-            "Save as? (Component ID)",
-            defaultId
-        )
-
-        val compId = input?.toIntOrNull() ?: run {
-            JOptionPane.showMessageDialog(
-                EditorGUI.instance,
-                "Invalid Component ID",
-                "Error",
-                JOptionPane.ERROR_MESSAGE
-            )
-            return
-        }
-
-        Copy.to(c.interfaceId)
-            .startAt(compId)
-            .addComponents(Consumer { comp ->
-                comp.version = 3
-                comp.type = ComponentType.SPRITE
-                comp.baseX = 463
-                comp.baseY = 33
-                comp.baseWidth = 16
-                comp.baseHeight = 16
-                comp.spriteId = 831
-                comp.optionMask = 2
-                comp.rightClickOptions = arrayOf("Close")
-                comp.onMouseHoverScript = arrayOf(44, -2147483645, 832)
-                comp.onMouseLeaveScript = arrayOf(44, -2147483645, 831)
-                comp.onOptionClick = arrayOf(29)
-            })
-            .save()
-
-        getInterface(c.interfaceId, true)
-        refreshUI(c.interfaceId)
     }
 
     @JvmStatic
-    fun createDualColorButton() {
-        val c = EditorGUI.selectedComponent
-        if (c == null || c.interfaceId == -1) {
-            JOptionPane.showMessageDialog(
-                EditorGUI.instance,
-                "Please select an interface from the list first",
-                "Warning",
-                JOptionPane.WARNING_MESSAGE
+    fun createSpellButton() = createTemplate { interfaceId, firstCompId ->
+        addComponent(interfaceId, firstCompId) { comp ->
+            comp.parentId = -1
+            comp.version = 3
+            comp.type = ComponentType.SPRITE
+            comp.baseX = 52
+            comp.baseY = 42
+            comp.baseWidth = 24
+            comp.baseHeight = 24
+            comp.spriteId = 572
+            comp.optionMask = 2
+            comp.rightClickOptions = arrayOf("OP_NAME")
+            comp.onLoadScript = arrayOf(
+                6,
+                -2147483645,
+                "LAYER_COMPONENT_HASH",
+                "ICON_ON",
+                "ICON_OFF_ID",
+                "MAGIC_LEVEL_REQ",
+                "SPELL_NAME",
+                "SPELL_TOOLTIP",
+                "RUNE_ITEM_ID1",
+                "RUNE_ID1_AMOUNT_REQ",
+                "RUNE_ITEM_ID2",
+                "RUNE_ID2_AMOUNT_REQ",
+                "RUNE_ITEM_ID3",
+                "RUNE_ID3_AMOUNT_REQ",
+                -1,
+                0
             )
-            return
         }
+    }
 
-        val defaultId = ComponentDefinition.getInterfaceDefinitionsComponentsSize(c.interfaceId)
-        val input = JOptionPane.showInputDialog(
-            EditorGUI.instance,
-            "Save as? (Component ID for SimpleButton)",
-            defaultId
-        )
-
-        val firstCompId = input?.toIntOrNull() ?: run {
-            JOptionPane.showMessageDialog(
-                EditorGUI.instance,
-                "Invalid Component ID",
-                "Error",
-                JOptionPane.ERROR_MESSAGE
-            )
-            return
+    @JvmStatic
+    fun createHighlightButton() = createTemplate { interfaceId, firstCompId ->
+        addComponent(interfaceId, firstCompId) { comp ->
+            comp.version = 3
+            comp.parentId = -1
+            comp.type = ComponentType.LAYER
+            comp.baseX = 309
+            comp.baseY = 57
+            comp.baseWidth = 200
+            comp.baseHeight = 200
+            comp.onMouseLeaveScript = arrayOf(40, -2147483645, comp.parentId)
         }
-
-        Copy.to(c.interfaceId)
-            .startAt(firstCompId)
-            .addComponents(Consumer { comp ->
-                comp.version = 3
-                comp.parentId = -1
-                comp.type = ComponentType.LAYER
-                comp.baseX = 90
-                comp.baseY = 200
-                comp.baseWidth = 100
-                comp.baseHeight = 50
-                comp.optionMask = 0
-                comp.onLoadScript = arrayOf(92, -2147483645)
-                comp.onMouseHoverScript = arrayOf(94, -2147483645)
-                comp.onMouseLeaveScript = arrayOf(92, -2147483645)
-            })
-            .save()
-
         val secondCompId = firstCompId + 1
-        Copy.to(c.interfaceId)
-            .startAt(secondCompId)
-            .addComponents(Consumer { comp ->
-                comp.version = 3
-                comp.type = ComponentType.TEXT
-                comp.baseWidth = 100
-                comp.baseHeight = 50
-//              comp.textLineHeight = 12
-                comp.parentId = firstCompId
-                comp.shadow = true
-                comp.text = "OP_NAME"
-                comp.textVerticalAli = 1
-                comp.textHorizontalAli = 1
-                comp.fontId = 495
-                comp.color = 52224
-                comp.optionMask = 0
-                comp.onMouseHoverScript = arrayOf(45, -2147483645, "COLOR_OFF")
-                comp.onMouseLeaveScript = arrayOf(45, -2147483645, "COLOR_ON")
-            })
-            .save()
-        getInterface(c.interfaceId, true)
-        refreshUI(c.interfaceId)
+        addComponent(interfaceId, secondCompId) { comp ->
+            comp.version = 3
+            comp.parentId = firstCompId
+            comp.type = ComponentType.SPRITE
+            comp.baseX = 150
+            comp.baseY = 150
+            comp.baseWidth = 42
+            comp.baseHeight = 42
+            comp.spriteId = 1058
+            comp.rightClickOptions = arrayOf("OP_TEXT")
+            comp.onMouseHoverScript = arrayOf(44, comp.parentId, "SPRITE_ID")
+            comp.onMouseLeaveScript = arrayOf(299, firstCompId, -2147483645, "SPRITE_ID")
+            comp.onMouseRepeat = arrayOf(38, -2147483645, firstCompId, "OP_TEXT", 25, 80)
+        }
+    }
+
+    @JvmStatic
+    fun createScrollBarButton() = createTemplate { interfaceId, firstCompId ->
+        addComponent(interfaceId, firstCompId) { comp ->
+            comp.baseX = 470;
+            comp.baseY = 75;
+            comp.baseWidth = 16;
+            comp.baseHeight = 230;
+        }
+        val secondCompId = firstCompId + 1
+        val layer = ComponentDefinition.getInterfaceComponent(interfaceId, firstCompId)?.componentHash
+        addComponent(interfaceId, secondCompId) { comp ->
+            comp.parentId = -1
+            comp.baseX = 30;
+            comp.baseY = 75;
+            comp.baseWidth = 440;
+            comp.baseHeight = 230;
+            comp.scrollHeight = 500;
+            comp.rightClickOptions = arrayOf("", "", "", "", "", "", "", "", "", "")
+            comp.onLoadScript = arrayOf(30, -2147483645, layer)
+        }
+    }
+
+    @JvmStatic
+    fun createSimpleButton() = createTemplate { interfaceId, firstCompId ->
+        addComponent(interfaceId, firstCompId) { comp ->
+            comp.version = 3
+            comp.type = ComponentType.LAYER
+            comp.baseX = 140
+            comp.baseY = 140
+            comp.baseWidth = 50
+            comp.baseHeight = 50
+            comp.optionMask = 0
+            comp.onLoadScript = arrayOf(92, -2147483645)
+            comp.onMouseHoverScript = arrayOf(94, -2147483645)
+            comp.onMouseLeaveScript = arrayOf(92, -2147483645)
+        }
+    }
+
+    @JvmStatic
+    fun createCloseButton() = createTemplate { interfaceId, firstCompId ->
+        addComponent(interfaceId, firstCompId) { comp ->
+            comp.version = 3
+            comp.type = ComponentType.SPRITE
+            comp.baseX = 463
+            comp.baseY = 33
+            comp.baseWidth = 16
+            comp.baseHeight = 16
+            comp.spriteId = 831
+            comp.optionMask = 2
+            comp.rightClickOptions = arrayOf("Close")
+            comp.onMouseHoverScript = arrayOf(44, -2147483645, 832)
+            comp.onMouseLeaveScript = arrayOf(44, -2147483645, 831)
+            comp.onOptionClick = arrayOf(29)
+        }
+    }
+
+    @JvmStatic
+    fun createDualColorButton() = createTemplate { interfaceId, firstCompId ->
+        addComponent(interfaceId, firstCompId) { comp ->
+            comp.version = 3
+            comp.parentId = -1
+            comp.type = ComponentType.LAYER
+            comp.baseX = 90
+            comp.baseY = 200
+            comp.baseWidth = 100
+            comp.baseHeight = 50
+            comp.optionMask = 0
+            comp.onLoadScript = arrayOf(92, -2147483645)
+            comp.onMouseHoverScript = arrayOf(94, -2147483645)
+            comp.onMouseLeaveScript = arrayOf(92, -2147483645)
+        }
+        val secondCompId = firstCompId + 1
+        addComponent(interfaceId, secondCompId) { comp ->
+                            comp.version = 3
+                            comp.type = ComponentType.TEXT
+                            comp.baseWidth = 100
+                            comp.baseHeight = 50
+            //              comp.textLineHeight = 12
+                            comp.parentId = firstCompId
+                            comp.shadow = true
+                            comp.text = "OP_NAME"
+                            comp.textVerticalAli = 1
+                            comp.textHorizontalAli = 1
+                            comp.fontId = 495
+                            comp.color = 52224
+                            comp.optionMask = 0
+                            comp.onMouseHoverScript = arrayOf(45, -2147483645, "COLOR_OFF")
+                            comp.onMouseLeaveScript = arrayOf(45, -2147483645, "COLOR_ON")
+        }
     }
 }

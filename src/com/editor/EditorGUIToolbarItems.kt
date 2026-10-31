@@ -285,8 +285,8 @@ object EditorGUIToolbarItems {
                 if (result == JOptionPane.YES_OPTION) {
                     try {
                         val url = java.net.URI("https://github.com/szumaster3/Interface-tool/commits/master/")
-                        if (java.awt.Desktop.isDesktopSupported()) {
-                            java.awt.Desktop.getDesktop().browse(url)
+                        if (Desktop.isDesktopSupported()) {
+                            Desktop.getDesktop().browse(url)
                         }
                     } catch (ex: Exception) {
                         ex.printStackTrace()

@@ -363,7 +363,7 @@ class ComponentDefinition {
         return bytes
     }
 
-    private fun encodeIf1(): ByteArray {
+    fun encodeIf1(): ByteArray {
         val out = OutputStream()
         out.writeByte(type)
         out.writeByte(buttonType)

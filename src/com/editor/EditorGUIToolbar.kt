@@ -46,6 +46,15 @@ class EditorGUIToolbar : JMenuBar() {
         addMenu.add(EditorGUIToolbarItems.addSpriteItem())
         addMenu.add(EditorGUIToolbarItems.addTextItem())
         addMenu.add(EditorGUIToolbarItems.addLineItem())
+        addMenu.addSeparator()
+        addMenu.add(EditorGUIToolbarItems.addIf1LayerItem())
+        addMenu.add(EditorGUIToolbarItems.addIf1FigureItem())
+        addMenu.add(EditorGUIToolbarItems.addIf1ModelItem())
+        addMenu.add(EditorGUIToolbarItems.addIf1SpriteItem())
+        addMenu.add(EditorGUIToolbarItems.addIf1TextItem())
+        addMenu.add(EditorGUIToolbarItems.addIf1ModelListItem())
+        addMenu.add(EditorGUIToolbarItems.addIf1InventoryItem())
+        addMenu.add(EditorGUIToolbarItems.addIf1TooltipItem())
         add(addMenu)
 
         // Template Menu

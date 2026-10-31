@@ -118,7 +118,8 @@ class EditorGUI : JFrame()
     {
         title = "Interface Editor v${Consts.APP_VERSION}"
         defaultCloseOperation = EXIT_ON_CLOSE
-        setSize(Consts.EDITOR_WIDTH, Consts.EDITOR_HEIGHT)
+        minimumSize = Dimension(Consts.EDITOR_WIDTH, Consts.EDITOR_HEIGHT)
+        size = Dimension(Consts.EDITOR_WIDTH, Consts.EDITOR_HEIGHT)
         layout = BorderLayout()
         jMenuBar = EditorGUIToolbar()
 
@@ -127,6 +128,27 @@ class EditorGUI : JFrame()
         loadInterfaces()
         setupSelection()
         setupChange()
+    }
+
+    private fun updateFormatSections(if1: Boolean, type: Int = ComponentType.SPRITE)
+    {
+        if1Section?.isVisible = if1
+
+        inventorySection?.isVisible = if1 &&
+                (type == ComponentType.INVENTORY || type == ComponentType.INVENTORY_TEXT)
+
+        ifThreeOnlySections.forEach {
+            it.isVisible = !if1
+        }
+
+        ifThreeScriptsSection?.isVisible = !if1
+        cs1ScriptsSection?.isVisible = if1
+
+        propertyPanel.revalidate()
+        propertyPanel.repaint()
+
+        scriptsPanel.revalidate()
+        scriptsPanel.repaint()
     }
 
     private fun setupSelection()
@@ -361,7 +383,7 @@ class EditorGUI : JFrame()
         bottomPanel.add(sectionsScroll, BorderLayout.CENTER)
 
         initScriptsPanel()
-
+        updateFormatSections(if1 = false)
         val scriptsScroll = JScrollPane(scriptsPanel).apply {
             verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
             horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
@@ -636,7 +658,7 @@ class EditorGUI : JFrame()
         addSection(settingsSection)
         ifThreeOnlySections = listOf(optionSection, settingsSection)
 
-        val if1 = createSection("IF1 properties", if1Fields, width = 220, labelWidth = 110)
+        val if1 = createSection("IF1 properties", if1Fields, width = 200, labelWidth = 110)
         addSection(if1)
         if1Section = if1
 
@@ -1414,17 +1436,15 @@ class EditorGUI : JFrame()
             rowPanel?.isVisible = visible
         }
 
-        if1Section?.isVisible = if1
-        inventorySection?.isVisible = if1 && (type == ComponentType.INVENTORY || type == ComponentType.INVENTORY_TEXT)
-        ifThreeOnlySections.forEach { it.isVisible = !if1 }
-        ifThreeScriptsSection?.isVisible = !if1
-        cs1ScriptsSection?.isVisible = if1
+        updateFormatSections(if1, type)
 
         // inventory fields which depend on the type
         propertyPanel.revalidate()
         propertyPanel.repaint()
         scriptsPanel.revalidate()
         scriptsPanel.repaint()
+        // the scroll pane is a validate root: its parent has to be laid out again to use the new height
+        SwingUtilities.getAncestorOfClass(JScrollPane::class.java, scriptsPanel)?.parent?.revalidate()
     }
 
     private fun addSection(section: JPanel)

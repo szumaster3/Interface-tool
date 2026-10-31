@@ -7,23 +7,26 @@ import java.io.FileWriter
 import java.lang.reflect.Field
 
 object EditorGenericTextPrinter {
+
     private val outputDir = File("data/prints/").apply {
         if (!exists()) mkdirs()
     }
 
-    fun printComponent(interfaceId: Int, componentId: Int)
-    {
+    fun printComponent(interfaceId: Int, componentId: Int) {
         try {
             val dir = File(outputDir, interfaceId.toString())
             if (!dir.exists()) dir.mkdirs()
 
             val file = File(dir, "component_$componentId.txt")
+
             FileWriter(file).use { out ->
                 val comps = ComponentDefinition.getInterface(interfaceId, true)
+
                 if (comps == null || componentId >= comps.size || comps[componentId] == null) {
                     println("Component not found: $interfaceId:$componentId")
                     return
                 }
+
                 val comp = comps[componentId]
                 printComponent(comp, out)
             }
@@ -32,18 +35,22 @@ object EditorGenericTextPrinter {
         }
     }
 
-    fun printInterface(interfaceId: Int)
-    {
+    fun printInterface(interfaceId: Int) {
         try {
             val file = File(outputDir, "interface_$interfaceId.txt")
+
             FileWriter(file).use { out ->
                 val comps = ComponentDefinition.getInterface(interfaceId, true)
+
                 if (comps == null) {
                     println("Interface not found: $interfaceId")
                     return
                 }
+
                 for (comp in comps) {
-                    if (comp != null) printComponent(comp, out)
+                    if (comp != null) {
+                        printComponent(comp, out)
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -52,17 +59,19 @@ object EditorGenericTextPrinter {
     }
 
     @Throws(Exception::class)
-    private fun printComponent(comp: ComponentDefinition?, out: FileWriter)
-    {
+    private fun printComponent(comp: ComponentDefinition?, out: FileWriter) {
         var clazz: Class<*>? = comp!!.javaClass
+
         while (clazz != null) {
             for (field in clazz.declaredFields) {
                 field.isAccessible = true
                 val value = field[comp]
+
                 if (shouldPrint(field, value)) {
                     out.write("comp.${field.name} = ${format(value)};\n")
                 }
             }
+
             clazz = clazz.superclass
         }
 
@@ -70,11 +79,11 @@ object EditorGenericTextPrinter {
 
         out.write("\n\n")
         out.flush()
+
         println(">>> Copied component: ${comp.interfaceId}:${comp.componentId}")
     }
 
-    private fun shouldPrint(field: Field, value: Any?): Boolean
-    {
+    private fun shouldPrint(field: Field, value: Any?): Boolean {
         if (value == null) return false
 
         val name = field.name
@@ -88,8 +97,14 @@ object EditorGenericTextPrinter {
 
         if (name.startsWith("on") || name == "rightClickOptions") return false
 
-        if (type == String::class.java) return (value as String).trim().isNotEmpty()
-        if (type == Boolean::class.javaPrimitiveType || type == Boolean::class.java) return value as Boolean
+        if (type == String::class.java) {
+            return (value as String).trim().isNotEmpty()
+        }
+
+        if (type == Boolean::class.javaPrimitiveType || type == Boolean::class.java) {
+            return value as Boolean
+        }
+
         if (Number::class.java.isAssignableFrom(type) || type.isPrimitive) {
             val num = (value as Number).toDouble()
             return num != 0.0 && num != -1.0
@@ -97,9 +112,15 @@ object EditorGenericTextPrinter {
 
         if (type.isArray) {
             return when (value) {
-                is Array<*>  -> value.isNotEmpty()
-                is IntArray  -> value.any { it != 0 && it != -1 }
+                is Array<*> -> value.isNotEmpty()
+                is IntArray -> value.any { it != 0 && it != -1 }
                 is ByteArray -> value.any { it.toInt() != 0 }
+                is BooleanArray -> value.any { it }
+                is ShortArray -> value.any { it.toInt() != 0 && it.toInt() != -1 }
+                is LongArray -> value.any { it != 0L && it != -1L }
+                is FloatArray -> value.any { it != 0f && it != -1f }
+                is DoubleArray -> value.any { it != 0.0 && it != -1.0 }
+                is CharArray -> value.isNotEmpty()
                 else -> true
             }
         }
@@ -109,34 +130,96 @@ object EditorGenericTextPrinter {
         return true
     }
 
-    private fun format(value: Any?): String
-    {
+    private fun format(value: Any?): String {
         if (value == null) return "null"
 
         return when (value) {
-            is String    -> "\"${escapeUnicode(value)}\""
-            is IntArray  -> value.joinToString(prefix = "new int[]{", postfix = "}", separator = ", ")
-            is ByteArray -> value.joinToString(prefix = "new byte[]{", postfix = "}", separator = ", ")
-            is Array<*>  -> value.joinToString(prefix = "new Object[]{", postfix = "}", separator = ", ") { format(it) }
-            is IComponentSettings -> "new IComponentSettings(${value.settings}, ${value.mask})"
+            is String -> "\"${escapeUnicode(value)}\""
+
+            is IntArray -> value.joinToString(
+                prefix = "new int[]{",
+                postfix = "}",
+                separator = ", "
+            )
+
+            is ByteArray -> value.joinToString(
+                prefix = "new byte[]{",
+                postfix = "}",
+                separator = ", "
+            )
+
+            is BooleanArray -> value.joinToString(
+                prefix = "new boolean[]{",
+                postfix = "}",
+                separator = ", "
+            )
+
+            is ShortArray -> value.joinToString(
+                prefix = "new short[]{",
+                postfix = "}",
+                separator = ", "
+            )
+
+            is LongArray -> value.joinToString(
+                prefix = "new long[]{",
+                postfix = "}",
+                separator = ", "
+            )
+
+            is FloatArray -> value.joinToString(
+                prefix = "new float[]{",
+                postfix = "}",
+                separator = ", "
+            )
+
+            is DoubleArray -> value.joinToString(
+                prefix = "new double[]{",
+                postfix = "}",
+                separator = ", "
+            )
+
+            is CharArray -> value.joinToString(
+                prefix = "new char[]{",
+                postfix = "}",
+                separator = ", "
+            ) { "'$it'" }
+
+            is Array<*> -> value.joinToString(
+                prefix = "new Object[]{",
+                postfix = "}",
+                separator = ", "
+            ) { format(it) }
+
+            is IComponentSettings -> {
+                "new IComponentSettings(${value.settings}, ${value.mask})"
+            }
+
             else -> value.toString()
         }
     }
 
-    private fun escapeUnicode(s: String): String
-    {
+    private fun escapeUnicode(s: String): String {
         val sb = StringBuilder()
+
         for (c in s) {
-            sb.append(if (c.code in 32..126) c else "\\u%04X".format(c.code))
+            sb.append(
+                if (c.code in 32..126) {
+                    c
+                } else {
+                    "\\u%04X".format(c.code)
+                }
+            )
         }
+
         return sb.toString()
     }
 
-    private fun printScripts(comp: ComponentDefinition?, out: FileWriter)
-    {
+    private fun printScripts(comp: ComponentDefinition?, out: FileWriter) {
         val fields = comp!!.javaClass.declaredFields
+
         for (field in fields) {
             field.isAccessible = true
+
             val value = field[comp] ?: continue
             val name = field.name
 
@@ -145,5 +228,4 @@ object EditorGenericTextPrinter {
             }
         }
     }
-
 }

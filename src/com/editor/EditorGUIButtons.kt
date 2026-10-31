@@ -37,10 +37,40 @@ object EditorGUIButtons {
     fun addText()   = EditorGUI.instance?.addComponent(752, 5) { it.baseX = 0; it.baseY = 0 }
     fun addLine()   = EditorGUI.instance?.addComponent(658, 39) { it.baseX = 0; it.baseY = 0 }
 
+    fun addif1Sprite() = EditorGUI.instance?.addComponent(63, 8)
+    fun addif1Model()  = EditorGUI.instance?.addComponent(74, 2) { it.baseX = 0; it.baseY = 0 }
+    fun addif1Layer()  = EditorGUI.instance?.addComponent(63, 10) { it.baseX = 0; it.baseY = 0; it.baseWidth = 50; it.baseHeight = 50 }
+    fun addif1Figure() = EditorGUI.instance?.addComponent(76, 8) { it.baseX = 0; it.baseY = 0 }
+    fun addif1Text()   = EditorGUI.instance?.addComponent(74, 14) { it.baseX = 0; it.baseY = 0 }
+
+    fun addToolTip()    = EditorGUI.instance?.addComponent(78, 32) { it.baseX = 0; it.baseY = 0 }
+    fun addInventory()  = EditorGUI.instance?.addComponent(367, 75) { it.baseX = 0; it.baseY = 0 }
+
     fun addNewInterface() {
+        val options = arrayOf("IF1", "IF3")
+
+        val selected = JOptionPane.showOptionDialog(
+            EditorGUI.instance,
+            "Select interface format:",
+            "New Interface",
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            "IF3"
+        )
+
+        if (selected == -1) return
+
+        addNewInterface(if (selected == 0) 1 else 3)
+    }
+
+    private fun addNewInterface(format: Int) {
         val newId = ComponentDefinition.getInterfaceDefinitionsSize()
+
         val comp = ComponentDefinition().apply {
             componentId = newId
+            version = if (format == 1) 1 else 3
             type = ComponentType.SPRITE
             optionBase = ""
             baseX = 0
@@ -50,11 +80,24 @@ object EditorGUIButtons {
             spriteId = 18
             parentId = -1
         }
-        Cache.store!!.indexes[3].putFile(comp.componentId, 0, comp.encodeIf3())
-        ComponentDefinition.componentDefinition = arrayOfNulls(ComponentDefinition.getInterfaceDefinitionsSize())
+
+        val data = when (format) {
+            1 -> comp.encodeIf1()
+            3 -> comp.encodeIf3()
+            else -> return
+        }
+
+        Cache.store!!.indexes[3].putFile(newId, 0, data)
+
+        ComponentDefinition.componentDefinition =
+            arrayOfNulls(ComponentDefinition.getInterfaceDefinitionsSize())
+
         EditorGUI.instance?.interfacesListModel?.addElement(newId)
         EditorGUI.instance?.interfacesList?.setSelectedValue(newId, true)
-        EditorGUI.instance?.interfacesList?.ensureIndexIsVisible(EditorGUI.instance?.interfacesListModel!!.size - 1)
+        EditorGUI.instance?.interfacesList?.ensureIndexIsVisible(
+            EditorGUI.instance?.interfacesListModel!!.size - 1
+        )
+
         EditorGUI.instance?.compontentRenderPanel?.interfaceId = newId
         EditorGUI.instance?.loadComponents(newId)
     }

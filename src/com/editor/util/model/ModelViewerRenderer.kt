@@ -1,7 +1,7 @@
 package com.editor.util.model
 
-import com.alex.loaders.mesh.Model
-import com.alex.loaders.mesh.ModelRenderer
+import com.alex.loaders.models.Model
+import com.alex.loaders.models.ModelRenderer
 import java.awt.Graphics
 
 /**

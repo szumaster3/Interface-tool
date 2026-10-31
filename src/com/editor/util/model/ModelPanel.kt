@@ -1,6 +1,6 @@
 package com.editor.util.model
 
-import com.alex.loaders.mesh.Model
+import com.alex.loaders.models.Model
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics

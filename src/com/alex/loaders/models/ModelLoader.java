@@ -1,4 +1,4 @@
-package com.alex.loaders.mesh;
+package com.alex.loaders.models;
 
 import com.alex.Cache;
 import com.alex.store.Index;

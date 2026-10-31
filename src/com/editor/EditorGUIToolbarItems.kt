@@ -1,7 +1,7 @@
 package com.editor
 
 import com.alex.Cache
-import com.alex.loaders.ItemDefinition
+import com.alex.loaders.items.ItemDefinition
 import com.alex.store.Store
 import com.editor.properties.PropertyValues
 import com.editor.EditorGUIButtons.openSpriteLibrary

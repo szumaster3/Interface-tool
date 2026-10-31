@@ -1,7 +1,7 @@
 package com.editor
 
 import com.alex.Cache
-import com.alex.loaders.ItemIcons
+import com.alex.loaders.items.ItemIcons
 import com.alex.loaders.interfaces.ComponentDefinition
 import com.alex.loaders.interfaces.ComponentType
 import com.alex.utils.Utils

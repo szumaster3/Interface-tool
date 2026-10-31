@@ -1,12 +1,12 @@
 package com.editor
 
-import com.alex.loaders.ItemIcons
+import com.alex.loaders.items.ItemIcons
 import com.alex.loaders.interfaces.ComponentDefinition
 import com.alex.loaders.interfaces.ComponentDefinition.Companion.getInterface
 import com.alex.loaders.interfaces.ComponentSprites
 import com.alex.loaders.interfaces.ComponentType
-import com.alex.loaders.mesh.ModelLoader
-import com.alex.loaders.mesh.ModelRenderer
+import com.alex.loaders.models.ModelLoader
+import com.alex.loaders.models.ModelRenderer
 import com.editor.util.sprites.SpriteLoader
 import com.alex.utils.Utils
 import com.editor.utils.*

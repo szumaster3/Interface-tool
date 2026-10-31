@@ -1,4 +1,4 @@
-package com.alex.loaders.mesh;
+package com.alex.loaders.models;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;

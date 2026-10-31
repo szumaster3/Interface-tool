@@ -201,8 +201,8 @@ class MultiCopy(parent: JFrame) : JDialog(parent, "Copy components", true) {
                             interfacesList.ensureIndexIsVisible(it)
                         }
 
-                        compontentRenderPanel?.interfaceId = targetId
-                        compontentRenderPanel?.repaint()
+                        compontentRenderPanel.interfaceId = targetId
+                        compontentRenderPanel.repaint()
                     }
 
                     JOptionPane.showMessageDialog(

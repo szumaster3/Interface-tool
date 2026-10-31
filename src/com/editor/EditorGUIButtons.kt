@@ -37,10 +37,40 @@ object EditorGUIButtons {
     fun addText()   = EditorGUI.instance?.addComponent(752, 5) { it.baseX = 0; it.baseY = 0 }
     fun addLine()   = EditorGUI.instance?.addComponent(658, 39) { it.baseX = 0; it.baseY = 0 }
 
+    fun addif1Sprite() = EditorGUI.instance?.addComponent(63, 8)
+    fun addif1Model()  = EditorGUI.instance?.addComponent(74, 2) { it.baseX = 0; it.baseY = 0 }
+    fun addif1Layer()  = EditorGUI.instance?.addComponent(63, 10) { it.baseX = 0; it.baseY = 0; it.baseWidth = 50; it.baseHeight = 50 }
+    fun addif1Figure() = EditorGUI.instance?.addComponent(76, 8) { it.baseX = 0; it.baseY = 0 }
+    fun addif1Text()   = EditorGUI.instance?.addComponent(74, 14) { it.baseX = 0; it.baseY = 0 }
+
+    fun addToolTip()    = EditorGUI.instance?.addComponent(78, 32) { it.baseX = 0; it.baseY = 0 }
+    fun addInventory()  = EditorGUI.instance?.addComponent(367, 75) { it.baseX = 0; it.baseY = 0 }
+
     fun addNewInterface() {
+        val options = arrayOf("IF1", "IF3")
+
+        val selected = JOptionPane.showOptionDialog(
+            EditorGUI.instance,
+            "Select interface format:",
+            "New Interface",
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            "IF3"
+        )
+
+        if (selected == -1) return
+
+        addNewInterface(if (selected == 0) 1 else 3)
+    }
+
+    private fun addNewInterface(format: Int) {
         val newId = ComponentDefinition.getInterfaceDefinitionsSize()
+
         val comp = ComponentDefinition().apply {
             componentId = newId
+            version = if (format == 1) 1 else 3
             type = ComponentType.SPRITE
             optionBase = ""
             baseX = 0
@@ -50,11 +80,24 @@ object EditorGUIButtons {
             spriteId = 18
             parentId = -1
         }
-        Cache.store!!.indexes[3].putFile(comp.componentId, 0, comp.encodeIf3())
-        ComponentDefinition.componentDefinition = arrayOfNulls(ComponentDefinition.getInterfaceDefinitionsSize())
+
+        val data = when (format) {
+            1 -> comp.encodeIf1()
+            3 -> comp.encodeIf3()
+            else -> return
+        }
+
+        Cache.store!!.indexes[3].putFile(newId, 0, data)
+
+        ComponentDefinition.componentDefinition =
+            arrayOfNulls(ComponentDefinition.getInterfaceDefinitionsSize())
+
         EditorGUI.instance?.interfacesListModel?.addElement(newId)
         EditorGUI.instance?.interfacesList?.setSelectedValue(newId, true)
-        EditorGUI.instance?.interfacesList?.ensureIndexIsVisible(EditorGUI.instance?.interfacesListModel!!.size - 1)
+        EditorGUI.instance?.interfacesList?.ensureIndexIsVisible(
+            EditorGUI.instance?.interfacesListModel!!.size - 1
+        )
+
         EditorGUI.instance?.compontentRenderPanel?.interfaceId = newId
         EditorGUI.instance?.loadComponents(newId)
     }
@@ -134,7 +177,7 @@ object EditorGUIButtons {
 
         for ((componentId, comp) in components.withIndex()) {
             if (comp != null) {
-                val bytes = comp.encode(comp.hasScripts)
+                val bytes = comp.encode()
                 Cache.store!!.indexes[3].putFile(interfaceId, componentId, bytes)
             }
         }
@@ -175,7 +218,7 @@ object EditorGUIButtons {
         val outStream = OutputStream()
         for (c in components) {
             if (c != null) {
-                val bytes = c.encode(c.hasScripts)
+                val bytes = c.encode()
                 outStream.writeBytes(bytes)
             }
         }
@@ -198,8 +241,9 @@ object EditorGUIButtons {
             return
         }
 
-        if (comp.interfaceId <= 0 || comp.componentId <= 0) {
-            JOptionPane.showMessageDialog(null, "Please select a valid component first.")
+        // component 0 is the base of an IF3 interface, in the old IF1 format it is a normal component
+        if (comp.interfaceId < 0 || comp.componentId < 0 || (!comp.isIf1 && comp.componentId == 0)) {
+            JOptionPane.showMessageDialog(null, "The base component (0) of an interface cannot be removed.")
             return
         }
 
@@ -306,7 +350,7 @@ object EditorGUIButtons {
                 comp.interfaceId,
                 comp.componentId,
                 2,
-                comp.encode(true),
+                comp.encode(),
                 null,
                 true,
                 true,
@@ -317,7 +361,7 @@ object EditorGUIButtons {
             store.indexes[3].putFile(
                 comp.interfaceId,
                 comp.componentId,
-                comp.encode(true)
+                comp.encode()
             )
         }
         EditorGUI.instance?.loadComponents(comp.interfaceId)
@@ -360,8 +404,8 @@ object EditorGUIButtons {
                 selectComponent(it)
             }
 
-            compontentRenderPanel?.interfaceId = targetInterfaceId
-            compontentRenderPanel?.repaint()
+            compontentRenderPanel.interfaceId = targetInterfaceId
+            compontentRenderPanel.repaint()
         }
     }
 
@@ -383,7 +427,7 @@ object EditorGUIButtons {
         Cache.store!!.indexes[3].putFile(
             targetInterfaceId,
             nextId,
-            newComp.encode(true)
+            newComp.encode()
         )
         hashMap[node.component.componentHash] = newComp.componentHash
         node.children.forEach {
@@ -464,7 +508,7 @@ object EditorGUIButtons {
             val titleLabel = JLabel("Interface Editor")
             titleLabel.alignmentX = Component.CENTER_ALIGNMENT
 
-            val authorLabel = JLabel("<html>Made by: Shnek<br>Discord: Cara Shnek#6969</html>")
+            val authorLabel = JLabel("<html>Made by: Shnek<br>Discord: Cara Shnek#6969<br>Edit by: Szu</html>")
             authorLabel.alignmentX = Component.CENTER_ALIGNMENT
 
             val refactorLabel = JLabel("<html>Major code refactoring & improvements by: Ceikry</html>")

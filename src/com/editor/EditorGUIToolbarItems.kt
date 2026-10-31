@@ -1,7 +1,8 @@
 package com.editor
 
+import com.alex.Cache
+import com.alex.loaders.ItemDefinition
 import com.alex.store.Store
-import com.editor.util.model.ModelViewerFrame
 import com.editor.properties.PropertyValues
 import com.editor.EditorGUIButtons.openSpriteLibrary
 import com.editor.utils.ComponentTemplates
@@ -9,6 +10,7 @@ import com.editor.utils.Consts
 import java.awt.Desktop
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.io.File
 import java.io.IOException
 import java.net.URL
 import javax.swing.*
@@ -76,6 +78,37 @@ object EditorGUIToolbarItems {
     }
     fun addLineItem() = JMenuItem("Add Line component").apply {
         addActionListener { EditorGUIButtons.addLine() }
+    }
+
+    fun addIf1LayerItem() = JMenuItem("Add Layer component (IF1)").apply {
+        addActionListener { EditorGUIButtons.addif1Layer() }
+    }
+    fun addIf1FigureItem() = JMenuItem("Add Figure component (IF1)").apply {
+        addActionListener { EditorGUIButtons.addif1Figure() }
+    }
+
+    fun addIf1SpriteItem() = JMenuItem("Add Sprite component (IF1)").apply {
+        addActionListener { EditorGUIButtons.addif1Sprite() }
+    }
+
+    fun addIf1ModelItem() = JMenuItem("Add Model component (IF1)").apply {
+        addActionListener { EditorGUIButtons.addif1Model() }
+    }
+
+    fun addIf1TextItem() = JMenuItem("Add Text component (IF1)").apply {
+        addActionListener { EditorGUIButtons.addif1Text() }
+    }
+
+    fun addIf1ModelListItem() = JMenuItem("Add Model list component (IF1)").apply {
+        addActionListener { EditorGUIButtons.addLine() }
+    }
+
+    fun addIf1InventoryItem() = JMenuItem("Add Inventory component (IF1)").apply {
+        addActionListener { EditorGUIButtons.addInventory() }
+    }
+
+    fun addIf1TooltipItem() = JMenuItem("Add Tooltip component (IF1)").apply {
+        addActionListener { EditorGUIButtons.addToolTip() }
     }
 
     fun template1Item(): JMenu {
@@ -258,9 +291,23 @@ object EditorGUIToolbarItems {
         addActionListener { PropertyValues.backupCache() }
     }
 
-    fun tool2Item() = JMenuItem("Tool 2").apply {
-        isEnabled = false
-        addActionListener { println("Tool 2 clicked") }
+    fun tool2Item() = JMenuItem("Print Item definitions").apply {
+        isEnabled = Cache.store != null
+
+        addActionListener {
+            val outputFile = "dumps/item_definitions.txt"
+
+            Cache.store?.let { cache ->
+                ItemDefinition.print(cache, outputFile)
+
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Item definitions have been successfully saved!\n\nLocation: ${File(outputFile).absolutePath}",
+                    "Export completed",
+                    JOptionPane.INFORMATION_MESSAGE
+                )
+            }
+        }
     }
 
     fun minimizeItem() = JMenuItem("Minimize").apply {
@@ -285,8 +332,8 @@ object EditorGUIToolbarItems {
                 if (result == JOptionPane.YES_OPTION) {
                     try {
                         val url = java.net.URI("https://github.com/szumaster3/Interface-tool/commits/master/")
-                        if (java.awt.Desktop.isDesktopSupported()) {
-                            java.awt.Desktop.getDesktop().browse(url)
+                        if (Desktop.isDesktopSupported()) {
+                            Desktop.getDesktop().browse(url)
                         }
                     } catch (ex: Exception) {
                         ex.printStackTrace()

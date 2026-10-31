@@ -124,42 +124,60 @@ class ComponentDefinition {
     var repeatCount: ByteArray? = null
     var modifier: ByteArray? = null
 
-    private var buttonType = 0
-    private var cs1ComparisonOpcodes: IntArray? = null
-    private var cs1ComparisonOperands: IntArray? = null
-    private var cs1Scripts: Array<IntArray>? = null
-
-    private var activeText: String? = null
-    private var activeColor = 0
-    private var overColor = 0
-    private var unknownColor = 0
-
-    private var unknownProp_11 = 0
     private var objCounts: IntArray? = null
     private var objTypes: IntArray? = null
 
+    // ---- Fields of the old IF1 format (they do not exist in IF3) ----
+
+    /** True for components stored in the old IF1 format. */
+    val isIf1: Boolean get() = version.toInt() == 1
+
+    /** 0 none, 1 ok, 2 target, 3 close, 4 toggle, 5 select, 6 continue */
+    var buttonType = 0
+
+    /** Conditions (opcode, operand) which decide when the CS1 scripts below run. */
+    var cs1ComparisonOpcodes: IntArray? = null
+    var cs1ComparisonOperands: IntArray? = null
+
+    /** CS1 scripts, every script is a list of numbers. */
+    var cs1Scripts: Array<IntArray>? = null
+
+    /** Text and colours of the active (selected) and the hovered state. */
+    var activeText: String? = null
+    var activeColor = 0
+    var overColor = 0
+    var unknownColor = 0
+
+    var unknownProp_11 = 0
+
+    /** Option of the button types 1, 4, 5 and 6, the suffix and the target mask of the button type 2. */
+    var option: String = ""
+    var optionSuffix: String = ""
+    var if1Mask = 0
+
+    var activeSpriteId = -1
+    var activeModelType = 0
+    var activeModelId = -1
+    var activeModelAnimId = -1
+
+    /** Inventory (types 2 and 7): the margin between the slots, the options and the 4 flag bytes. */
     var invMarginX = 0
     var invMarginY = 0
-    private var invOffsetX: IntArray? = null
-    private var invOffsetY: IntArray? = null
-    private var invSprite: IntArray? = null
-    private var invOptions: Array<String?>? = null
+    var invOptions: Array<String?>? = null
+    var invFlagBytes = IntArray(4)
 
-    private var activeSpriteId = -1
-    private var activeModelType = 0
-    private var activeModelId = -1
-    private var activeModelAnimId = -1
+    /** Inventory (type 2): 20 slots with a placeholder sprite which is shown when the slot is empty. */
+    var invSlotPresent = BooleanArray(20)
+    var invOffsetX: IntArray? = null
+    var invOffsetY: IntArray? = null
+    var invSprite: IntArray? = null
 
-    private var option: String = ""
-    private var if1Type1A = 0
-    private var if1Type1B = 0
-    private var invFlagBytes = IntArray(4)
-    private var invSlotPresent = BooleanArray(20)
-    private var if1Mask = 0
-    private var if1Type7HasOptions = 0
-    private var optionSuffix: String = ""
+    /** Values of the types 1 and 7 which the client reads but does not use. */
+    var if1Type1A = 0
+    var if1Type1B = 0
+    var if1Type7HasOptions = 0
 
-    fun encode(hasScripts: Boolean): ByteArray = if (version.toInt() == 1) encodeIf1() else encodeIf3()
+    fun encode(): ByteArray = if (version.toInt() == 1) encodeIf1() else encodeIf3()
 
     fun encodeIf3(): ByteArray {
         val out = OutputStream()
@@ -345,7 +363,7 @@ class ComponentDefinition {
         return bytes
     }
 
-    private fun encodeIf1(): ByteArray {
+    fun encodeIf1(): ByteArray {
         val out = OutputStream()
         out.writeByte(type)
         out.writeByte(buttonType)
@@ -1087,7 +1105,7 @@ class ComponentDefinition {
         }
 
         fun copy(source: ComponentDefinition): ComponentDefinition {
-            val bytes = source.encode(true)
+            val bytes = source.encode()
 
             return ComponentDefinition().apply {
                 decode(

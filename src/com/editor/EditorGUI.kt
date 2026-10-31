@@ -1,6 +1,7 @@
 package com.editor
 
 import com.alex.Cache
+import com.alex.loaders.ItemIcons
 import com.alex.loaders.interfaces.ComponentDefinition
 import com.alex.loaders.interfaces.ComponentType
 import com.alex.utils.Utils
@@ -9,10 +10,14 @@ import com.editor.properties.PropertyValues.loadValues
 import com.editor.properties.PropertyValues.setCachePath
 import com.editor.utils.Consts
 import com.editor.utils.InterfaceUtils
+import com.editor.utils.If1Text
 import com.editor.utils.InterfaceUtils.iconButton
+import com.editor.utils.PlaceholderTextField
 import com.editor.utils.SelectionModel
 import com.editor.utils.SelectionSource
 import java.awt.*
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
@@ -39,6 +44,30 @@ class EditorGUI : JFrame()
     private val propertyPanel       = JPanel()
     private val scriptsList         = listOf("Load", "MouseHover", "MouseLeave", "OptionClick", "UseWith", "Use", "VarpTransmit", "InvTransmit", "StatTransmit", "Timer", "MouseRepeat", "ClickRepeat", "Drag", "Release", "Hold", "DragStart", "DragRelease", "Scroll", "VarcTransmit", "VarcStrTransmit", "VarpTriggers", "InventoryTriggers", "StatTriggers", "VarcTriggers", "VarcStrTriggers")
     private val scriptsPanel        = JPanel().apply{layout = BoxLayout(this, BoxLayout.Y_AXIS)}
+
+    // Fields which only exist in the old IF1 format, and the panels which are only valid for one format
+    private val if1Fields = listOf(
+        "ButtonType", "ButtonOption", "OptionSuffix", "TargetMask", "UnknownProp11",
+        "ActiveText", "ActiveColor", "OverColor", "UnknownColor",
+        "ActiveSpriteID", "ActiveModelID", "ActiveAnimID", "ModelListA", "ModelListB"
+    )
+    private val inventoryFields = listOf("InvMarginX", "InvMarginY", "InvHasOptions") +
+            (1..4).map { "InvFlag $it" } + (1..5).map { "InvOption $it" } + "InvSlots"
+    private val cs1Fields = listOf("CS1 Comparisons", "CS1 Scripts")
+
+    /** Fields of the IF3 format which are not stored in IF1 components. */
+    private val if3OnlyFields = setOf(
+        "Name", "WidthMode", "HeightMode", "XMode", "YMode", "BorderThickness", "Angle2D", "HFlip", "VFlip",
+        "Tiling", "HasAlpha", "ShadowColor", "ModelOriginX", "ModelOriginY", "ZAngle", "Orthogonal",
+        "ModelObjectWidth", "ModelObjectHeight", "UnknownProp3", "UnknownProp4", "UnknownProp5", "ScrollWidth",
+        "NoClickThrough", "DragDeadzone", "DragDeadtime", "DragRenderBehavior", "LineWidth", "UnknownProp8"
+    )
+
+    private var if1Section: JPanel? = null
+    private var inventorySection: JPanel? = null
+    private var ifThreeOnlySections: List<JPanel> = emptyList()
+    private var ifThreeScriptsSection: JPanel? = null
+    private var cs1ScriptsSection: JPanel? = null
 
     private var orderedComponents: List<ComponentDefinition> = emptyList()
 
@@ -89,7 +118,8 @@ class EditorGUI : JFrame()
     {
         title = "Interface Editor v${Consts.APP_VERSION}"
         defaultCloseOperation = EXIT_ON_CLOSE
-        setSize(Consts.EDITOR_WIDTH, Consts.EDITOR_HEIGHT)
+        minimumSize = Dimension(Consts.EDITOR_WIDTH, Consts.EDITOR_HEIGHT)
+        size = Dimension(Consts.EDITOR_WIDTH, Consts.EDITOR_HEIGHT)
         layout = BorderLayout()
         jMenuBar = EditorGUIToolbar()
 
@@ -98,6 +128,27 @@ class EditorGUI : JFrame()
         loadInterfaces()
         setupSelection()
         setupChange()
+    }
+
+    private fun updateFormatSections(if1: Boolean, type: Int = ComponentType.SPRITE)
+    {
+        if1Section?.isVisible = if1
+
+        inventorySection?.isVisible = if1 &&
+                (type == ComponentType.INVENTORY || type == ComponentType.INVENTORY_TEXT)
+
+        ifThreeOnlySections.forEach {
+            it.isVisible = !if1
+        }
+
+        ifThreeScriptsSection?.isVisible = !if1
+        cs1ScriptsSection?.isVisible = if1
+
+        propertyPanel.revalidate()
+        propertyPanel.repaint()
+
+        scriptsPanel.revalidate()
+        scriptsPanel.repaint()
     }
 
     private fun setupSelection()
@@ -162,6 +213,8 @@ class EditorGUI : JFrame()
 
     fun loadComponents(interfaceId: Int)
     {
+        // a selected component of the previous interface (or a removed one) must not stay selected
+        clearSelection()
         EditorInterfaceDraw.prepareInterface(interfaceId)
         EditorInterfaceDraw.viewMode = EditorInterfaceDraw.ViewMode.NONE
         EditorInterfaceDraw.selectedType = null
@@ -330,7 +383,7 @@ class EditorGUI : JFrame()
         bottomPanel.add(sectionsScroll, BorderLayout.CENTER)
 
         initScriptsPanel()
-
+        updateFormatSections(if1 = false)
         val scriptsScroll = JScrollPane(scriptsPanel).apply {
             verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
             horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
@@ -404,10 +457,31 @@ class EditorGUI : JFrame()
         showPanel.border = BorderFactory.createLoweredBevelBorder()
         optionsPanel.add(showPanel)
 
+        // Preview of the items in the inventory components
+        val itemIdsField = PlaceholderTextField("Item ids, e.g. 4151, 1-28")
+        fun applyItemIds() {
+            EditorInterfaceDraw.previewItems = ItemIcons.parseIds(itemIdsField.text)
+            compontentRenderPanel.repaint()
+        }
+        itemIdsField.addActionListener { applyItemIds() }
+        itemIdsField.addFocusListener(object : FocusAdapter() {
+            override fun focusLost(e: FocusEvent?) = applyItemIds()
+        })
+        val showItemsCB = JCheckBox("Items", EditorInterfaceDraw.showItems).apply {
+            toolTipText = "Fill the inventories with preview items"
+            addActionListener { EditorInterfaceDraw.showItems = isSelected; compontentRenderPanel.repaint() }
+        }
+        val itemsPanel = JPanel(BorderLayout(2, 0)).apply {
+            border = BorderFactory.createLoweredBevelBorder()
+            add(showItemsCB, BorderLayout.WEST)
+            add(itemIdsField, BorderLayout.CENTER)
+        }
+        optionsPanel.add(itemsPanel)
+
         val viewModeComboBox = JComboBox(arrayOf("Default", "Type")).apply {
             selectedIndex = 0
         }
-        val typeFilterComboBox = JComboBox(arrayOf("Layer", "Sprite", "Figure", "Model", "Text", "Line")).apply {
+        val typeFilterComboBox = JComboBox(ComponentType.names.values.map { it.replaceFirstChar { c -> c.uppercase() } }.toTypedArray()).apply {
             selectedIndex = 0
             isEnabled = false
         }
@@ -459,15 +533,8 @@ class EditorGUI : JFrame()
 
         typeFilterComboBox.addActionListener {
             if (!typeFilterComboBox.isEnabled) return@addActionListener
-            EditorInterfaceDraw.selectedType = when (typeFilterComboBox.selectedItem as String) {
-                "Layer"  -> ComponentType.LAYER
-                "Sprite" -> ComponentType.SPRITE
-                "Figure" -> ComponentType.FIGURE
-                "Model"  -> ComponentType.MODEL
-                "Text"   -> ComponentType.TEXT
-                "Line"   -> ComponentType.LINE
-                else -> null
-            }
+            EditorInterfaceDraw.selectedType =
+                ComponentType.fromName((typeFilterComboBox.selectedItem as String).lowercase()).takeIf { it >= 0 }
             refreshTreeAndList()
             compontentRenderPanel.repaint()
         }
@@ -550,9 +617,7 @@ class EditorGUI : JFrame()
 
         for (i in 0..index3.lastArchiveId)
         {
-            val data = index3.getFile(i, 0) ?: continue
-            val version = data[0].toInt() and 0xFF
-            if (version == 255) {
+            if (index3.archiveExists(i)) {
                 interfacesListModel.addElement(i)
             }
         }
@@ -591,6 +656,15 @@ class EditorGUI : JFrame()
             width = 200
         )
         addSection(settingsSection)
+        ifThreeOnlySections = listOf(optionSection, settingsSection)
+
+        val if1 = createSection("IF1 properties", if1Fields, width = 200, labelWidth = 110)
+        addSection(if1)
+        if1Section = if1
+
+        val inventory = createSection("Inventory", inventoryFields, width = 230, labelWidth = 110)
+        addSection(inventory)
+        inventorySection = inventory
     }
 
 
@@ -606,6 +680,16 @@ class EditorGUI : JFrame()
         )
 
         scriptsPanel.add(scriptSection)
+        ifThreeScriptsSection = scriptSection
+
+        val cs1Section = createSection(null,
+            cs1Fields,
+            fieldHeight = 24,
+            labelWidth = 110,
+            height = 96
+        )
+        scriptsPanel.add(cs1Section)
+        cs1ScriptsSection = cs1Section
     }
 
     private fun updatePropertyFields(comp: ComponentDefinition)
@@ -627,13 +711,13 @@ class EditorGUI : JFrame()
         "ShadowColor"     to listOf(ComponentType.SPRITE),
         "Transparency"    to listOf(ComponentType.FIGURE, ComponentType.SPRITE),
 
-        "Text"            to listOf(ComponentType.TEXT),
-        "FontID"          to listOf(ComponentType.TEXT),
-        "XAlign"          to listOf(ComponentType.TEXT),
-        "YAlign"          to listOf(ComponentType.TEXT),
-        "TextLineHeight"  to listOf(ComponentType.TEXT),
-        "Shadow"          to listOf(ComponentType.TEXT),
-        "Color"           to listOf(ComponentType.TEXT, ComponentType.FIGURE, ComponentType.LINE),
+        "Text"            to listOf(ComponentType.TEXT, ComponentType.TOOLTIP),
+        "FontID"          to listOf(ComponentType.TEXT, ComponentType.MODEL_LIST, ComponentType.INVENTORY_TEXT),
+        "XAlign"          to listOf(ComponentType.TEXT, ComponentType.MODEL_LIST, ComponentType.INVENTORY_TEXT),
+        "YAlign"          to listOf(ComponentType.TEXT, ComponentType.MODEL_LIST),
+        "TextLineHeight"  to listOf(ComponentType.TEXT, ComponentType.MODEL_LIST),
+        "Shadow"          to listOf(ComponentType.TEXT, ComponentType.MODEL_LIST, ComponentType.INVENTORY_TEXT),
+        "Color"           to listOf(ComponentType.TEXT, ComponentType.FIGURE, ComponentType.LINE, ComponentType.MODEL_LIST, ComponentType.INVENTORY_TEXT),
 
         "ModelID"               to listOf(ComponentType.MODEL),
         "AnimID"                to listOf(ComponentType.MODEL),
@@ -657,7 +741,20 @@ class EditorGUI : JFrame()
         "NoClickThrough"  to listOf(ComponentType.LAYER),
 
         "LineWidth"       to listOf(ComponentType.LINE),
-        "UnknownProp8"    to listOf(ComponentType.LINE)
+        "UnknownProp8"    to listOf(ComponentType.LINE),
+
+        // IF1 only
+        "ActiveText"      to listOf(ComponentType.TEXT),
+        "ActiveColor"     to listOf(ComponentType.TEXT, ComponentType.FIGURE),
+        "OverColor"       to listOf(ComponentType.TEXT, ComponentType.FIGURE),
+        "UnknownColor"    to listOf(ComponentType.TEXT, ComponentType.FIGURE),
+        "ActiveSpriteID"  to listOf(ComponentType.SPRITE),
+        "ActiveModelID"   to listOf(ComponentType.MODEL),
+        "ActiveAnimID"    to listOf(ComponentType.MODEL),
+        "ModelListA"      to listOf(ComponentType.MODEL_LIST),
+        "ModelListB"      to listOf(ComponentType.MODEL_LIST),
+        "InvSlots"        to listOf(ComponentType.INVENTORY),
+        "InvHasOptions"   to listOf(ComponentType.INVENTORY_TEXT)
     )
 
     fun buildPropertyPanel(comp: ComponentDefinition)
@@ -666,16 +763,10 @@ class EditorGUI : JFrame()
         set("Name", c.name ?: "")
         set("Hash", c.componentHash)
         set("Type", Utils.getComponentFromInt(c.type))
-        val typeInt = c.type
-        setComponentType(typeInt, componentTypes)
+        updateFieldVisibility(c)
 
-        when(typeInt)
-        {
-            ComponentType.SPRITE -> set("Transparency", c.transparency)
-            ComponentType.FIGURE -> {set("Color", c.color);set("Transparency", c.transparency)}
-            ComponentType.TEXT   -> set("Color", c.color)
-            ComponentType.LINE   -> set("Color", c.color)
-        }
+        set("Color",            c.color)
+        set("Transparency",     c.transparency)
         set("ContentType",      c.contentType)
         set("ParentID",         c.parentId)
         set("X",                c.baseX)
@@ -765,6 +856,30 @@ class EditorGUI : JFrame()
 
         set("Fill",             c.filled)
 
+        // IF1
+        set("ButtonType",       c.buttonType)
+        set("ButtonOption",     c.option)
+        set("OptionSuffix",     c.optionSuffix)
+        set("TargetMask",       c.if1Mask)
+        set("UnknownProp11",    c.unknownProp_11)
+        set("ActiveText",       c.activeText ?: "")
+        set("ActiveColor",      c.activeColor)
+        set("OverColor",        c.overColor)
+        set("UnknownColor",     c.unknownColor)
+        set("ActiveSpriteID",   c.activeSpriteId)
+        set("ActiveModelID",    c.activeModelId)
+        set("ActiveAnimID",     c.activeModelAnimId)
+        set("ModelListA",       c.if1Type1A)
+        set("ModelListB",       c.if1Type1B)
+        set("InvMarginX",       c.invMarginX)
+        set("InvMarginY",       c.invMarginY)
+        set("InvHasOptions",    c.if1Type7HasOptions == 1)
+        for (i in 1..4) set("InvFlag $i", c.invFlagBytes[i - 1] == 1)
+        for (i in 1..5) set("InvOption $i", c.invOptions?.getOrNull(i - 1) ?: "")
+        set("InvSlots",         If1Text.formatSlots(c.invSlotPresent, c.invOffsetX, c.invOffsetY, c.invSprite))
+        set("CS1 Comparisons",  If1Text.formatComparisons(c.cs1ComparisonOpcodes, c.cs1ComparisonOperands))
+        set("CS1 Scripts",      If1Text.formatScripts(c.cs1Scripts))
+
         set("Load",             c.onLoadScript?.joinToString(";"))
         set("MouseHover",       c.onMouseHoverScript?.joinToString(";"))
         set("MouseLeave",       c.onMouseLeaveScript?.joinToString(";"))
@@ -823,6 +938,8 @@ class EditorGUI : JFrame()
             }
         }
 
+        val optionTexts = Array(10) { "" }
+
         for (name in fieldMap.keys)
         {
 
@@ -831,10 +948,7 @@ class EditorGUI : JFrame()
             if (name.startsWith("Option "))
             {
                 name.removePrefix("Option ").toIntOrNull()?.let { option ->
-                    if (option in 1..10)
-                    {
-                        InterfaceUtils.updateRightClickOption(c, option - 1, text)
-                    }
+                    if (option in 1..10) optionTexts[option - 1] = text
                 }
                 continue
             }
@@ -956,6 +1070,13 @@ class EditorGUI : JFrame()
 
         c.settings.settings = newSettings
         c.optionMask = newOptionMask
+        if (!c.isIf1) {
+            InterfaceUtils.setRightClickOptions(c, optionTexts.toList())
+        }
+
+        if (c.isIf1) {
+            saveIf1(c, ::getText)
+        }
 
         // Scripts
         c.onLoadScript       = Utils.getScriptArray(getText("Load"))
@@ -987,7 +1108,48 @@ class EditorGUI : JFrame()
         c.varcstrTriggers    = Utils.getConfigArray(getText("VarcStrTriggers"))
     }
 
-    private fun createSection(title: String? = null, fields: List<String>, componentTypes: Map<String, Int>? = null, width: Int? = null, labelWidth: Int? = null, height: Int? = null, fieldHeight: Int? = null): JPanel
+    /** Writes the fields which exist only in IF1 components. */
+    private fun saveIf1(c: ComponentDefinition, getText: (String) -> String) {
+        fun int(name: String, default: Int = 0) = getText(name).toIntOrNull() ?: default
+
+        c.buttonType = int("ButtonType")
+        c.option = getText("ButtonOption")
+        c.optionSuffix = getText("OptionSuffix")
+        c.if1Mask = int("TargetMask")
+        c.unknownProp_11 = int("UnknownProp11", -1)
+        c.activeText = getText("ActiveText")
+        c.activeColor = int("ActiveColor")
+        c.overColor = int("OverColor")
+        c.unknownColor = int("UnknownColor")
+        c.activeSpriteId = int("ActiveSpriteID", -1)
+        c.activeModelId = int("ActiveModelID", -1)
+        c.activeModelAnimId = int("ActiveAnimID", -1)
+        c.if1Type1A = int("ModelListA")
+        c.if1Type1B = int("ModelListB")
+        c.invMarginX = int("InvMarginX")
+        c.invMarginY = int("InvMarginY")
+        c.if1Type7HasOptions = if (getText("InvHasOptions").toBoolean()) 1 else 0
+        for (i in 1..4) c.invFlagBytes[i - 1] = if (getText("InvFlag $i").toBoolean()) 1 else 0
+        c.invOptions = Array(5) { getText("InvOption ${it + 1}").ifEmpty { null } }
+
+        c.invSlotPresent = BooleanArray(20)
+        c.invOffsetX = IntArray(20)
+        c.invOffsetY = IntArray(20)
+        c.invSprite = IntArray(20) { -1 }
+        for (slot in If1Text.parseSlots(getText("InvSlots"))) {
+            c.invSlotPresent[slot.index] = true
+            c.invOffsetX!![slot.index] = slot.x
+            c.invOffsetY!![slot.index] = slot.y
+            c.invSprite!![slot.index] = slot.sprite
+        }
+
+        val comparisons = If1Text.parseComparisons(getText("CS1 Comparisons"))
+        c.cs1ComparisonOpcodes = comparisons?.first
+        c.cs1ComparisonOperands = comparisons?.second
+        c.cs1Scripts = If1Text.parseScripts(getText("CS1 Scripts"))
+    }
+
+    private fun createSection(title: String? = null, fields: List<String>, width: Int? = null, labelWidth: Int? = null, height: Int? = null, fieldHeight: Int? = null): JPanel
     {
         val sectionWidth = width ?: Consts.SECTION_WIDTH
         val sectionHeight = height ?: Consts.SECTION_HEIGHT
@@ -1118,21 +1280,13 @@ class EditorGUI : JFrame()
             "Hidden", "Fill", "HasAlpha", "Orthogonal", "Shadow", "HFlip", "VFlip", "Tiling", "NoClickThrough",
             "UnknownProp5", "UnknownProp8", "RightClickAllowed", "CanBeUsedOn", "DragRenderBehavior",
             "HasUnlockedSlots", "UseOnGround", "UseOnNpc", "UseOnObject", "UseOnPlayer", "UseOnSelf",
-            "UseOnIComp", "UnknownBit21", "UnknownBit31"
-        ).apply { addAll((1..10).map { "Slot $it" }) }
+            "UseOnIComp", "UnknownBit21", "UnknownBit31", "InvHasOptions"
+        ).apply {
+            addAll((1..10).map { "Slot $it" })
+            addAll((1..4).map { "InvFlag $it" })
+        }
 
-        val enumFields = mapOf(
-            "Type" to arrayOf(
-                Utils.getComponentFromInt(ComponentType.LAYER),
-                Utils.getComponentFromInt(ComponentType.MODEL_LIST),
-                Utils.getComponentFromInt(ComponentType.INVENTORY),
-                Utils.getComponentFromInt(ComponentType.FIGURE),
-                Utils.getComponentFromInt(ComponentType.TEXT),
-                Utils.getComponentFromInt(ComponentType.SPRITE),
-                Utils.getComponentFromInt(ComponentType.MODEL),
-                Utils.getComponentFromInt(ComponentType.LINE)
-            )
-        )
+        val enumFields = mapOf("Type" to ComponentType.names.values.toTypedArray())
 
         fields.forEachIndexed { row, name ->
             gbc.gridy = row
@@ -1157,12 +1311,14 @@ class EditorGUI : JFrame()
                 maximumSize = Dimension(labelWidth, fieldHeight)
             }
 
-            val textFields = setOf(
-                "Name", "ParentID", "Hash",
-                "Text", "Color",
-                "ModelID", "AnimID", "SpriteID",
-                "OptionBase", "OptionCircumfix"
-            ) + scriptsList + (1..10).map { "Option $it" }
+            val plainTextFields = setOf(
+                "Text", "OptionBase", "OptionCircumfix", "ButtonOption", "OptionSuffix", "ActiveText", "InvSlots"
+            ) + scriptsList + cs1Fields + (1..10).map { "Option $it" } + (1..5).map { "InvOption $it" }
+
+            val textFields = plainTextFields + setOf(
+                "Name", "ParentID", "Hash", "Color", "ModelID", "AnimID", "SpriteID",
+                "ActiveColor", "OverColor", "UnknownColor", "ActiveSpriteID", "ActiveModelID", "ActiveAnimID"
+            )
 
             val step1Fields = listOf(
                 "XMode", "YMode", "XAlign", "YAlign", "WidthMode", "HeightMode", "TextLineHeight"
@@ -1170,24 +1326,12 @@ class EditorGUI : JFrame()
 
             val fieldComponent: JComponent = when {
                 name in booleanFields -> JComboBox(arrayOf("true", "false"))
-                name in enumFields -> {
-                    val combo = JComboBox(enumFields[name])
-                    if (name == "Type" && componentTypes != null) {
-                        combo.addActionListener {
-                            val selectedTypeName = combo.selectedItem?.toString() ?: return@addActionListener
-                            val selectedType = Utils.getComponentFromString(selectedTypeName)
-                            val intComponentTypes = mutableMapOf<String, List<Int>>()
-                            for ((key, value) in componentTypes) {
-                                intComponentTypes[key] = listOf(value)
-                            }
-                            setComponentType(selectedType, intComponentTypes)
-                        }
-                    }
-                    if (name == "Type") combo.isEnabled = false
-                    combo
+                name in enumFields -> JComboBox(enumFields[name]).apply {
+                    // the type of an existing component cannot be changed
+                    if (name == "Type") isEnabled = false
                 }
                 name in textFields -> JTextField().apply {
-                    if (name != "Text" && name !in scriptsList && name !in (1..10).map { "Option $it" }) horizontalAlignment = JTextField.RIGHT
+                    if (name !in plainTextFields) horizontalAlignment = JTextField.RIGHT
                     font = jSpinnerFont
                 }
                 step1Fields.any { name.contains(it) } -> InterfaceUtils.createSpinner(step = 1, font = jSpinnerFont)
@@ -1275,16 +1419,32 @@ class EditorGUI : JFrame()
         }
     }
 
-    private fun setComponentType(type: Int, componentTypes: Map<String, List<Int>>) {
-        fieldMap.forEach { (name, component) ->
-            val allowedTypes = componentTypes[name] ?: listOf()
-            val isVisible = allowedTypes.isEmpty() || allowedTypes.contains(type)
+    /** Shows only the fields and sections which are valid for the format and the type of the component. */
+    private fun updateFieldVisibility(c: ComponentDefinition) {
+        val if1 = c.isIf1
+        val type = c.type
 
+        fieldMap.forEach { (name, component) ->
+            val allowedTypes = componentTypes[name]
+            var visible = allowedTypes == null || type in allowedTypes
+            when {
+                if1 && name in if3OnlyFields -> visible = false
+                // in IF1 every component has a transparency
+                if1 && name == "Transparency" -> visible = true
+            }
             val rowPanel = component.parent?.parent as? JPanel
-            rowPanel?.isVisible = isVisible
-            rowPanel?.revalidate()
-            rowPanel?.repaint()
+            rowPanel?.isVisible = visible
         }
+
+        updateFormatSections(if1, type)
+
+        // inventory fields which depend on the type
+        propertyPanel.revalidate()
+        propertyPanel.repaint()
+        scriptsPanel.revalidate()
+        scriptsPanel.repaint()
+        // the scroll pane is a validate root: its parent has to be laid out again to use the new height
+        SwingUtilities.getAncestorOfClass(JScrollPane::class.java, scriptsPanel)?.parent?.revalidate()
     }
 
     private fun addSection(section: JPanel)
@@ -1295,7 +1455,7 @@ class EditorGUI : JFrame()
 
     fun addComponent(templateInterface: Int, templateComponentId: Int, setup: (ComponentDefinition) -> Unit = {})
     {
-        val parentId = compontentRenderPanel.interfaceId ?: return
+        val parentId = compontentRenderPanel.interfaceId
         val index = Cache.store?.indexes?.get(3) ?: return
         val newId = index.getLastFileId(parentId) + 1
         val templateComp = ComponentDefinition.getInterfaceComponent(templateInterface, templateComponentId) ?: return
@@ -1303,7 +1463,7 @@ class EditorGUI : JFrame()
         setup(templateComp)
         templateComp.componentHash = newId + (parentId shl 16)
         buildPropertyPanel(templateComp)
-        index.putFile(parentId, newId, templateComp.encode(true))
+        index.putFile(parentId, newId, templateComp.encode())
         ComponentDefinition.getInterface(parentId, true)
         loadComponents(parentId)
         selectComponent(templateComp)

@@ -115,6 +115,11 @@ public final class Model {
                 throw new IllegalStateException("face index out of range");
             }
         }
+        finishBounds();
+        applyLighting(DEFAULT_AMBIENT, DEFAULT_CONTRAST);
+    }
+
+    private void finishBounds() {
         if (vertices > 0) {
             minX = minY = minZ = Integer.MAX_VALUE;
             maxX = maxY = maxZ = Integer.MIN_VALUE;
@@ -128,7 +133,61 @@ public final class Model {
             }
             height = Math.max(0, -minY);
         }
-        applyLighting();
+    }
+
+    /** Lighting of interface models and item icons (the client adds more for items). */
+    public static final int DEFAULT_AMBIENT = 64;
+    public static final int DEFAULT_CONTRAST = 768;
+
+    /** @return a copy which can be recoloured, resized and lit differently without changing this model. */
+    public Model copy() {
+        Model m = new Model();
+        m.modelId = modelId;
+        m.vertices = vertices;
+        m.triangleCount = triangleCount;
+        m.texturedFaces = texturedFaces;
+        m.verticesXCoordinate = verticesXCoordinate.clone();
+        m.verticesYCoordinate = verticesYCoordinate.clone();
+        m.verticesZCoordinate = verticesZCoordinate.clone();
+        m.faceIndicesA = faceIndicesA;
+        m.faceIndicesB = faceIndicesB;
+        m.faceIndicesC = faceIndicesC;
+        m.triangleColors = triangleColors.clone();
+        m.triangleInfo = triangleInfo;
+        m.faceAlpha = faceAlpha;
+        m.trianglePriorities = trianglePriorities;
+        m.modelPriority = modelPriority;
+        m.vertexWeights = vertexWeights;
+        m.triangleSkin = triangleSkin;
+        m.faceMaterial = faceMaterial;
+        m.isNewHeader = isNewHeader;
+        m.finishBounds();
+        m.applyLighting(DEFAULT_AMBIENT, DEFAULT_CONTRAST);
+        return m;
+    }
+
+    /** Replaces the faces with the HSL colour {@code from} by {@code to} (item recolouring). */
+    public void recolor(int from, int to) {
+        for (int i = 0; i < triangleCount; i++) {
+            if ((triangleColors[i] & 0xFFFF) == (from & 0xFFFF)) {
+                triangleColors[i] = (short) to;
+            }
+        }
+    }
+
+    /** Scales the model, the sizes are in 1/128 (128 = unchanged). */
+    public void resize(int x, int y, int z) {
+        for (int i = 0; i < vertices; i++) {
+            verticesXCoordinate[i] = verticesXCoordinate[i] * x / 128;
+            verticesYCoordinate[i] = verticesYCoordinate[i] * y / 128;
+            verticesZCoordinate[i] = verticesZCoordinate[i] * z / 128;
+        }
+        finishBounds();
+    }
+
+    /** Lights the model again, with the values the client uses for item icons for example. */
+    public void relight(int ambient, int contrast) {
+        applyLighting(ambient, contrast);
     }
 
     /**
@@ -146,12 +205,13 @@ public final class Model {
     }
 
     /**
-     * Port of the client's model lighting (ambient 64, contrast 768, light direction -50/-10/-50).
+     * Port of the client's model lighting, the light direction is -50/-10/-50. Interface models use an ambient
+     * of 64 and a contrast of 768.
      */
-    private void applyLighting() {
-        final int lx = -50, ly = -10, lz = -50, ambient = 64;
+    private void applyLighting(int ambient, int contrast) {
+        final int lx = -50, ly = -10, lz = -50;
         int specular = (int) Math.sqrt(5100.0D);
-        specular = specular * 768 >> 8;
+        specular = specular * contrast >> 8;
 
         lightA = new int[triangleCount];
         lightB = new int[triangleCount];

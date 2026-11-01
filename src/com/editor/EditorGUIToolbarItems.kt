@@ -1,7 +1,7 @@
 package com.editor
 
 import com.alex.Cache
-import com.alex.loaders.ItemDefinition
+import com.alex.loaders.items.ItemDefinition
 import com.alex.store.Store
 import com.editor.properties.PropertyValues
 import com.editor.EditorGUIButtons.openSpriteLibrary
@@ -100,7 +100,7 @@ object EditorGUIToolbarItems {
     }
 
     fun addIf1ModelListItem() = JMenuItem("Add Model list component (IF1)").apply {
-        addActionListener { EditorGUIButtons.addLine() }
+        addActionListener { EditorGUIButtons.addif1ModelList() }
     }
 
     fun addIf1InventoryItem() = JMenuItem("Add Inventory component (IF1)").apply {

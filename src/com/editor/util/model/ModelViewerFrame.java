@@ -1,7 +1,7 @@
 package com.editor.util.model;
 
-import com.alex.loaders.mesh.Model;
-import com.alex.loaders.mesh.ModelLoader;
+import com.alex.loaders.models.Model;
+import com.alex.loaders.models.ModelLoader;
 import com.alex.store.Index;
 import com.alex.store.Store;
 import org.jetbrains.annotations.NotNull;

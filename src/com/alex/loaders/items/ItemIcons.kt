@@ -1,8 +1,8 @@
-package com.alex.loaders
+package com.alex.loaders.items
 
 import com.alex.Cache
-import com.alex.loaders.mesh.ModelLoader
-import com.alex.loaders.mesh.ModelRenderer
+import com.alex.loaders.models.ModelLoader
+import com.alex.loaders.models.ModelRenderer
 import java.awt.image.BufferedImage
 
 /**

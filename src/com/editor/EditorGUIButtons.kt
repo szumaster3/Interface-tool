@@ -11,6 +11,7 @@ import com.editor.properties.PropertyValues
 import com.editor.utils.ColorPicker
 import com.editor.utils.ComponentCopy
 import com.editor.utils.EditorGenericTextPrinter
+import com.editor.utils.FontPreview
 import com.editor.utils.InterfaceUtils.iconButton
 import com.editor.utils.InterfaceUtils.loadIcon
 import com.editor.utils.MultiCopy
@@ -42,6 +43,18 @@ object EditorGUIButtons {
     fun addif1Layer()  = EditorGUI.instance?.addComponent(63, 10) { it.baseX = 0; it.baseY = 0; it.baseWidth = 50; it.baseHeight = 50 }
     fun addif1Figure() = EditorGUI.instance?.addComponent(76, 8) { it.baseX = 0; it.baseY = 0 }
     fun addif1Text()   = EditorGUI.instance?.addComponent(74, 14) { it.baseX = 0; it.baseY = 0 }
+
+    /** No interface of the cache has a model list, so it is created here. */
+    fun addif1ModelList() = EditorGUI.instance?.addComponent(
+        ComponentDefinition().apply {
+            version = 1
+            type = ComponentType.MODEL_LIST
+            baseWidth = 100
+            baseHeight = 50
+            fontId = -1
+            unknownProp_11 = -1
+        }
+    )
 
     fun addToolTip()    = EditorGUI.instance?.addComponent(78, 32) { it.baseX = 0; it.baseY = 0 }
     fun addInventory()  = EditorGUI.instance?.addComponent(367, 75) { it.baseX = 0; it.baseY = 0 }
@@ -660,9 +673,12 @@ object EditorGUIButtons {
 
     fun fontPreviewButton(): JButton {
         val button = JButton("Font preview")
-        button.toolTipText = "Show font examples preview image"
+        button.toolTipText = "Show the fonts of the cache"
 
         button.addActionListener {
+            // the fonts of the cache, drawn like the client does; the image is for caches without fonts
+            if (FontPreview.show(EditorGUI.instance)) return@addActionListener
+
             val imgStream = EditorGUIButtons::class.java.getResourceAsStream(
                 "/misc/interface_font_preview.png"
             )

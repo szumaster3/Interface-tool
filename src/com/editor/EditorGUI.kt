@@ -1,7 +1,7 @@
 package com.editor
 
 import com.alex.Cache
-import com.alex.loaders.ItemIcons
+import com.alex.loaders.items.ItemIcons
 import com.alex.loaders.interfaces.ComponentDefinition
 import com.alex.loaders.interfaces.ComponentType
 import com.alex.utils.Utils
@@ -686,7 +686,7 @@ class EditorGUI : JFrame()
             cs1Fields,
             fieldHeight = 24,
             labelWidth = 110,
-            height = 96
+            height = cs1Fields.size * 24 + 8
         )
         scriptsPanel.add(cs1Section)
         cs1ScriptsSection = cs1Section
@@ -1453,19 +1453,27 @@ class EditorGUI : JFrame()
         propertyPanel.add(section)
     }
 
+    /** Adds a copy of a component of another interface to the selected interface. */
     fun addComponent(templateInterface: Int, templateComponentId: Int, setup: (ComponentDefinition) -> Unit = {})
     {
-        val parentId = compontentRenderPanel.interfaceId
+        val template = ComponentDefinition.getInterfaceComponent(templateInterface, templateComponentId) ?: return
+        // the template belongs to the interface it comes from, so it must not be changed
+        addComponent(ComponentDefinition.copy(template), setup)
+    }
+
+    /** Adds a new component to the selected interface and selects it. */
+    fun addComponent(component: ComponentDefinition, setup: (ComponentDefinition) -> Unit = {})
+    {
+        val interfaceId = compontentRenderPanel.interfaceId
         val index = Cache.store?.indexes?.get(3) ?: return
-        val newId = index.getLastFileId(parentId) + 1
-        val templateComp = ComponentDefinition.getInterfaceComponent(templateInterface, templateComponentId) ?: return
-        templateComp.parentId = -1
-        setup(templateComp)
-        templateComp.componentHash = newId + (parentId shl 16)
-        buildPropertyPanel(templateComp)
-        index.putFile(parentId, newId, templateComp.encode())
-        ComponentDefinition.getInterface(parentId, true)
-        loadComponents(parentId)
-        selectComponent(templateComp)
+        if (interfaceId < 0 || !index.archiveExists(interfaceId)) return
+
+        val newId = index.getLastFileId(interfaceId) + 1
+        component.parentId = -1
+        setup(component)
+        index.putFile(interfaceId, newId, component.encode())
+        ComponentDefinition.getInterface(interfaceId, true)
+        loadComponents(interfaceId)
+        ComponentDefinition.getInterfaceComponent(interfaceId, newId)?.let { selectComponent(it) }
     }
 }

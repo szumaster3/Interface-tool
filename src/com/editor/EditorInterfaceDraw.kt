@@ -1,12 +1,14 @@
 package com.editor
 
-import com.alex.loaders.ItemIcons
+import com.alex.loaders.items.ItemIcons
+import com.alex.loaders.fonts.CacheFonts
+import com.alex.loaders.fonts.PixelImage
 import com.alex.loaders.interfaces.ComponentDefinition
 import com.alex.loaders.interfaces.ComponentDefinition.Companion.getInterface
 import com.alex.loaders.interfaces.ComponentSprites
 import com.alex.loaders.interfaces.ComponentType
-import com.alex.loaders.mesh.ModelLoader
-import com.alex.loaders.mesh.ModelRenderer
+import com.alex.loaders.models.ModelLoader
+import com.alex.loaders.models.ModelRenderer
 import com.editor.util.sprites.SpriteLoader
 import com.alex.utils.Utils
 import com.editor.utils.*
@@ -33,6 +35,13 @@ object EditorInterfaceDraw {
     val childrenCache = mutableMapOf<Int, List<ComponentDefinition>>()
     private val spriteCache = mutableMapOf<String, BufferedImage>()
     private val textCache = mutableMapOf<String, List<String>>()
+
+    /** Drawn texts of the cache fonts, so a text is only drawn again when something about it changes. */
+    private data class TextKey(
+        val font: Int, val text: String, val width: Int, val height: Int, val color: Int,
+        val shadow: Int, val halign: Int, val valign: Int, val spacing: Int
+    )
+    private val textImages = mutableMapOf<TextKey, BufferedImage>()
     private val fontMetricsCache = mutableMapOf<Font, FontMetrics>()
     private val modelRenderers = mutableMapOf<Long, ModelRenderer>()
     var preparedRoots: List<ComponentDefinition> = emptyList()
@@ -44,6 +53,7 @@ object EditorInterfaceDraw {
         childrenCache.clear()
         spriteCache.clear()
         textCache.clear()
+        textImages.clear()
         fontMetricsCache.clear()
         modelRenderers.clear()
 
@@ -438,6 +448,10 @@ object EditorInterfaceDraw {
         val rawText = text ?: return
         if (rawText.isEmpty()) return
 
+        // the font of the cache, drawn the way the client does it
+        if (drawCacheText(g, comp, rawText, x, y, w, h)) return
+
+        // no font in the cache (a cache without fonts or an invalid font id): a font of the system
         g.font = DEFAULT_FONT
         val fm = fontMetricsCache.getOrPut(g.font) { g.getFontMetrics(g.font) }
 
@@ -483,6 +497,28 @@ object EditorInterfaceDraw {
                 cursorX += fm.stringWidth(frag.text.replace(TAG_REGEX, ""))
             }
         }
+    }
+
+    /** @return false when the cache has no font for the component. */
+    private fun drawCacheText(g: Graphics2D, comp: ComponentDefinition, text: String, x: Int, y: Int, w: Int, h: Int): Boolean {
+        val font = CacheFonts.get(comp.fontId) ?: return false
+        if (w <= 0 || h <= 0 || w > 4096 || h > 4096) return true
+
+        val color = comp.color and 0xFFFFFF
+        val shadow = if (comp.shadow) 0 else -1
+        val key = TextKey(font.id, text, w, h, color, shadow, comp.textHorizontalAli, comp.textVerticalAli, comp.textLineHeight)
+        if (textImages.size > 500) textImages.clear()
+        val image = textImages.getOrPut(key) {
+            val canvas = PixelImage(w, h)
+            font.drawParagraph(
+                canvas, text, 0, 0, w, h, color, shadow,
+                comp.textHorizontalAli, comp.textVerticalAli, comp.textLineHeight
+            )
+            BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB).apply { setRGB(0, 0, w, h, canvas.pixels, 0, w) }
+        }
+        // the image has the size of the component, so the text is clipped to it like in the client
+        g.drawImage(image, x, y, null)
+        return true
     }
 
     private fun drawTextFragment(
@@ -688,6 +724,8 @@ object EditorInterfaceDraw {
         childrenCache.clear()
         spriteCache.clear()
         textCache.clear()
+        textImages.clear()
+        CacheFonts.clear()
     }
 
     private fun drawResize(g: Graphics2D, x: Int, y: Int, w: Int, h: Int) {

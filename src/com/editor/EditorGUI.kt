@@ -686,7 +686,7 @@ class EditorGUI : JFrame()
             cs1Fields,
             fieldHeight = 24,
             labelWidth = 110,
-            height = cs1Fields.size * 24 + 8
+            height = 96
         )
         scriptsPanel.add(cs1Section)
         cs1ScriptsSection = cs1Section

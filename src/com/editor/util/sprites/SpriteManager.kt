@@ -18,6 +18,7 @@ class SpriteManager(parent: JFrame?, private val onSelect: (spriteId: Int, width
     val selectBtn = JButton("Select")
     val exportBtn = JButton("Export selected")
     private val importBtn = JButton("Import")
+    private val importFolderBtn = JButton("Import folder")
     private val exportAllBtn = JButton("Export all")
     private val findBtn = JButton("Find")
     private val previewBtn = JButton("Preview")
@@ -52,6 +53,8 @@ class SpriteManager(parent: JFrame?, private val onSelect: (spriteId: Int, width
         }
 
         importBtn.addActionListener { importSprites() }
+        importFolderBtn.toolTipText = "Imports a folder like the one 'Export all' writes: sprite_<id>.png and sprite_<id>/<id>_<frame>.png"
+        importFolderBtn.addActionListener { importFolder() }
         exportBtn.addActionListener { exportSelected() }
         exportAllBtn.addActionListener { exportAll() }
 
@@ -60,6 +63,7 @@ class SpriteManager(parent: JFrame?, private val onSelect: (spriteId: Int, width
         bottom.add(findBtn)
         bottom.add(previewBtn)
         bottom.add(importBtn)
+        bottom.add(importFolderBtn)
         bottom.add(exportBtn)
         bottom.add(exportAllBtn)
         bottom.add(selectBtn)
@@ -185,6 +189,42 @@ class SpriteManager(parent: JFrame?, private val onSelect: (spriteId: Int, width
         } catch (e: Exception) {
             JOptionPane.showMessageDialog(this, e.message, "Import Error", JOptionPane.ERROR_MESSAGE)
         }
+    }
+
+    /**
+     * Imports all the sprites of a folder in the layout `Export all` writes: a sprite with a single frame is the file
+     * `sprite_<id>.png`, a sprite with more frames is the folder `sprite_<id>` with the files `<id>_<frame>.png`.
+     */
+    private fun importFolder() {
+        val chooser = JFileChooser().apply { fileSelectionMode = JFileChooser.DIRECTORIES_ONLY }
+        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return
+
+        val groups = SpriteFolder.findGroups(chooser.selectedFile)
+        if (groups.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "The folder has no sprites (sprite_<id>.png or sprite_<id>/<id>_<frame>.png).")
+            return
+        }
+        val confirm = JOptionPane.showConfirmDialog(
+            this, "Import ${groups.size} sprites? Sprites which exist already are replaced.",
+            "Import folder", JOptionPane.YES_NO_OPTION
+        )
+        if (confirm != JOptionPane.YES_OPTION) return
+
+        val failed = mutableListOf<String>()
+        var imported = 0
+        for ((spriteId, files) in groups) {
+            try {
+                write(spriteId, import(files))
+                imported++
+            } catch (e: Exception) {
+                failed.add("sprite $spriteId: ${e.message}")
+            }
+        }
+        val message = "Imported $imported of ${groups.size} sprites." +
+                if (failed.isEmpty()) "" else "\n\nNot imported:\n" + failed.take(15).joinToString("\n")
+        JOptionPane.showMessageDialog(this, message)
+        dispose()
+        SpriteManager(owner as? JFrame, onSelect)
     }
 
     private fun exportSelected() {

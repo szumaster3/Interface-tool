@@ -1016,6 +1016,9 @@ class ComponentDefinition {
     }
 
     companion object {
+        @JvmStatic
+        var ifOneName: ((Int, Int) -> String?)? = null
+
         var componentDefinition: Array<Array<ComponentDefinition?>?>? =
             arrayOfNulls(getInterfaceDefinitionsSize())
 
@@ -1038,7 +1041,7 @@ class ComponentDefinition {
                 componentDefinition!![id] = arrayOfNulls(size)
 
                 for (i in 0 until size) {
-                    val data: ByteArray? = Cache.store!!.indexes[3].getFile(id, i)
+                    val data: ByteArray? = Cache.store!!.indexes[Cache.interfaceIndex].getFile(id, i)
                     if (data == null) {
                         println("[$id]:[$i] = null")
                         continue
@@ -1048,6 +1051,8 @@ class ComponentDefinition {
                     defs.componentHash = i + (id shl 16)
                     try {
                         defs.decode(InputStream(data), i, id)
+                        // IF1 has no name in the file, the editor keeps the names of its components
+                        if (defs.isIf1) defs.name = ifOneName?.invoke(id, i)
                     } catch (e: Exception) {
                         println("[$id]:[$i] failed to decode: $e")
                         continue
@@ -1060,11 +1065,11 @@ class ComponentDefinition {
         }
 
         @JvmStatic
-        fun getInterfaceDefinitionsSize(): Int = Cache.store!!.indexes[3].lastArchiveId + 1
+        fun getInterfaceDefinitionsSize(): Int = Cache.store!!.indexes[Cache.interfaceIndex].lastArchiveId + 1
 
         @JvmStatic
         fun getInterfaceDefinitionsComponentsSize(interfaceId: Int): Int =
-            Cache.store!!.indexes[3].getLastFileId(interfaceId) + 1
+            Cache.store!!.indexes[Cache.interfaceIndex].getLastFileId(interfaceId) + 1
 
         @JvmStatic
         fun getChildsByParent(interfaceId: Int, hash: Int): ArrayList<ComponentDefinition> {

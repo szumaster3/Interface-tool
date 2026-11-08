@@ -91,7 +91,7 @@ class Copy private constructor(val targetInterface: Int) {
             modifier?.accept(comp)
             task.modifier?.accept(comp)
 
-            Cache.store!!.indexes[3].putFile(targetInterface, task.targetId, comp.encode())
+            Cache.store!!.indexes[Cache.interfaceIndex].putFile(targetInterface, task.targetId, comp.encode())
 
             copiedComponents.add(comp)
         }
@@ -177,7 +177,7 @@ class Copy private constructor(val targetInterface: Int) {
                 base.baseX = 0
                 base.baseY = 0
                 base.parentId = -1
-                Cache.store!!.indexes[3].putFile(newId, 0, base.encode())
+                Cache.store!!.indexes[Cache.interfaceIndex].putFile(newId, 0, base.encode())
             }
             ComponentDefinition.componentDefinition = arrayOfNulls(newId + 1)
             return newId

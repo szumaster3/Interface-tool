@@ -1,5 +1,6 @@
 package com.editor
 
+import javax.swing.ButtonGroup
 import javax.swing.JMenu
 import javax.swing.JMenuBar
 
@@ -21,23 +22,35 @@ class EditorGUIToolbar : JMenuBar() {
     init {
         // File Menu
         fileMenu.add(EditorGUIToolbarItems.newArchiveItem())
-        fileMenu.add(EditorGUIToolbarItems.openArchiveItem())
-        fileMenu.add(EditorGUIToolbarItems.exportArchiveItem())
-        fileMenu.add(EditorGUIToolbarItems.saveArchiveItem())
+        fileMenu.add(EditorGUIToolbarItems.importInterfaceItem())
+        fileMenu.add(EditorGUIToolbarItems.exportInterfaceItem())
+        fileMenu.addSeparator()
+        fileMenu.add(EditorGUIToolbarItems.duplicateInterfaceItem())
+        fileMenu.add(EditorGUIToolbarItems.copyInterfaceItem())
+        fileMenu.add(EditorGUIToolbarItems.deleteInterfaceItem())
+        fileMenu.addSeparator()
+        fileMenu.add(EditorGUIToolbarItems.saveComponentItem())
         add(fileMenu)
 
         // Edit Menu
         editMenu.add(EditorGUIToolbarItems.undoItem())
         editMenu.add(EditorGUIToolbarItems.redoItem())
         editMenu.add(EditorGUIToolbarItems.copyItem())
+        editMenu.addSeparator()
+        editMenu.add(EditorGUIToolbarItems.moveUpItem())
+        editMenu.add(EditorGUIToolbarItems.moveDownItem())
+        editMenu.addSeparator()
+        editMenu.add(EditorGUIToolbarItems.findItem())
         add(editMenu)
 
         // View Menu
+        val screenModes = ButtonGroup()
+        ScreenMode.values().forEach { viewMenu.add(EditorGUIToolbarItems.screenModeItem(it, screenModes)) }
+        viewMenu.addSeparator()
         viewMenu.add(EditorGUIToolbarItems.zoomInItem())
         viewMenu.add(EditorGUIToolbarItems.zoomOutItem())
         viewMenu.add(EditorGUIToolbarItems.resetViewItem())
         add(viewMenu)
-        viewMenu.isEnabled = false
 
         // Add Menu
         addMenu.add(EditorGUIToolbarItems.addLayerItem())
@@ -84,6 +97,7 @@ class EditorGUIToolbar : JMenuBar() {
         // Tools Menu
         toolsMenu.add(EditorGUIToolbarItems.tool1Item())
         toolsMenu.add(EditorGUIToolbarItems.tool2Item())
+        toolsMenu.add(EditorGUIToolbarItems.interfaceIndexItem())
         add(toolsMenu)
 
         // Window Menu

@@ -1,12 +1,16 @@
 package com.editor
 
 import com.alex.Cache
+import com.alex.loaders.interfaces.ComponentDefinition
 import com.alex.loaders.items.ItemDefinition
 import com.alex.store.Store
 import com.editor.properties.PropertyValues
 import com.editor.EditorGUIButtons.openSpriteLibrary
 import com.editor.utils.ComponentTemplates
+import com.editor.utils.ComponentOrder
 import com.editor.utils.Consts
+import com.editor.utils.FindInInterfaces
+import com.editor.utils.InterfaceTools
 import java.awt.Desktop
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -20,15 +24,38 @@ object EditorGUIToolbarItems {
     fun newArchiveItem() = JMenuItem("New").apply {
         addActionListener { EditorGUIButtons.addNewInterface() }
     }
-    fun openArchiveItem() = JMenuItem("Open").apply {
-        isEnabled = false
+    fun importInterfaceItem() = JMenuItem("Import interface...").apply {
         addActionListener { EditorGUIButtons.importInterface() }
     }
-    fun exportArchiveItem() = JMenuItem("Save as").apply {
+    fun exportInterfaceItem() = JMenuItem("Export interface...").apply {
         addActionListener { EditorGUIButtons.exportInterface() }
     }
-    fun saveArchiveItem() = JMenuItem("Save").apply {
-        addActionListener { }
+    fun duplicateInterfaceItem() = JMenuItem("Duplicate interface").apply {
+        addActionListener { EditorGUI.instance?.interfacesList?.selectedValue?.let { InterfaceTools.duplicate(it) } }
+    }
+    fun copyInterfaceItem() = JMenuItem("Copy interface to another cache...").apply {
+        addActionListener { EditorGUI.instance?.interfacesList?.selectedValue?.let { InterfaceTools.copyToCache(it) } }
+    }
+    fun deleteInterfaceItem() = JMenuItem("Delete interface").apply {
+        addActionListener { EditorGUI.instance?.interfacesList?.selectedValue?.let { InterfaceTools.delete(it) } }
+    }
+    fun findItem() = JMenuItem("Find in interfaces...").apply {
+        accelerator = KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK)
+        addActionListener { FindInInterfaces.show(EditorGUI.instance) }
+    }
+    fun moveUpItem() = JMenuItem("Move component up").apply {
+        toolTipText = "Draws the component earlier in its layer. Scripts which use the id of the component are not changed."
+        accelerator = KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK)
+        addActionListener { EditorGUI.selectedComponent?.let { ComponentOrder.moveUp(it) } }
+    }
+    fun moveDownItem() = JMenuItem("Move component down").apply {
+        toolTipText = "Draws the component later in its layer. Scripts which use the id of the component are not changed."
+        accelerator = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK)
+        addActionListener { EditorGUI.selectedComponent?.let { ComponentOrder.moveDown(it) } }
+    }
+    fun saveComponentItem() = JMenuItem("Save component").apply {
+        addActionListener { EditorGUIButtons.saveButton().doClick() }
+        accelerator = KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK)
     }
 
     fun undoItem() = JMenuItem("Undo").apply {
@@ -51,14 +78,22 @@ object EditorGUIToolbarItems {
         }
     }
 
+    fun screenModeItem(mode: ScreenMode, group: ButtonGroup) = JRadioButtonMenuItem(mode.label).apply {
+        isSelected = EditorGUI.instance?.screenMode == mode || (EditorGUI.instance == null && mode == ScreenMode.FIXED)
+        group.add(this)
+        addActionListener { EditorGUI.instance?.setScreenMode(mode) }
+    }
     fun zoomInItem() = JMenuItem("Zoom In").apply {
-        addActionListener { }
+        addActionListener { EditorGUI.instance?.changeZoom(1) }
+        accelerator = KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, InputEvent.CTRL_DOWN_MASK)
     }
     fun zoomOutItem() = JMenuItem("Zoom Out").apply {
-        addActionListener { }
+        addActionListener { EditorGUI.instance?.changeZoom(-1) }
+        accelerator = KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, InputEvent.CTRL_DOWN_MASK)
     }
     fun resetViewItem() = JMenuItem("Reset View").apply {
-        addActionListener { }
+        addActionListener { EditorGUI.instance?.resetZoom() }
+        accelerator = KeyStroke.getKeyStroke(KeyEvent.VK_0, InputEvent.CTRL_DOWN_MASK)
     }
 
     fun addLayerItem() = JMenuItem("Add Layer component").apply {
@@ -284,6 +319,27 @@ object EditorGUIToolbarItems {
                     }
                 }
             }.start()
+        }
+    }
+
+    /** The index of the cache which holds the interfaces (it is not 3 in every cache). */
+    fun interfaceIndexItem() = JMenuItem("Interface index...").apply {
+        addActionListener {
+            val store = Cache.store ?: return@addActionListener
+            val answer = JOptionPane.showInputDialog(
+                EditorGUI.instance,
+                "Index of the cache which holds the interfaces (3 in revision 530):",
+                Cache.interfaceIndex
+            ) ?: return@addActionListener
+            val index = answer.toString().trim().toIntOrNull()
+            if (index == null || index !in store.indexes.indices || store.indexes[index] == null) {
+                JOptionPane.showMessageDialog(EditorGUI.instance, "The cache has no index $answer", "Error", JOptionPane.ERROR_MESSAGE)
+                return@addActionListener
+            }
+            Cache.interfaceIndex = index
+            PropertyValues.saveInterfaceIndex(index)
+            ComponentDefinition.componentDefinition = arrayOfNulls(ComponentDefinition.getInterfaceDefinitionsSize())
+            EditorGUI.instance?.loadInterfaces()
         }
     }
 

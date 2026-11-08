@@ -10,7 +10,12 @@ object PropertyValues {
     private var dump_path: String = "dump/"
     private var model_dump_path: String = "dump/models/"
     private var sprite_path: String? = "dump/sprites/"
+
+    var interface_index: Int = 3
     private var input: InputStream? = null
+
+    @JvmStatic
+    fun getConfigDirectory(): File = getJarDir()
 
     private fun getJarDir(): File {
         val jarPath = PropertyValues::class.java
@@ -43,6 +48,7 @@ object PropertyValues {
                 prop.setProperty("dump_path", dump_path)
                 prop.setProperty("model_dump_path", model_dump_path)
                 prop.setProperty("sprite_path", sprite_path ?: "")
+                prop.setProperty("interface_index", interface_index.toString())
 
                 propFile.parentFile?.mkdirs()
                 FileOutputStream(propFile).use { out ->
@@ -54,6 +60,7 @@ object PropertyValues {
             dump_path = prop.getProperty("dump_path") ?: dump_path
             model_dump_path = prop.getProperty("model_dump_path") ?: model_dump_path
             sprite_path = prop.getProperty("sprite_path") ?: sprite_path
+            interface_index = prop.getProperty("interface_index")?.toIntOrNull() ?: interface_index
 
         } catch (e: Exception) {
             println("Exception while loading config: $e")
@@ -71,6 +78,23 @@ object PropertyValues {
         dump_path = cache_path + "IFToolDumps" + File.separator
         model_dump_path = dump_path + "models" + File.separator
         sprite_path = cache_path
+    }
+
+    /**
+     * Remembers the index of the interfaces in the config file.
+     */
+    @JvmStatic
+    fun saveInterfaceIndex(index: Int) {
+        interface_index = index
+        try {
+            val propFile = File(getJarDir(), "config.properties")
+            val prop = Properties()
+            if (propFile.exists()) FileInputStream(propFile).use { prop.load(it) }
+            prop.setProperty("interface_index", index.toString())
+            FileOutputStream(propFile).use { prop.store(it, "Configuration") }
+        } catch (e: Exception) {
+            println("Could not save the interface index: $e")
+        }
     }
 
     @JvmStatic

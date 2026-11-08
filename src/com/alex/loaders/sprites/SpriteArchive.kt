@@ -100,12 +100,11 @@ constructor(
             os.writeShort(height)
             os.write(palette.size - 1)
 
-            for (i in frames.indices) {
-                os.writeShort(0)
-                os.writeShort(0)
-                os.writeShort(width)
-                os.writeShort(height)
-            }
+            // the header has four arrays, one value for every frame in each of them: the offsets and the sizes
+            for (i in frames.indices) os.writeShort(0) // x offsets
+            for (i in frames.indices) os.writeShort(0) // y offsets
+            for (i in frames.indices) os.writeShort(width)
+            for (i in frames.indices) os.writeShort(height)
 
             os.writeShort(frames.size)
 

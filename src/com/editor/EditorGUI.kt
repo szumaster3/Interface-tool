@@ -10,6 +10,9 @@ import com.editor.properties.PropertyValues.loadValues
 import com.editor.properties.PropertyValues.setCachePath
 import com.editor.utils.Consts
 import com.editor.utils.InterfaceUtils
+import com.editor.util.model.ModelViewerFrame
+import com.editor.util.sprites.SpriteManager
+import com.editor.utils.ComponentNames
 import com.editor.utils.If1Text
 import com.editor.utils.InterfaceUtils.iconButton
 import com.editor.utils.PlaceholderTextField
@@ -55,9 +58,12 @@ class EditorGUI : JFrame()
             (1..4).map { "InvFlag $it" } + (1..5).map { "InvOption $it" } + "InvSlots"
     private val cs1Fields = listOf("CS1 Comparisons", "CS1 Scripts")
 
+    /** Key codes of an IF3 component: every row is `key code,repeat,modifier`. */
+    private val keyFields = (1..10).map { "Key $it" }
+
     /** Fields of the IF3 format which are not stored in IF1 components. */
     private val if3OnlyFields = setOf(
-        "Name", "WidthMode", "HeightMode", "XMode", "YMode", "BorderThickness", "Angle2D", "HFlip", "VFlip",
+        "WidthMode", "HeightMode", "XMode", "YMode", "BorderThickness", "Angle2D", "HFlip", "VFlip",
         "Tiling", "HasAlpha", "ShadowColor", "ModelOriginX", "ModelOriginY", "ZAngle", "Orthogonal",
         "ModelObjectWidth", "ModelObjectHeight", "UnknownProp3", "UnknownProp4", "UnknownProp5", "ScrollWidth",
         "NoClickThrough", "DragDeadzone", "DragDeadtime", "DragRenderBehavior", "LineWidth", "UnknownProp8"
@@ -102,7 +108,10 @@ class EditorGUI : JFrame()
                     UIManager.put("OptionPane.informationIcon", InterfaceUtils.loadIcon("/icons/info_global.png"))
                     UIManager.put("OptionPane.questionIcon", InterfaceUtils.loadIcon("/icons/question.png"))
                     if (args.isEmpty()) loadValues() else setCachePath(args[0])
+                    Cache.interfaceIndex = PropertyValues.interface_index
                     Cache.init(PropertyValues.cache_path)
+                    // after the cache is open: it is needed when the class of the components is set up
+                    ComponentDefinition.ifOneName = ComponentNames::get
                     instance = EditorGUI().apply {
                         setLocationRelativeTo(null)
                         isVisible = true
@@ -202,6 +211,28 @@ class EditorGUI : JFrame()
     private fun setupInterfaceListListener()
     {
         interfacesList.selectionMode = ListSelectionModel.SINGLE_SELECTION
+
+        // the right mouse button opens the actions of an interface
+        val popup = JPopupMenu().apply {
+            add(EditorGUIToolbarItems.duplicateInterfaceItem())
+            add(EditorGUIToolbarItems.copyInterfaceItem())
+            add(EditorGUIToolbarItems.exportInterfaceItem())
+            add(EditorGUIToolbarItems.importInterfaceItem())
+            addSeparator()
+            add(EditorGUIToolbarItems.deleteInterfaceItem())
+        }
+        interfacesList.addMouseListener(object : MouseAdapter() {
+            private fun show(e: MouseEvent) {
+                if (!e.isPopupTrigger) return
+                val index = interfacesList.locationToIndex(e.point)
+                if (index >= 0 && interfacesList.getCellBounds(index, index)?.contains(e.point) == true) {
+                    interfacesList.selectedIndex = index
+                    popup.show(interfacesList, e.x, e.y)
+                }
+            }
+            override fun mousePressed(e: MouseEvent) = show(e)
+            override fun mouseReleased(e: MouseEvent) = show(e)
+        })
         interfacesList.addListSelectionListener { e ->
             if (!e.valueIsAdjusting) {
                 interfacesList.selectedValue?.let { id ->
@@ -216,8 +247,6 @@ class EditorGUI : JFrame()
         // a selected component of the previous interface (or a removed one) must not stay selected
         clearSelection()
         EditorInterfaceDraw.prepareInterface(interfaceId)
-        EditorInterfaceDraw.viewMode = EditorInterfaceDraw.ViewMode.NONE
-        EditorInterfaceDraw.selectedType = null
         refreshTreeAndList()
         compontentRenderPanel.interfaceId = interfaceId
         compontentRenderPanel.repaint()
@@ -247,14 +276,7 @@ class EditorGUI : JFrame()
 
     fun refreshTreeAndList()
     {
-        val allComponents = EditorInterfaceDraw.getFilteredComponents()
-
-        val filtered = when (EditorInterfaceDraw.viewMode) {
-            EditorInterfaceDraw.ViewMode.NONE -> allComponents
-            EditorInterfaceDraw.ViewMode.BY_TYPE -> allComponents.filter {
-                EditorInterfaceDraw.selectedType == null || it.type == EditorInterfaceDraw.selectedType
-            }
-        }
+        val filtered = EditorInterfaceDraw.getFilteredComponents()
         val rootNode = DefaultMutableTreeNode("root")
         filtered.forEach { rootNode.add(buildTreeNode(it)) }
         treeModel.setRoot(rootNode)
@@ -262,11 +284,7 @@ class EditorGUI : JFrame()
 
         val listModel = DefaultListModel<ComponentDefinition>()
         fun addAllComponents(comp: ComponentDefinition) {
-            val include = when (EditorInterfaceDraw.viewMode) {
-                EditorInterfaceDraw.ViewMode.NONE -> true
-                EditorInterfaceDraw.ViewMode.BY_TYPE -> EditorInterfaceDraw.selectedType == null || comp.type == EditorInterfaceDraw.selectedType
-            }
-            if (include) listModel.addElement(comp)
+            if (EditorInterfaceDraw.matchesFilter(comp)) listModel.addElement(comp)
             EditorInterfaceDraw.childrenCache[comp.componentHash]?.forEach { addAllComponents(it) }
         }
 
@@ -281,11 +299,7 @@ class EditorGUI : JFrame()
     {
         val node = DefaultMutableTreeNode(comp)
         EditorInterfaceDraw.childrenCache[comp.componentHash]?.forEach { child ->
-            val shouldInclude = when (EditorInterfaceDraw.viewMode) {
-                EditorInterfaceDraw.ViewMode.NONE -> true
-                EditorInterfaceDraw.ViewMode.BY_TYPE -> EditorInterfaceDraw.selectedType == null || child.type == EditorInterfaceDraw.selectedType
-            }
-            if (shouldInclude) node.add(buildTreeNode(child))
+            if (EditorInterfaceDraw.containsMatch(child)) node.add(buildTreeNode(child))
         }
         return node
     }
@@ -320,9 +334,13 @@ class EditorGUI : JFrame()
         leftPanel.add(interfacesWrapper, BorderLayout.CENTER)
         setupInterfaceListListener()
 
-        val centerWrapper = JPanel(GridBagLayout()).apply {
+        val centerWrapper = CenterPanel().apply {
             background = Color.LIGHT_GRAY
             add(compontentRenderPanel)
+        }
+        val centerScroll = JScrollPane(centerWrapper).apply {
+            border = null
+            viewport.background = Color.LIGHT_GRAY
         }
 
         val rightPanel = JPanel(BorderLayout()).apply {
@@ -334,7 +352,7 @@ class EditorGUI : JFrame()
         val topPanel = JPanel(BorderLayout()).apply {
             border = BorderFactory.createLoweredBevelBorder()
             add(leftPanel, BorderLayout.WEST)
-            add(centerWrapper, BorderLayout.CENTER)
+            add(centerScroll, BorderLayout.CENTER)
             add(rightPanel, BorderLayout.EAST)
         }
         mainPanel.add(topPanel, BorderLayout.CENTER)
@@ -607,17 +625,33 @@ class EditorGUI : JFrame()
         orderedComponents.forEach { componentListModel.addElement(it) }
     }
 
-    private fun loadInterfaces()
+    /** Opens an interface and selects one of its components. */
+    fun openComponent(interfaceId: Int, componentId: Int) {
+        val position = interfacesListModel.indexOf(interfaceId)
+        if (position < 0) return
+        if (interfacesList.selectedValue != interfaceId) interfacesList.selectedIndex = position
+        interfacesList.ensureIndexIsVisible(position)
+        ComponentDefinition.getInterfaceComponent(interfaceId, componentId)?.let { selectComponent(it) }
+    }
+
+    /** Forgets the selected component, after the interface it belongs to was removed. */
+    fun clearSelectionAfterRemoval() {
+        clearSelection()
+    }
+
+    /** Fills the list with the interfaces of the cache. */
+    fun loadInterfaces()
     {
         clearSelection()
         interfacesListModel.clear()
 
         val store = Cache.store ?: return
-        val index3 = store.indexes[3]
+        val index3 = store.indexes[Cache.interfaceIndex]
 
+        // an interface which was removed has no components left and is not listed
         for (i in 0..index3.lastArchiveId)
         {
-            if (index3.archiveExists(i)) {
+            if (index3.archiveExists(i) && index3.getValidFilesCount(i) > 0) {
                 interfacesListModel.addElement(i)
             }
         }
@@ -656,7 +690,9 @@ class EditorGUI : JFrame()
             width = 200
         )
         addSection(settingsSection)
-        ifThreeOnlySections = listOf(optionSection, settingsSection)
+        val keySection = createSection("Key codes", keyFields, width = 160, labelWidth = 50)
+        addSection(keySection)
+        ifThreeOnlySections = listOf(optionSection, settingsSection, keySection)
 
         val if1 = createSection("IF1 properties", if1Fields, width = 200, labelWidth = 110)
         addSection(if1)
@@ -855,6 +891,13 @@ class EditorGUI : JFrame()
         set("UnknownProp8",     c.unknownProp_8)
 
         set("Fill",             c.filled)
+
+        for (i in 0 until 10) {
+            val code = c.opId?.getOrNull(i) ?: 0
+            val repeat = c.repeatCount?.getOrNull(i)?.toInt() ?: 0
+            val modifier = c.modifier?.getOrNull(i)?.toInt() ?: 0
+            set("Key ${i + 1}", if (code != 0 || repeat != 0 || modifier != 0) "$code,$repeat,$modifier" else "")
+        }
 
         // IF1
         set("ButtonType",       c.buttonType)
@@ -1072,10 +1115,12 @@ class EditorGUI : JFrame()
         c.optionMask = newOptionMask
         if (!c.isIf1) {
             InterfaceUtils.setRightClickOptions(c, optionTexts.toList())
+            saveKeyCodes(c, ::getText)
         }
 
         if (c.isIf1) {
             saveIf1(c, ::getText)
+            ComponentNames.set(c.interfaceId, c.componentId, c.name)
         }
 
         // Scripts
@@ -1106,6 +1151,31 @@ class EditorGUI : JFrame()
         c.statTriggers       = Utils.getConfigArray(getText("StatTriggers"))
         c.varcTriggers       = Utils.getConfigArray(getText("VarcTriggers"))
         c.varcstrTriggers    = Utils.getConfigArray(getText("VarcStrTriggers"))
+    }
+
+    /** Popup menu of the fields with events: puts the id of a sprite or of a model of the cache at the cursor. */
+    private fun idPopup(field: JTextField) = JPopupMenu().apply {
+        add(JMenuItem("Insert sprite id...").apply {
+            addActionListener { SpriteManager(null) { spriteId, _, _, _ -> field.replaceSelection(spriteId.toString()) } }
+        })
+        add(JMenuItem("Insert model id...").apply {
+            addActionListener {
+                val store = Cache.store ?: return@addActionListener
+                ModelViewerFrame(store) { id -> field.replaceSelection(id.toString()) }.isVisible = true
+            }
+        })
+    }
+
+    /** Writes the key codes: a row which is empty or cannot be read is a key which is not used. */
+    private fun saveKeyCodes(c: ComponentDefinition, getText: (String) -> String) {
+        val rows = keyFields.map { name ->
+            getText(name).split(',').map { it.trim().toIntOrNull() }.takeIf { it.size == 3 && it.all { v -> v != null } }
+        }
+        if (rows.all { it == null } && c.opId == null) return
+
+        c.opId = IntArray(10) { rows[it]?.get(0) ?: 0 }
+        c.repeatCount = ByteArray(10) { (rows[it]?.get(1) ?: 0).toByte() }
+        c.modifier = ByteArray(10) { (rows[it]?.get(2) ?: 0).toByte() }
     }
 
     /** Writes the fields which exist only in IF1 components. */
@@ -1298,6 +1368,14 @@ class EditorGUI : JFrame()
                 EditorGUIButtons.colorPickButton()
             } else if (name == "FontID") {
                 EditorGUIButtons.fontPreviewButton()
+            } else if (name == "ModelID") {
+                EditorGUIButtons.modelPickButton(name)
+            } else if (name == "ActiveModelID") {
+                EditorGUIButtons.modelPickButton(name, "Active model")
+            } else if (name == "SpriteID") {
+                EditorGUIButtons.spritePickButton(name)
+            } else if (name == "ActiveSpriteID") {
+                EditorGUIButtons.spritePickButton(name, "Active sprite")
             } else {
                 JPanel(BorderLayout()).apply {
                     border = BorderFactory.createRaisedSoftBevelBorder()
@@ -1313,7 +1391,7 @@ class EditorGUI : JFrame()
 
             val plainTextFields = setOf(
                 "Text", "OptionBase", "OptionCircumfix", "ButtonOption", "OptionSuffix", "ActiveText", "InvSlots"
-            ) + scriptsList + cs1Fields + (1..10).map { "Option $it" } + (1..5).map { "InvOption $it" }
+            ) + scriptsList + cs1Fields + keyFields + (1..10).map { "Option $it" } + (1..5).map { "InvOption $it" }
 
             val textFields = plainTextFields + setOf(
                 "Name", "ParentID", "Hash", "Color", "ModelID", "AnimID", "SpriteID",
@@ -1333,6 +1411,8 @@ class EditorGUI : JFrame()
                 name in textFields -> JTextField().apply {
                     if (name !in plainTextFields) horizontalAlignment = JTextField.RIGHT
                     font = jSpinnerFont
+                    // events: the ids of sprites and models can be picked from the cache
+                    if (name in scriptsList || name in cs1Fields) componentPopupMenu = idPopup(this)
                 }
                 step1Fields.any { name.contains(it) } -> InterfaceUtils.createSpinner(step = 1, font = jSpinnerFont)
                 name == "ModelZoom" -> InterfaceUtils.createSpinner(step = 100, font = jSpinnerFont)
@@ -1453,6 +1533,26 @@ class EditorGUI : JFrame()
         propertyPanel.add(section)
     }
 
+    /** The part of the game screen the interface is shown in. */
+    var screenMode = ScreenMode.FIXED
+        private set
+
+    /** Shows the interface in another part of the game screen, so it is laid out for that size. */
+    fun setScreenMode(mode: ScreenMode) {
+        screenMode = mode
+        EditorInterfaceDraw.setScreenSize(mode.width, mode.height)
+        compontentRenderPanel.applyScreenSize()
+        selectedComponent?.let { buildPropertyPanel(it) }
+    }
+
+    fun changeZoom(step: Int) {
+        compontentRenderPanel.zoom += step
+    }
+
+    fun resetZoom() {
+        compontentRenderPanel.zoom = 1
+    }
+
     /** Adds a copy of a component of another interface to the selected interface. */
     fun addComponent(templateInterface: Int, templateComponentId: Int, setup: (ComponentDefinition) -> Unit = {})
     {
@@ -1465,7 +1565,7 @@ class EditorGUI : JFrame()
     fun addComponent(component: ComponentDefinition, setup: (ComponentDefinition) -> Unit = {})
     {
         val interfaceId = compontentRenderPanel.interfaceId
-        val index = Cache.store?.indexes?.get(3) ?: return
+        val index = Cache.store?.indexes?.get(Cache.interfaceIndex) ?: return
         if (interfaceId < 0 || !index.archiveExists(interfaceId)) return
 
         val newId = index.getLastFileId(interfaceId) + 1

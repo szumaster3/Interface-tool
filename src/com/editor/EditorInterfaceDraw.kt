@@ -27,7 +27,20 @@ object EditorInterfaceDraw {
     var previewItems: List<Int> = emptyList()
     private const val FIXED_SHIFT = 14
     private val DEFAULT_FONT = Font("Helvetica", Font.PLAIN, 11)
-    const val HANDLE_SIZE = 6
+    const val HANDLE_SIZE = 8
+
+    /** Distance from the border of a component in which it can be grabbed to resize it. */
+    private const val GRAB_DISTANCE = 5
+
+    /** Size of the area the interfaces are drawn in (see ScreenMode). */
+    var screenWidth = Consts.CENTER_PANEL_WIDTH
+        private set
+    var screenHeight = Consts.CENTER_PANEL_HEIGHT
+        private set
+
+    /** Scroll position of the layers which have more content than they can show, by component hash. */
+    private val scrollX = mutableMapOf<Int, Int>()
+    private val scrollY = mutableMapOf<Int, Int>()
     private val TAG_REGEX = Regex("<[^>]+>")
     enum class ViewMode { NONE, BY_TYPE }
     var viewMode: ViewMode = ViewMode.NONE
@@ -60,7 +73,7 @@ object EditorInterfaceDraw {
         childrenCache.putAll(allComponents.groupBy { it.parentId })
         preparedRoots = childrenCache[-1] ?: emptyList()
         preparedRoots.forEach {
-            layoutComponent(it, Consts.CENTER_PANEL_WIDTH, Consts.CENTER_PANEL_HEIGHT)
+            layoutComponent(it, screenWidth, screenHeight)
         }
     }
 
@@ -84,11 +97,7 @@ object EditorInterfaceDraw {
     ) {
         drawBackground(g)
 
-        val rootClip = Rectangle(
-            0, 0,
-            Consts.CENTER_PANEL_WIDTH,
-            Consts.CENTER_PANEL_HEIGHT
-        )
+        val rootClip = Rectangle(0, 0, screenWidth, screenHeight)
         g.clip = rootClip
 
         preparedRoots.forEach {
@@ -106,6 +115,13 @@ object EditorInterfaceDraw {
             ViewMode.BY_TYPE -> selectedType == null || type == selectedType
         }
     }
+
+    /** True when the component matches the filter of the view. */
+    fun matchesFilter(comp: ComponentDefinition): Boolean = matchesViewMode(comp.type, viewMode, selectedType)
+
+    /** True when the component or one of the components inside of it matches the filter of the view. */
+    fun containsMatch(comp: ComponentDefinition): Boolean =
+        matchesFilter(comp) || childrenCache[comp.componentHash]?.any { containsMatch(it) } == true
 
     private fun intersects(
         x1: Int, y1: Int, w1: Int, h1: Int,
@@ -138,7 +154,7 @@ object EditorInterfaceDraw {
         if (w <= 0 || h <= 0) return
 
         // Culling
-        if (!intersects(x, y, w, h, 0, 0, Consts.CENTER_PANEL_WIDTH, Consts.CENTER_PANEL_HEIGHT)) return
+        if (!intersects(x, y, w, h, 0, 0, screenWidth, screenHeight)) return
 
         val oldClip = g.clip
 
@@ -166,22 +182,22 @@ object EditorInterfaceDraw {
             }
         }
 
-        // Draw child ids
+        // Draw child ids: the children are always visited, a filter only decides which components are drawn
+        val childX = x - scrollXOf(comp)
+        val childY = y - scrollYOf(comp)
         childrenCache[comp.componentHash]?.forEach { child ->
-            if (matchesViewMode(child.type, viewMode, selectedType)) {
-                drawComponent(
-                    g,
-                    child,
-                    x,
-                    y,
-                    showContainers,
-                    showHidden,
-                    showModels,
-                    viewMode,
-                    selectedType,
-                    selectedComponent
-                )
-            }
+            drawComponent(
+                g,
+                child,
+                childX,
+                childY,
+                showContainers,
+                showHidden,
+                showModels,
+                viewMode,
+                selectedType,
+                selectedComponent
+            )
         }
 
         // Outlines
@@ -196,18 +212,15 @@ object EditorInterfaceDraw {
         )
 
         // Resize handles
-        if (selectedComponent == comp && SelectionModel.source == SelectionSource.MOUSE) {
+        if (selectedComponent == comp) {
             drawResize(g, x, y, w, h)
         }
 
         g.clip = oldClip
     }
 
-    fun getFilteredComponents(): List<ComponentDefinition> {
-        return preparedRoots.filter { root ->
-            viewMode == ViewMode.NONE || selectedType == null || root.type == selectedType
-        }
-    }
+    /** The root components which are shown: the ones which contain a component of the selected type. */
+    fun getFilteredComponents(): List<ComponentDefinition> = preparedRoots.filter { containsMatch(it) }
 
     @JvmStatic
     fun outline(src: BufferedImage, thickness: Int): BufferedImage {
@@ -702,8 +715,8 @@ object EditorInterfaceDraw {
     }
 
     private fun drawBackground(g: Graphics2D) {
-        val width = g.clipBounds?.width ?: Consts.CENTER_PANEL_WIDTH
-        val height = g.clipBounds?.height ?: Consts.CENTER_PANEL_HEIGHT
+        val width = g.clipBounds?.width ?: screenWidth
+        val height = g.clipBounds?.height ?: screenHeight
 
         g.color = if (editMode) Color.BLACK else Color.LIGHT_GRAY
         g.fillRect(0, 0, width, height)
@@ -732,7 +745,7 @@ object EditorInterfaceDraw {
         g.color = Color.WHITE
         g.stroke = BasicStroke(1f)
 
-        val drawSize = maxOf(HANDLE_SIZE, 6)
+        val drawSize = HANDLE_SIZE
         val half = drawSize / 2
 
         fun handle(cx: Int, cy: Int) {
@@ -752,24 +765,168 @@ object EditorInterfaceDraw {
         handle(x, y + h / 2)
     }
 
-    fun getCursor(mouseX: Int, mouseY: Int, x: Int, y: Int, w: Int, h: Int): ComponentResizeType? {
-        val handleSize = maxOf(HANDLE_SIZE, 6)
-        val margin = 4
+    // ------------------------------------------------------------------ scrolling
 
-        fun click(cx: Int, cy: Int): Boolean =
-            mouseX in (cx - handleSize/2 - margin)..(cx + handleSize/2 + margin) &&
-                    mouseY in (cy - handleSize/2 - margin)..(cy + handleSize/2 + margin)
+    /** How far the content of a layer can be scrolled. */
+    private fun maxScrollX(comp: ComponentDefinition) = if (comp.type == ComponentType.LAYER) maxOf(0, comp.scrollWidth - comp.width) else 0
+    private fun maxScrollY(comp: ComponentDefinition) = if (comp.type == ComponentType.LAYER) maxOf(0, comp.scrollHeight - comp.height) else 0
 
+    fun scrollXOf(comp: ComponentDefinition): Int = (scrollX[comp.componentHash] ?: 0).coerceIn(0, maxScrollX(comp))
+    fun scrollYOf(comp: ComponentDefinition): Int = (scrollY[comp.componentHash] ?: 0).coerceIn(0, maxScrollY(comp))
+
+    /**
+     * Scrolls the innermost layer at the position which has something to scroll, like the mouse wheel does it in
+     * the client.
+     *
+     * @return true when a layer was scrolled
+     */
+    fun scrollAt(mouseX: Int, mouseY: Int, amount: Int, horizontal: Boolean): Boolean {
+        fun search(comp: ComponentDefinition, x: Int, y: Int): ComponentDefinition? {
+            if (mouseX !in x until x + comp.width || mouseY !in y until y + comp.height) return null
+            val childX = x - scrollXOf(comp)
+            val childY = y - scrollYOf(comp)
+            childrenCache[comp.componentHash]?.asReversed()?.forEach { child ->
+                search(child, childX + child.positionX, childY + child.positionY)?.let { return it }
+            }
+            val canScroll = if (horizontal) maxScrollX(comp) > 0 else maxScrollY(comp) > 0
+            return if (canScroll) comp else null
+        }
+
+        val layer = preparedRoots.asReversed().firstNotNullOfOrNull { search(it, it.positionX, it.positionY) } ?: return false
+        if (horizontal) {
+            scrollX[layer.componentHash] = (scrollXOf(layer) + amount).coerceIn(0, maxScrollX(layer))
+        } else {
+            scrollY[layer.componentHash] = (scrollYOf(layer) + amount).coerceIn(0, maxScrollY(layer))
+        }
+        return true
+    }
+
+    // ------------------------------------------------------------------ position and size
+
+    /** Where a component is in the drawn interface and the area of its parent, both in pixels of the panel. */
+    class Placement(val bounds: Rectangle, val parent: Rectangle)
+
+    fun placementOf(target: ComponentDefinition): Placement? {
+        fun search(comp: ComponentDefinition, parentArea: Rectangle, x: Int, y: Int): Placement? {
+            val area = Rectangle(x, y, comp.width, comp.height)
+            if (comp.componentHash == target.componentHash) return Placement(area, parentArea)
+            val childX = x - scrollXOf(comp)
+            val childY = y - scrollYOf(comp)
+            childrenCache[comp.componentHash]?.forEach { child ->
+                search(child, area, childX + child.positionX, childY + child.positionY)?.let { return it }
+            }
+            return null
+        }
+
+        val screen = Rectangle(0, 0, screenWidth, screenHeight)
+        return preparedRoots.firstNotNullOfOrNull { search(it, screen, it.positionX, it.positionY) }
+    }
+
+    /**
+     * Moves and resizes a component. [x], [y], [w] and [h] are relative to the parent; they are turned into the
+     * values which are stored in the component, which depend on the position and size modes of the component.
+     */
+    fun setBounds(comp: ComponentDefinition, x: Int, y: Int, w: Int, h: Int, parentW: Int, parentH: Int) {
+        // a component which is not resized keeps its size, also when it has none
+        val width = if (w == comp.width) w else maxOf(1, w)
+        val height = if (h == comp.height) h else maxOf(1, h)
+
+        fun fraction(value: Int, parent: Int) =
+            if (parent > 0) Math.round(value * (1 shl FIXED_SHIFT).toDouble() / parent).toInt() else value
+
+        // a value which does not change is left alone, so it does not lose precision (the sizes and positions
+        // in the modes 2 to 5 are stored as fractions of the parent)
+        val widthChanged = width != comp.width
+        val heightChanged = height != comp.height
+        val xChanged = widthChanged || x != comp.positionX
+        val yChanged = heightChanged || y != comp.positionY
+
+        if (widthChanged) {
+            comp.baseWidth = when (comp.widthMode.toInt()) {
+                0 -> width
+                1 -> parentW - width
+                2 -> fraction(width, parentW)
+                else -> comp.baseWidth
+            }
+        }
+        if (heightChanged) {
+            comp.baseHeight = when (comp.heightMode.toInt()) {
+                0 -> height
+                1 -> parentH - height
+                2 -> fraction(height, parentH)
+                else -> comp.baseHeight
+            }
+        }
+        // the width and the height which the layout will calculate
+        val realW = if (comp.widthMode.toInt() >= 3) comp.width else width
+        val realH = if (comp.heightMode.toInt() >= 3) comp.height else height
+
+        if (xChanged) {
+            comp.baseX = when (comp.yMode.toInt()) {
+                1 -> x - (parentW - realW) / 2
+                2 -> parentW - realW - x
+                3 -> fraction(x, parentW)
+                4 -> fraction(x - (parentW - realW) / 2, parentW)
+                5 -> fraction(parentW - realW - x, parentW)
+                else -> x
+            }
+        }
+        if (yChanged) {
+            comp.baseY = when (comp.xMode.toInt()) {
+                1 -> y - (parentH - realH) / 2
+                2 -> parentH - realH - y
+                3 -> fraction(y, parentH)
+                4 -> fraction(y - (parentH - realH) / 2, parentH)
+                5 -> fraction(parentH - realH - y, parentH)
+                else -> y
+            }
+        }
+    }
+
+    /** Sets the size of the area the interfaces are drawn in and lays the interface out again. */
+    fun setScreenSize(width: Int, height: Int) {
+        screenWidth = width
+        screenHeight = height
+        preparedRoots.forEach { layoutComponent(it, screenWidth, screenHeight) }
+    }
+
+    // ------------------------------------------------------------------ resize handles
+
+    /**
+     * The handle of the rectangle at the mouse position: the corners and the whole borders can be grabbed, a few
+     * pixels outside of the component as well as inside of it.
+     */
+    fun handleAt(mouseX: Int, mouseY: Int, area: Rectangle): ComponentResizeType? {
+        val right = area.x + area.width
+        val bottom = area.y + area.height
+        val grab = GRAB_DISTANCE
+
+        // on a small component the corners must not take the whole border
+        val cornerX = minOf(HANDLE_SIZE + 2, maxOf(grab - 1, area.width / 3))
+        val cornerY = minOf(HANDLE_SIZE + 2, maxOf(grab - 1, area.height / 3))
+
+        fun near(value: Int, target: Int, distance: Int) = value in (target - distance)..(target + distance)
+
+        val onLeftCorner = near(mouseX, area.x, cornerX)
+        val onRightCorner = near(mouseX, right, cornerX)
+        val onTopCorner = near(mouseY, area.y, cornerY)
+        val onBottomCorner = near(mouseY, bottom, cornerY)
+        when {
+            onLeftCorner && onTopCorner -> return ComponentResizeType.TOP_LEFT
+            onRightCorner && onTopCorner -> return ComponentResizeType.TOP_RIGHT
+            onLeftCorner && onBottomCorner -> return ComponentResizeType.BOTTOM_LEFT
+            onRightCorner && onBottomCorner -> return ComponentResizeType.BOTTOM_RIGHT
+        }
+
+        val insideX = mouseX in (area.x - grab)..(right + grab)
+        val insideY = mouseY in (area.y - grab)..(bottom + grab)
         return when {
-            click(x, y) -> ComponentResizeType.TOP_LEFT
-            click(x + w / 2, y) -> ComponentResizeType.TOP
-            click(x + w, y) -> ComponentResizeType.TOP_RIGHT
-            click(x + w, y + h / 2) -> ComponentResizeType.RIGHT
-            click(x + w, y + h) -> ComponentResizeType.BOTTOM_RIGHT
-            click(x + w / 2, y + h) -> ComponentResizeType.BOTTOM
-            click(x, y + h) -> ComponentResizeType.BOTTOM_LEFT
-            click(x, y + h / 2) -> ComponentResizeType.LEFT
+            insideY && near(mouseX, area.x, grab) -> ComponentResizeType.LEFT
+            insideY && near(mouseX, right, grab) -> ComponentResizeType.RIGHT
+            insideX && near(mouseY, area.y, grab) -> ComponentResizeType.TOP
+            insideX && near(mouseY, bottom, grab) -> ComponentResizeType.BOTTOM
             else -> null
         }
     }
+
 }

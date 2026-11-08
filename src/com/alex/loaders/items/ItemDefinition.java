@@ -96,7 +96,7 @@ public class ItemDefinition implements Cloneable {
       byte[] data = cache.getIndexes()[19].getFile(this.getArchiveId(), this.getFileId());
       if(data != null) {
          try {
-            this.readOpcodeValues(new com.alex.io.InputStream(data));
+            this.readOpcodeValues(new InputStream(data));
          } catch (RuntimeException var4) {
             var4.printStackTrace();
          }
@@ -180,7 +180,7 @@ public class ItemDefinition implements Cloneable {
       this.zAngle2D = 0;
    }
 
-    private void decode(com.alex.io.InputStream stream, int opcode) {
+    private void decode(InputStream stream, int opcode) {
         switch (opcode) {
             case 1:
                 this.model = stream.readUnsignedShort();

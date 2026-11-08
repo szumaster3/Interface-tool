@@ -27,10 +27,18 @@ public class ModelViewerFrame extends JFrame {
     private Thread modelViewThread;
     private final List<Integer> allModelIds = new ArrayList<>();
 
+    /** Called with the id of the model the user picked, null when the frame is only used to look at models. */
+    private final java.util.function.Consumer<Integer> picker;
+
     public ModelViewerFrame(Store store) throws IOException {
+        this(store, null);
+    }
+
+    public ModelViewerFrame(Store store, java.util.function.Consumer<Integer> picker) throws IOException {
+        this.picker = picker;
         cache = store;
 
-        setTitle("Media manager");
+        setTitle(picker == null ? "Media manager" : "Pick a model");
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setSize(800, 600);
         setLocationRelativeTo(null);
@@ -94,6 +102,19 @@ public class ModelViewerFrame extends JFrame {
         modelScrollPane.setPreferredSize(new Dimension(350, 400));
         mainPanel.add(modelScrollPane, BorderLayout.CENTER);
 
+        if (picker != null) {
+            JButton select = new JButton("Select this model");
+            select.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
+            select.addActionListener(e -> pickSelected());
+            controlPanel.add(select);
+            listModel.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    if (e.getClickCount() == 2) pickSelected();
+                }
+            });
+        }
+
         listModel.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 Integer selectedId = listModel.getSelectedValue();
@@ -112,6 +133,13 @@ public class ModelViewerFrame extends JFrame {
         });
 
         return mainPanel;
+    }
+
+    private void pickSelected() {
+        Integer id = listModel.getSelectedValue();
+        if (id == null || picker == null) return;
+        picker.accept(id);
+        dispose();
     }
 
     private @NotNull JPanel getjPanel() {

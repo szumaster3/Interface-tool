@@ -9,6 +9,7 @@ import com.editor.util.sprites.SpriteManager
 import com.alex.util.crc32.CRC32HGenerator
 import com.editor.properties.PropertyValues
 import com.editor.utils.ColorPicker
+import com.editor.utils.ComponentNames
 import com.editor.utils.ComponentCopy
 import com.editor.utils.EditorGenericTextPrinter
 import com.editor.utils.FontPreview
@@ -100,7 +101,7 @@ object EditorGUIButtons {
             else -> return
         }
 
-        Cache.store!!.indexes[3].putFile(newId, 0, data)
+        Cache.store!!.indexes[Cache.interfaceIndex].putFile(newId, 0, data)
 
         ComponentDefinition.componentDefinition =
             arrayOfNulls(ComponentDefinition.getInterfaceDefinitionsSize())
@@ -191,11 +192,11 @@ object EditorGUIButtons {
         for ((componentId, comp) in components.withIndex()) {
             if (comp != null) {
                 val bytes = comp.encode()
-                Cache.store!!.indexes[3].putFile(interfaceId, componentId, bytes)
+                Cache.store!!.indexes[Cache.interfaceIndex].putFile(interfaceId, componentId, bytes)
             }
         }
         for (componentId in components.size until oldCount) {
-            Cache.store!!.indexes[3].removeFile(interfaceId, componentId)
+            Cache.store!!.indexes[Cache.interfaceIndex].removeFile(interfaceId, componentId)
         }
 
         EditorGUI.instance?.compontentRenderPanel?.interfaceId = interfaceId
@@ -284,10 +285,11 @@ object EditorGUIButtons {
             }
             collect(comp)
             for (c in toRemove) {
-                Cache.store!!.indexes[3].removeFile(c.interfaceId, c.componentId)
+                Cache.store!!.indexes[Cache.interfaceIndex].removeFile(c.interfaceId, c.componentId)
+                ComponentNames.set(c.interfaceId, c.componentId, null)
             }
-            Cache.store!!.indexes[3].resetCachedFiles()
-            Cache.store!!.indexes[3].rewriteTable()
+            Cache.store!!.indexes[Cache.interfaceIndex].resetCachedFiles()
+            Cache.store!!.indexes[Cache.interfaceIndex].rewriteTable()
 
             try {
                 Cache.init(PropertyValues.cache_path)
@@ -312,9 +314,9 @@ object EditorGUIButtons {
             if (i == 0) {
                 val base = ComponentDefinition.getInterfaceComponent(interfaceId, 0)
                 base?.parentId = -1
-                Cache.store!!.indexes[3].putFile(interfaceId, 0, base!!.encodeIf3())
+                Cache.store!!.indexes[Cache.interfaceIndex].putFile(interfaceId, 0, base!!.encode())
             } else {
-                Cache.store!!.indexes[3].removeFile(interfaceId, i)
+                Cache.store!!.indexes[Cache.interfaceIndex].removeFile(interfaceId, i)
             }
         }
         try {
@@ -359,7 +361,7 @@ object EditorGUIButtons {
         val hashToUse = fileNameHash
 
         if (hashToUse != null) {
-            store.indexes[3].putFile(
+            store.indexes[Cache.interfaceIndex].putFile(
                 comp.interfaceId,
                 comp.componentId,
                 2,
@@ -371,7 +373,7 @@ object EditorGUIButtons {
                 hashToUse
             )
         } else {
-            store.indexes[3].putFile(
+            store.indexes[Cache.interfaceIndex].putFile(
                 comp.interfaceId,
                 comp.componentId,
                 comp.encode()
@@ -437,7 +439,7 @@ object EditorGUIButtons {
         newComp.componentHash = (targetInterfaceId shl 16) or nextId
 
         newComp.parentId = newParentHash ?: -1
-        Cache.store!!.indexes[3].putFile(
+        Cache.store!!.indexes[Cache.interfaceIndex].putFile(
             targetInterfaceId,
             nextId,
             newComp.encode()
@@ -488,7 +490,7 @@ object EditorGUIButtons {
             comp.baseWidth = w
             comp.baseHeight = h
             EditorInterfaceDraw.preparedRoots.forEach { root ->
-                EditorInterfaceDraw.layoutComponent(root, EditorGUI.instance!!.compontentRenderPanel.width, EditorGUI.instance!!.compontentRenderPanel.height)
+                EditorInterfaceDraw.layoutComponent(root, EditorInterfaceDraw.screenWidth, EditorInterfaceDraw.screenHeight)
             }
             EditorGUI.instance?.compontentRenderPanel?.repaint()
             EditorGUI.instance?.buildPropertyPanel(comp)
@@ -668,6 +670,33 @@ object EditorGUIButtons {
         val button = JButton("Pick color")
         button.toolTipText = "Select the color"
         button.addActionListener { openColorPicker() }
+        return button
+    }
+
+    /** Opens the model viewer; the model which is picked is written to the field. */
+    fun modelPickButton(field: String, title: String = "Pick model"): JButton {
+        val button = JButton(title)
+        button.toolTipText = "Select a model of the cache"
+        button.addActionListener {
+            val store = Cache.store ?: return@addActionListener
+            try {
+                com.editor.util.model.ModelViewerFrame(store) { id -> EditorGUI.instance?.set(field, id.toString()) }
+                    .isVisible = true
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        return button
+    }
+
+    /** Opens the sprite library; the sprite which is picked is written to the field. */
+    fun spritePickButton(field: String, title: String = "Pick sprite"): JButton {
+        val button = JButton(title)
+        button.toolTipText = "Select a sprite of the cache"
+        button.addActionListener {
+            if (field == "SpriteID") openSpriteLibrary()
+            else SpriteManager(null) { spriteId, _, _, _ -> EditorGUI.instance?.set(field, spriteId.toString()) }
+        }
         return button
     }
 

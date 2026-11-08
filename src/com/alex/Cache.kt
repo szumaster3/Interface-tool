@@ -8,6 +8,9 @@ object Cache {
     var store: Store? = null
         private set
 
+    @JvmStatic
+    var interfaceIndex = 3
+
     @Throws(IOException::class)
     fun init(path: String?) {
         store = Store(path)

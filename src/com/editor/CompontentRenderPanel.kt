@@ -4,7 +4,6 @@ import com.alex.loaders.interfaces.ComponentDefinition
 import com.alex.loaders.interfaces.ComponentType
 import com.alex.utils.Utils
 import com.editor.EditorInterfaceDraw.childrenCache
-import com.editor.EditorInterfaceDraw.getCursor
 import com.editor.utils.Consts
 import com.editor.utils.SelectionModel
 import com.editor.utils.SelectionSource
@@ -20,6 +19,35 @@ import javax.swing.JPanel
 import javax.swing.KeyStroke
 
 class CompontentRenderPanel : JPanel() {
+
+    companion object {
+        /** Pixels a layer is scrolled by one notch of the mouse wheel. */
+        private const val SCROLL_STEP = 24
+        const val MAX_ZOOM = 4
+    }
+
+    /** The interface is shown this many times larger. */
+    var zoom = 1
+        set(value) {
+            field = value.coerceIn(1, MAX_ZOOM)
+            applyScreenSize()
+        }
+
+    /** Mouse position in the pixels of the interface. */
+    private fun px(e: MouseEvent) = e.x / zoom
+    private fun py(e: MouseEvent) = e.y / zoom
+
+    /** Gives the panel the size of the screen mode (and the zoom). Call it after the size of the screen changed. */
+    fun applyScreenSize() {
+        val size = Dimension(EditorInterfaceDraw.screenWidth * zoom, EditorInterfaceDraw.screenHeight * zoom)
+        preferredSize = size
+        minimumSize = size
+        maximumSize = size
+        backBuffer = null
+        revalidate()
+        parent?.revalidate()
+        repaint()
+    }
     var interfaceId: Int = -1
     var showContainers = true
     var showHidden = true
@@ -33,10 +61,13 @@ class CompontentRenderPanel : JPanel() {
     private var dragStartX = 0
     private var dragStartY = 0
 
-    private var startBaseW = 0
-    private var startBaseH = 0
-    private var startBaseX = 0
-    private var startBaseY = 0
+    // position and size of the component (relative to its parent) when the change was started
+    private var startRelX = 0
+    private var startRelY = 0
+    private var startW = 0
+    private var startH = 0
+    private var parentW = 0
+    private var parentH = 0
 
     private val undoStack = Stack<ComponentState>()
     private val redoStack = Stack<ComponentState>()
@@ -58,9 +89,7 @@ class CompontentRenderPanel : JPanel() {
     }
 
     init {
-        preferredSize = Dimension(Consts.CENTER_PANEL_WIDTH, Consts.CENTER_PANEL_HEIGHT)
-        minimumSize   = Dimension(Consts.CENTER_PANEL_WIDTH, Consts.CENTER_PANEL_HEIGHT)
-        maximumSize   = Dimension(Consts.CENTER_PANEL_WIDTH, Consts.CENTER_PANEL_HEIGHT)
+        applyScreenSize()
 
         SelectionModel.addListener { comp ->
             selectedComponent = comp
@@ -73,46 +102,33 @@ class CompontentRenderPanel : JPanel() {
             {
                 if (!interactionEnabled) return
                 if (resizing) return
+                requestFocusInWindow()
 
-                val clicked = hitTestComponent(e.x, e.y)
+                // the handles of the selected component come first, so they can be grabbed over other components
+                selectedComponent?.let { selected ->
+                    val placement = EditorInterfaceDraw.placementOf(selected)
+                    val handle = placement?.let { EditorInterfaceDraw.handleAt(px(e), py(e), it.bounds) }
+                    if (placement != null && handle != null) {
+                        startChange(selected, placement, e)
+                        resizing = true
+                        activeHandle = handle
+                        return
+                    }
+                }
+
+                val clicked = hitTestComponent(px(e), py(e))
                 if (clicked == null) {
                     SelectionModel.setSelection(null, SelectionSource.MOUSE)
                     return
                 }
-
                 if (clicked != selectedComponent) {
                     SelectionModel.setSelection(clicked, SelectionSource.MOUSE)
                 }
 
                 val comp = selectedComponent ?: return
-
-                val handle = getCursor(e.x, e.y, comp.positionX, comp.positionY, comp.width, comp.height)
-                if (handle != null) {
-                    resizing = true
-                    activeHandle = handle
-
-                    dragStartX = e.x
-                    dragStartY = e.y
-
-                    startBaseW = comp.baseWidth
-                    startBaseH = comp.baseHeight
-                    startBaseX = comp.baseX
-                    startBaseY = comp.baseY
-
-                    pushUndo(comp)
-                    redoStack.clear()
-                } else {
-                    dragging = true
-
-                    dragStartX = e.x
-                    dragStartY = e.y
-
-                    startBaseX = comp.baseX
-                    startBaseY = comp.baseY
-
-                    pushUndo(comp)
-                    redoStack.clear()
-                }
+                val placement = EditorInterfaceDraw.placementOf(comp) ?: return
+                startChange(comp, placement, e)
+                dragging = true
             }
 
             override fun mouseReleased(e: MouseEvent)
@@ -128,87 +144,67 @@ class CompontentRenderPanel : JPanel() {
             override fun mouseDragged(e: MouseEvent) {
                 if (!interactionEnabled) return
                 val comp = selectedComponent ?: return
-                val dx = e.x - dragStartX
-                val dy = e.y - dragStartY
+                val dx = px(e) - dragStartX
+                val dy = py(e) - dragStartY
 
                 if (dragging) {
-                    comp.baseX = startBaseX + dx
-                    comp.baseY = startBaseY + dy
-
-                    EditorInterfaceDraw.preparedRoots.forEach { root ->
-                        EditorInterfaceDraw.layoutComponent(root, width, height)
-                    }
-                    selectedComponent?.let { EditorGUI.instance?.buildPropertyPanel(it) }
-                    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-                    repaint()
+                    changeBounds(comp, startRelX + dx, startRelY + dy, startW, startH)
+                    cursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)
                     return
                 }
 
-                if (!resizing) return
                 val handle = activeHandle ?: return
+                if (!resizing) return
 
-                when (handle) {
-                    com.editor.ComponentResizeType.RIGHT -> comp.baseWidth = startBaseW + dx
-                    com.editor.ComponentResizeType.BOTTOM -> comp.baseHeight = startBaseH + dy
-                    com.editor.ComponentResizeType.LEFT -> {
-                        comp.baseX = startBaseX + dx
-                        comp.baseWidth = startBaseW - dx
-                    }
-                    com.editor.ComponentResizeType.TOP -> {
-                        comp.baseY = startBaseY + dy
-                        comp.baseHeight = startBaseH - dy
-                    }
-                    com.editor.ComponentResizeType.TOP_LEFT -> {
-                        comp.baseX = startBaseX + dx
-                        comp.baseY = startBaseY + dy
-                        comp.baseWidth = startBaseW - dx
-                        comp.baseHeight = startBaseH - dy
-                    }
-                    com.editor.ComponentResizeType.TOP_RIGHT -> {
-                        comp.baseY = startBaseY + dy
-                        comp.baseWidth = startBaseW + dx
-                        comp.baseHeight = startBaseH - dy
-                    }
-                    com.editor.ComponentResizeType.BOTTOM_LEFT -> {
-                        comp.baseX = startBaseX + dx
-                        comp.baseWidth = startBaseW - dx
-                        comp.baseHeight = startBaseH + dy
-                    }
-                    com.editor.ComponentResizeType.BOTTOM_RIGHT -> {
-                        comp.baseWidth = startBaseW + dx
-                        comp.baseHeight = startBaseH + dy
-                    }
+                var x = startRelX
+                var y = startRelY
+                var w = startW
+                var h = startH
+                val left = handle == ComponentResizeType.LEFT || handle == ComponentResizeType.TOP_LEFT || handle == ComponentResizeType.BOTTOM_LEFT
+                val right = handle == ComponentResizeType.RIGHT || handle == ComponentResizeType.TOP_RIGHT || handle == ComponentResizeType.BOTTOM_RIGHT
+                val top = handle == ComponentResizeType.TOP || handle == ComponentResizeType.TOP_LEFT || handle == ComponentResizeType.TOP_RIGHT
+                val bottom = handle == ComponentResizeType.BOTTOM || handle == ComponentResizeType.BOTTOM_LEFT || handle == ComponentResizeType.BOTTOM_RIGHT
+
+                if (left) {
+                    // the opposite side stays where it is, also when the component gets very small
+                    w = maxOf(1, startW - dx)
+                    x = startRelX + startW - w
                 }
-
-                comp.baseWidth = maxOf(1, comp.baseWidth)
-                comp.baseHeight = maxOf(1, comp.baseHeight)
-
-                EditorInterfaceDraw.preparedRoots.forEach { root ->
-                    EditorInterfaceDraw.layoutComponent(root, width, height)
+                if (right) w = maxOf(1, startW + dx)
+                if (top) {
+                    h = maxOf(1, startH - dy)
+                    y = startRelY + startH - h
                 }
-                selectedComponent?.let { EditorGUI.instance?.buildPropertyPanel(it) }
+                if (bottom) h = maxOf(1, startH + dy)
 
-                repaint()
+                changeBounds(comp, x, y, w, h)
             }
 
             override fun mouseMoved(e: MouseEvent)
             {
-                val handle = if (SelectionModel.source == SelectionSource.MOUSE) {
-                    selectedComponent?.let {
-                        getCursor(e.x, e.y, it.positionX, it.positionY, it.width, it.height)
-                    }
-                } else null
+                val selected = selectedComponent?.takeIf { interactionEnabled }
+                val area = selected?.let { EditorInterfaceDraw.placementOf(it)?.bounds }
+                val handle = area?.let { EditorInterfaceDraw.handleAt(px(e), py(e), it) }
 
                 cursor = when (handle)
                 {
-                    com.editor.ComponentResizeType.TOP, com.editor.ComponentResizeType.BOTTOM -> Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR)
-                    com.editor.ComponentResizeType.LEFT, com.editor.ComponentResizeType.RIGHT -> Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR)
-                    com.editor.ComponentResizeType.TOP_LEFT, com.editor.ComponentResizeType.BOTTOM_RIGHT -> Cursor.getPredefinedCursor(Cursor.NW_RESIZE_CURSOR)
-                    com.editor.ComponentResizeType.TOP_RIGHT, com.editor.ComponentResizeType.BOTTOM_LEFT -> Cursor.getPredefinedCursor(Cursor.NE_RESIZE_CURSOR)
-                    else -> Cursor.getDefaultCursor()
+                    ComponentResizeType.TOP, ComponentResizeType.BOTTOM -> Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR)
+                    ComponentResizeType.LEFT, ComponentResizeType.RIGHT -> Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR)
+                    ComponentResizeType.TOP_LEFT, ComponentResizeType.BOTTOM_RIGHT -> Cursor.getPredefinedCursor(Cursor.NW_RESIZE_CURSOR)
+                    ComponentResizeType.TOP_RIGHT, ComponentResizeType.BOTTOM_LEFT -> Cursor.getPredefinedCursor(Cursor.NE_RESIZE_CURSOR)
+                    else ->
+                        if (area != null && area.contains(px(e), py(e))) Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)
+                        else Cursor.getDefaultCursor()
                 }
             }
         })
+
+        // layers which have more content than they can show are scrolled with the mouse wheel
+        addMouseWheelListener { e ->
+            if (EditorInterfaceDraw.scrollAt(px(e), py(e), e.wheelRotation * SCROLL_STEP, e.isShiftDown)) {
+                repaint()
+            }
+        }
 
         val inputMap = this.getInputMap(WHEN_IN_FOCUSED_WINDOW)
         val actionMap = this.actionMap
@@ -226,6 +222,8 @@ class CompontentRenderPanel : JPanel() {
             }
         })
 
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, shortcut), undoKey)
+
         inputMap.put(
             KeyStroke.getKeyStroke(KeyEvent.VK_Y, shortcut),
             redoKey
@@ -236,6 +234,60 @@ class CompontentRenderPanel : JPanel() {
                 redo()
             }
         })
+
+        // The arrow keys move the selected component by 1 pixel, with shift by 10 pixels. They work while the
+        // panel has the focus, which it gets when the interface is clicked.
+        isFocusable = true
+        val focused = getInputMap(WHEN_FOCUSED)
+        for ((key, dx, dy) in listOf(
+            Triple(KeyEvent.VK_LEFT, -1, 0), Triple(KeyEvent.VK_RIGHT, 1, 0),
+            Triple(KeyEvent.VK_UP, 0, -1), Triple(KeyEvent.VK_DOWN, 0, 1)
+        )) {
+            for ((modifier, step) in listOf(0 to 1, InputEvent.SHIFT_DOWN_MASK to 10)) {
+                val name = "nudge-$key-$step"
+                focused.put(KeyStroke.getKeyStroke(key, modifier), name)
+                actionMap.put(name, object : AbstractAction() {
+                    override fun actionPerformed(e: java.awt.event.ActionEvent?) = nudge(dx * step, dy * step)
+                })
+            }
+        }
+    }
+
+    /** Remembers where the component is, before it is moved or resized with the mouse. */
+    private fun startChange(comp: ComponentDefinition, placement: EditorInterfaceDraw.Placement, e: MouseEvent) {
+        dragStartX = px(e)
+        dragStartY = py(e)
+        startRelX = comp.positionX
+        startRelY = comp.positionY
+        startW = comp.width
+        startH = comp.height
+        parentW = placement.parent.width
+        parentH = placement.parent.height
+        pushUndo(comp)
+        redoStack.clear()
+    }
+
+    /** Moves and resizes the component, lays the interface out again and updates the property panel. */
+    private fun changeBounds(comp: ComponentDefinition, x: Int, y: Int, w: Int, h: Int) {
+        EditorInterfaceDraw.setBounds(comp, x, y, w, h, parentW, parentH)
+        EditorInterfaceDraw.preparedRoots.forEach {
+            EditorInterfaceDraw.layoutComponent(it, EditorInterfaceDraw.screenWidth, EditorInterfaceDraw.screenHeight)
+        }
+        EditorGUI.instance?.buildPropertyPanel(comp)
+        notifyChangeListeners()
+        repaint()
+    }
+
+    /** Moves the selected component with the arrow keys. */
+    private fun nudge(dx: Int, dy: Int) {
+        if (!interactionEnabled) return
+        val comp = selectedComponent ?: return
+        val placement = EditorInterfaceDraw.placementOf(comp) ?: return
+        parentW = placement.parent.width
+        parentH = placement.parent.height
+        pushUndo(comp)
+        redoStack.clear()
+        changeBounds(comp, comp.positionX + dx, comp.positionY + dy, comp.width, comp.height)
     }
 
     private fun hitTestComponentRecursive(
@@ -243,7 +295,8 @@ class CompontentRenderPanel : JPanel() {
         mouseX: Int,
         mouseY: Int,
         offsetX: Int = 0,
-        offsetY: Int = 0
+        offsetY: Int = 0,
+        depth: Int = 0
     ): ComponentDefinition? {
 
         val hidden = Utils.isHidden(comp)
@@ -261,34 +314,20 @@ class CompontentRenderPanel : JPanel() {
             return null
         }
 
+        // the content of a scrolled layer is moved
+        val childX = x - EditorInterfaceDraw.scrollXOf(comp)
+        val childY = y - EditorInterfaceDraw.scrollYOf(comp)
         childrenCache[comp.componentHash]
             ?.asReversed()
             ?.forEach { child ->
-                hitTestComponentRecursive(child, mouseX, mouseY, x, y)
+                hitTestComponentRecursive(child, mouseX, mouseY, childX, childY, depth + 1)
                     ?.let { return it }
             }
 
-        if (comp.type == ComponentType.LAYER) {
+        // the layers which are not the base of the interface can be selected too
+        if (comp.type == ComponentType.LAYER && depth == 0) {
             return null
         }
-
-        val handleSize = maxOf(EditorInterfaceDraw.HANDLE_SIZE, 6)
-        val margin = 4
-        val half = handleSize / 2
-
-        val handles = listOf(
-            Pair(x, y), Pair(x + w / 2, y), Pair(x + w, y),
-            Pair(x + w, y + h / 2), Pair(x + w, y + h),
-            Pair(x + w / 2, y + h), Pair(x, y + h), Pair(x, y + h / 2)
-        )
-
-        if (handles.any { (cx, cy) ->
-                mouseX in (cx - half - margin)..(cx + half + margin) &&
-                        mouseY in (cy - half - margin)..(cy + half + margin)
-            }) {
-            return comp
-        }
-
         return comp
     }
 
@@ -345,12 +384,14 @@ class CompontentRenderPanel : JPanel() {
         if (interfaceId == -1) return
 
 
-        if (backBuffer == null || backBuffer!!.width != width || backBuffer!!.height != height) {
-            backBuffer = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+        val screenWidth = EditorInterfaceDraw.screenWidth
+        val screenHeight = EditorInterfaceDraw.screenHeight
+        if (backBuffer == null || backBuffer!!.width != screenWidth || backBuffer!!.height != screenHeight) {
+            backBuffer = BufferedImage(screenWidth, screenHeight, BufferedImage.TYPE_INT_ARGB)
         }
 
         val g2 = backBuffer!!.createGraphics()
-        g2.clearRect(0, 0, width, height)
+        g2.clearRect(0, 0, screenWidth, screenHeight)
 
         EditorInterfaceDraw.drawPreparedInterface(
             g2,
@@ -363,7 +404,10 @@ class CompontentRenderPanel : JPanel() {
         )
 
         g2.dispose()
-        g.drawImage(backBuffer, 0, 0, width, height, null)
+        (g as? java.awt.Graphics2D)?.setRenderingHint(
+            java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
+        )
+        g.drawImage(backBuffer, 0, 0, screenWidth * zoom, screenHeight * zoom, null)
     }
 
     private class ComponentState(val c: ComponentDefinition) {
@@ -580,7 +624,7 @@ class CompontentRenderPanel : JPanel() {
 
     private fun refresh() {
         EditorInterfaceDraw.preparedRoots.forEach { root ->
-            EditorInterfaceDraw.layoutComponent(root, width, height)
+            EditorInterfaceDraw.layoutComponent(root, EditorInterfaceDraw.screenWidth, EditorInterfaceDraw.screenHeight)
         }
         repaint()
     }
